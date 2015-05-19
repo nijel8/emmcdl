@@ -31,7 +31,9 @@ when       who     what, where, why
 #include <string.h>
 #include <stdio.h>
 #include "tchar.h"
+#ifdef _WIN32
 #include "windows.h"
+#endif
 #include "sahara.h"
 
 // Only List COM port information for desktop version

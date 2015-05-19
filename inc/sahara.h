@@ -23,7 +23,9 @@ when       who     what, where, why
 
 #include "serialport.h"
 #ifdef _WIN32
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 #endif
 
 #define SAHARA_HELLO_REQ      0x1

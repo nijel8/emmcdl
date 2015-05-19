@@ -23,7 +23,9 @@ when       who     what, where, why
 #pragma once
 
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "xmlparser.h"
 #include <stdio.h>
 

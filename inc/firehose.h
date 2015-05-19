@@ -26,7 +26,9 @@ when       who     what, where, why
 #include "partition.h"
 #include <stdio.h>
 #ifdef _WIN32
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 #endif
 
 #define MAX_RETRY   50

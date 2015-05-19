@@ -24,7 +24,9 @@ when       who     what, where, why
 
 #include "partition.h"
 #include "protocol.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 

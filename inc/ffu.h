@@ -23,7 +23,9 @@ when       who     what, where, why
 #include "partition.h"
 #include "serialport.h"
 #include "firehose.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 // Security Header struct. The first data read in from the FFU.
 typedef struct _SECURITY_HEADER

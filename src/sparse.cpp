@@ -24,7 +24,9 @@ when       who     what, where, why
 #include "stdlib.h"
 #include "tchar.h"
 #include "sparse.h"
+#ifdef _WIN32
 #include "windows.h"
+#endif
 #include "string.h"
 
 // Constructor

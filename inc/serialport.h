@@ -23,7 +23,9 @@ when       who     what, where, why
 
 #include <stdio.h>
 #ifdef _WIN32
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 #endif
 #include "crc.h"
 
