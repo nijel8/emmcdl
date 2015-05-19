@@ -1,5 +1,7 @@
 
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 
 #define CRC_16_L_SEED         0xFFFF
 extern const unsigned short crc_16_l_table[];
