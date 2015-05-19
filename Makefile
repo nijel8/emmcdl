@@ -197,6 +197,7 @@ emmcdl_SOURCES = src/crc.cpp src/dload.cpp src/emmcdl.cpp src/ffu.cpp \
 	src/firehose.cpp src/partition.cpp src/protocol.cpp \
 	src/sahara.cpp src/serialport.cpp src/sparse.cpp \
 	src/xmlparser.cpp $(am__append_1) $(am__append_2)
+#AM_CPPFLAGS = -D_WIN32
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

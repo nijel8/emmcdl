@@ -18,6 +18,7 @@ emmcdl_SOURCES = \
                src/xmlparser.cpp
 
 if SYSDEPS_WIN32
+AM_CPPFLAGS = -D_WIN32
 emmcdl_SOURCES += \
                src/writedisk_windows.cpp
 else
