@@ -48,23 +48,23 @@ public:
   Firehose(SerialPort *port, HANDLE hLogFile = NULL);
   ~Firehose();
 
-  int WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum);
-  int ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum);
+  int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum);
+  int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum);
 
   int DeviceReset(void);
-  int FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 sectorWrite, uint64 sectors, UINT8 partNum);
+  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum);
   int ProgramPatchEntry(PartitionEntry pe, TCHAR *key);
   int ProgramRawCommand(TCHAR *key);
 
   // Firehose specific operations
-  int CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4);
+  int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4);
   int SetActivePartition(int prtn_num);
   int ConnectToFlashProg(fh_configure_t *cfg);
 
 protected:
 
 private:
-  int ReadData(unsigned char *pOutBuf, DWORD uiBufSize, bool bXML);
+  int ReadData(unsigned char *pOutBuf, uint32_t uiBufSize, bool bXML);
   int ReadStatus(void);
 
   SerialPort *sport;
@@ -73,7 +73,7 @@ private:
   unsigned char *m_payload;
   unsigned char *m_buffer;
   unsigned char *m_buffer_ptr;
-  DWORD m_buffer_len;
+  uint32_t m_buffer_len;
   UINT32 dwMaxPacketSize;
   HANDLE hLog;
   char *program_pkt;

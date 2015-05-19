@@ -26,4 +26,15 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS(memset strstr)
 AC_PROG_RANLIB
 
+
+AC_ARG_ENABLE([sysdeps],
+[  --enable-sysdeps Turn on debugging],
+[case "${enableval}" in
+  yes) sysdeps=true ;;
+  no)  sysdeps=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-sysdeps]) ;;
+esac],[sysdeps=false])
+AM_CONDITIONAL([SYSDEPS_WIN32], [test x$sysdeps = xtrue])
+
+
 AC_OUTPUT(Makefile)

@@ -41,10 +41,10 @@ typedef struct _SECURITY_HEADER
 // Image Header struct found within Image Header region of FFU
 typedef struct _IMAGE_HEADER
 {
-    DWORD  cbSize;           // sizeof(ImageHeader)
+    uint32_t  cbSize;           // sizeof(ImageHeader)
     unsigned char   Signature[12];    // "ImageFlash  "
-    DWORD  ManifestLength;   // in bytes
-    DWORD  dwChunkSize;      // Used only during image generation.
+    uint32_t  ManifestLength;   // in bytes
+    uint32_t  dwChunkSize;      // Used only during image generation.
 } IMAGE_HEADER;
 
 // Store Header struct found within Store Header region of FFU
@@ -92,7 +92,7 @@ typedef struct _BLOCK_DATA_ENTRY
 class FFUImage {
 public:
   int PreLoadImage(TCHAR *szFFUPath);
-  int ProgramImage(Protocol *proto, __int64 dwOffset);
+  int ProgramImage(Protocol *proto, int64_t dwOffset);
   int CloseFFUFile(void);
   void SetDiskSectorSize(int size);
   int SplitFFUBin(TCHAR *szPartName, TCHAR *szOutputFile);
@@ -106,7 +106,7 @@ private:
   int TerminateRawProgram(TCHAR *szFileName);
   int DumpRawProgram(TCHAR *szFFUFile, TCHAR *szRawProgram);
   int FFUDumpDisk(Protocol *proto);
-  int AddEntryToRawProgram(TCHAR *szRawProgram, TCHAR *szFileName, UINT64 ui64FileOffset, __int64 i64StartSector, UINT64 ui64NumSectors);
+  int AddEntryToRawProgram(TCHAR *szRawProgram, TCHAR *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors);
   int ReadGPT(void);
   int ParseHeaders(void);
   UINT64 GetNextStartingArea(UINT64 chunkSizeInBytes, UINT64 sizeOfArea);

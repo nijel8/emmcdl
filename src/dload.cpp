@@ -112,7 +112,7 @@ int Dload::LoadPartition(TCHAR *szPrtnFile)
   HANDLE hFile;
   int status = ERROR_SUCCESS;
   unsigned char rsp[32];
-  DWORD bytesRead=0;
+  uint32_t bytesRead=0;
   int rspSize;
   unsigned char partition[1040] = {EHOST_PARTITION_REQ,0};
   
@@ -172,13 +172,13 @@ int Dload::ClosePartition()
   return ERROR_SUCCESS;
 }
 
-int Dload::FastCopySerial(HANDLE hInFile, DWORD offset, DWORD sectors)
+int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
 {
   int status = ERROR_SUCCESS;
   unsigned char rsp[32];
-  DWORD bytesRead=0;
-  DWORD count = 0;
-  DWORD readSize = 1024;
+  uint32_t bytesRead=0;
+  uint32_t count = 0;
+  uint32_t readSize = 1024;
   int rspSize;
   unsigned char streamwrite[1050] = {EHOST_STREAM_WRITE_REQ,0};
 
@@ -246,7 +246,7 @@ int Dload::LoadImage(TCHAR *szSingleImage)
     return ERROR_INVALID_HANDLE;
   }
 
-  status = FastCopySerial(hFile,0,(DWORD)-1);
+  status = FastCopySerial(hFile,0,(uint32_t)-1);
   CloseHandle(hFile);
 
   return status;
@@ -258,11 +258,11 @@ int Dload::LoadFlashProg(TCHAR *szFlashPrg)
   unsigned char *writePtr;
   unsigned char rsp[32];
   int rspSize;
-  DWORD goAddr = 0;
-  DWORD targetAddr=0;
-  DWORD newAddr=0;
-  DWORD bytesRead;
-  DWORD status = ERROR_SUCCESS;
+  uint32_t goAddr = 0;
+  uint32_t targetAddr=0;
+  uint32_t newAddr=0;
+  uint32_t bytesRead;
+  uint32_t status = ERROR_SUCCESS;
 
   char hexline[128];
   FILE *fMprgFile;
@@ -409,7 +409,7 @@ int Dload::SetActivePartition()
   return status;
 }
 
-int Dload::CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4)
+int Dload::CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4)
 {
   unsigned char stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x1};
   unsigned char rsp[128] = {0};
@@ -493,7 +493,7 @@ int Dload::ProgramPartitionEntry(PartitionEntry pe)
   if( status == ERROR_SUCCESS ) {
     // Fast copy from input file to Serial port
     wprintf(L"\nIn offset: %I64d out offset: %I64d sectors: %I64d\n",pe.offset, pe.start_sector,pe.num_sectors);
-    status = FastCopySerial(hInFile,(DWORD)pe.start_sector,(DWORD)pe.num_sectors);
+    status = FastCopySerial(hInFile,(uint32_t)pe.start_sector,(uint32_t)pe.num_sectors);
   }
   
   if( hInFile != INVALID_HANDLE_VALUE ) CloseHandle(hInFile);

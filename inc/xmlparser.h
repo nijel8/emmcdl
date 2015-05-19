@@ -29,7 +29,7 @@ when       who     what, where, why
 #include <stdio.h>
 
 #define MAX_STRING_LEN   512
-typedef unsigned __int64 uint64;
+typedef unsigned int64_t uint64;
 
 class XMLParser {
 public:

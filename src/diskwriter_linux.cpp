@@ -80,22 +80,22 @@ int DiskWriter::DeviceReset(void)
 int DiskWriter::GetVolumeInfo(vol_entry_t *vol)
 {
   TCHAR mount[MAX_PATH+1];
-  DWORD mountsize;
+  uint32_t mountsize;
 
   //try {
     // Clear out our mount path
     memset(mount,0,sizeof(mount));
 
     if( GetVolumePathNamesForVolumeName(vol->rootpath,mount,MAX_PATH,&mountsize) ) {
-      DWORD maxcomplen;
-      DWORD fsflags;
+      uint32_t maxcomplen;
+      uint32_t fsflags;
       wcscpy_s(vol->mount, mount);
       // Chop of the last trailing char
       vol->mount[wcslen(vol->mount)-1] = 0; 
       vol->drivetype = GetDriveType(vol->mount);
       // We only fill out information for DRIVE_FIXED and DRIVE_REMOVABLE
       if( vol->drivetype == DRIVE_REMOVABLE || vol->drivetype == DRIVE_FIXED ) {
-        GetVolumeInformation(vol->mount,vol->volume,MAX_PATH+1,(LPDWORD)&vol->serialnum,&maxcomplen,&fsflags,vol->fstype,MAX_PATH);
+        GetVolumeInformation(vol->mount,vol->volume,MAX_PATH+1,(LPuint32_t)&vol->serialnum,&maxcomplen,&fsflags,vol->fstype,MAX_PATH);
         // Create handle to volume and get disk number
         TCHAR volPath[MAX_PATH+1] = _T("\\\\.\\");
         wcscat_s(volPath,vol->mount);
@@ -111,7 +111,7 @@ int DiskWriter::GetVolumeInfo(vol_entry_t *vol)
         if( hDisk != INVALID_HANDLE_VALUE ) {
           // Now get physical disk number
           _STORAGE_DEVICE_NUMBER devInfo;
-          DWORD bytesRead;
+          uint32_t bytesRead;
           DeviceIoControl( hDisk,IOCTL_STORAGE_GET_DEVICE_NUMBER,NULL,0,&devInfo,sizeof(devInfo),&bytesRead,NULL);
           vol->disknum = devInfo.DeviceNumber;
           CloseHandle(hDisk);
@@ -144,7 +144,7 @@ int DiskWriter::GetDiskInfo(disk_entry_t *de)
     NULL);
   if (hDisk != INVALID_HANDLE_VALUE) {
     DISK_GEOMETRY_EX info;
-    DWORD bytesRead;
+    uint32_t bytesRead;
     if (DeviceIoControl(hDisk,
       IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,    // dwIoControlCode
       NULL,                          // lpInBuffer
@@ -188,7 +188,7 @@ int DiskWriter::InitDiskList(bool verbose)
 #ifndef ARM
   HDEVINFO hDevInfo = SetupDiGetClassDevs(&GUID_DEVINTERFACE_COMPORT,NULL,NULL,DIGCF_DEVICEINTERFACE|DIGCF_PRESENT);
   DEVPROPTYPE ulPropertyType = DEVPROP_TYPE_STRING;
-  DWORD dwSize;
+  uint32_t dwSize;
 #endif //ARM
 
   if( disks == NULL || volumes == NULL ) {
@@ -282,7 +282,7 @@ int DiskWriter::InitDiskList(bool verbose)
 int DiskWriter::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
 {
   UNREFERENCED_PARAMETER(key);
-  DWORD bytesIn, bytesOut;
+  uint32_t bytesIn, bytesOut;
   BOOL bPatchFile = FALSE;
   int status = ERROR_SUCCESS;
 
@@ -342,7 +342,7 @@ int DiskWriter::CorruptionTest(uint64 offset)
   int status = ERROR_SUCCESS;
   BOOL bWriteDone = FALSE;
   BOOL bReadDone = FALSE;
-  DWORD bytesOut = 0;
+  uint32_t bytesOut = 0;
   UINT64 ticks;
   
   char *bufAlloc = NULL;
@@ -351,7 +351,7 @@ int DiskWriter::CorruptionTest(uint64 offset)
   bufAlloc = new char[MAX_TEST_SIZE + 1024*1024];
 
   // Round off to 1MB boundary
-  temp1 = (char *)(((DWORD)bufAlloc + 1024*1024) & ~0xFFFFF);
+  temp1 = (char *)(((uint32_t)bufAlloc + 1024*1024) & ~0xFFFFF);
   ticks = GetTickCount64();
   wprintf(L"OffsetLow is at 0x%x\n", (UINT32)offset);
   wprintf(L"OffsetHigh is at 0x%x\n", (UINT32)(offset >> 32));
@@ -401,9 +401,9 @@ int DiskWriter::DiskTest(uint64 offset)
   int status = ERROR_SUCCESS;
   BOOL bWriteDone = FALSE;
   BOOL bReadDone = FALSE;
-  DWORD bytesOut = 0;
+  uint32_t bytesOut = 0;
   UINT64 ticks;
-  DWORD iops;
+  uint32_t iops;
 
   char *bufAlloc = NULL;
   char *temp1 = NULL;
@@ -412,7 +412,7 @@ int DiskWriter::DiskTest(uint64 offset)
   bufAlloc = new char[MAX_TEST_SIZE + 1024*1024];
 
   // Round off to 1MB boundary
-  temp1 = (char *)(((DWORD)bufAlloc + 1024*1024) & ~0xFFFFF);
+  temp1 = (char *)(((uint32_t)bufAlloc + 1024*1024) & ~0xFFFFF);
   
   wprintf(L"Sequential write test 4MB buffer %i\n", (int)temp1);
   ovl.Offset = (offset & 0xffffffff);
@@ -494,7 +494,7 @@ int DiskWriter::DiskTest(uint64 offset)
   return status;
 }
 
-int DiskWriter::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum)
+int DiskWriter::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum)
 {
   UNREFERENCED_PARAMETER(partNum);
   OVERLAPPED ovlWrite;
@@ -517,7 +517,7 @@ int DiskWriter::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD
   }
 
   ResetEvent(ovlWrite.hEvent);
-  ovlWrite.Offset = (DWORD)(writeOffset);
+  ovlWrite.Offset = (uint32_t)(writeOffset);
   ovlWrite.OffsetHigh = ((writeOffset) >> 32);
 
   // Write the data to the disk/file at the given offset
@@ -535,7 +535,7 @@ int DiskWriter::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD
   return status;
 }
 
-int DiskWriter::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum)
+int DiskWriter::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum)
 {
   UNREFERENCED_PARAMETER(partNum);
   OVERLAPPED ovlRead;
@@ -558,7 +558,7 @@ int DiskWriter::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD re
   }
 
   ResetEvent(ovlRead.hEvent);
-  ovlRead.Offset = (DWORD)readOffset;
+  ovlRead.Offset = (uint32_t)readOffset;
   ovlRead.OffsetHigh = (readOffset >> 32);
 
   bReadDone = ReadFile(hDisk, readBuffer, readBytes, bytesRead, &ovlRead);
@@ -578,7 +578,7 @@ int DiskWriter::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD re
 
 int DiskWriter::UnmountVolume(vol_entry_t vol)
 {
-  DWORD bytesRead = 0;
+  uint32_t bytesRead = 0;
 
   //try {
     TCHAR volPath[MAX_PATH+1] = _T("\\\\.\\");
@@ -681,7 +681,7 @@ void DiskWriter::CloseDevice()
 
 bool DiskWriter::IsDeviceWriteable()
 {
-  DWORD bytesRead;
+  uint32_t bytesRead;
     if( DeviceIoControl( hDisk,IOCTL_DISK_IS_WRITABLE,NULL,0,NULL,0,&bytesRead,NULL) ) {
       return true;
     }
@@ -690,7 +690,7 @@ bool DiskWriter::IsDeviceWriteable()
 
 int DiskWriter::WipeLayout()
 {
-  DWORD bytesRead;
+  uint32_t bytesRead;
     if( DeviceIoControl( hDisk,IOCTL_DISK_DELETE_DRIVE_LAYOUT,NULL,0,NULL,0,&bytesRead,&ovl) ) {
 
       if( DeviceIoControl( hDisk,IOCTL_DISK_UPDATE_PROPERTIES,NULL,0,NULL,0,&bytesRead,&ovl) ) {
@@ -712,8 +712,8 @@ int DiskWriter::RawReadTest(uint64 offset)
   ovlp.Offset = large_val.LowPart;
   ovlp.OffsetHigh = large_val.HighPart;
 
-  DWORD bytesIn = 0; 
-  DWORD dwResult;
+  uint32_t bytesIn = 0; 
+  uint32_t dwResult;
   BOOL bResult = ReadFile(hDisk, buffer1, DISK_SECTOR_SIZE, NULL, &ovlp);
   dwResult = GetLastError();
   if( !bResult ) {
@@ -741,14 +741,14 @@ int DiskWriter::RawReadTest(uint64 offset)
   return status;
 }
 
-int DiskWriter::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 sectorWrite, uint64 sectors, UINT8 partNum)
+int DiskWriter::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum)
 {  // Set up the overlapped structure
   UNREFERENCED_PARAMETER(partNum);
   OVERLAPPED ovlWrite, ovlRead;
   int stride;
   uint64 sec;
-  DWORD bytesOut = 0;
-  DWORD bytesRead = 0;
+  uint32_t bytesOut = 0;
+  uint32_t bytesRead = 0;
   int readStatus = ERROR_SUCCESS;
   int status = ERROR_SUCCESS;
   BOOL bWriteDone = TRUE;
@@ -765,12 +765,12 @@ int DiskWriter::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int6
   // Setup offsets for read and write
   ovlWrite.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
   if (ovlWrite.hEvent == NULL) return ERROR_OUTOFMEMORY;
-  ovlWrite.Offset = (DWORD)(sectorWrite*DISK_SECTOR_SIZE);
+  ovlWrite.Offset = (uint32_t)(sectorWrite*DISK_SECTOR_SIZE);
   ovlWrite.OffsetHigh = ((sectorWrite*DISK_SECTOR_SIZE) >> 32);
 
   ovlRead.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
   if (ovlRead.hEvent == NULL) return ERROR_OUTOFMEMORY;
-  ovlRead.Offset = (DWORD)(sectorRead*DISK_SECTOR_SIZE);
+  ovlRead.Offset = (uint32_t)(sectorRead*DISK_SECTOR_SIZE);
   ovlRead.OffsetHigh = ((sectorRead*DISK_SECTOR_SIZE) >> 32);
 
   if (hRead == INVALID_HANDLE_VALUE) {
@@ -786,7 +786,7 @@ int DiskWriter::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int6
 
     // Check if we have to read smaller number of sectors
     if ((sec + stride > sectors) && (sectors != 0)) {
-      stride = (DWORD)(sectors - sec);
+      stride = (uint32_t)(sectors - sec);
     }
 
     // If read handle is valid then read file file and wait for response
@@ -889,7 +889,7 @@ int DiskWriter::GetRawDiskSize( uint64 *ds)
 
 int DiskWriter::LockDevice()
 {
-  DWORD bytesRead = 0;
+  uint32_t bytesRead = 0;
 	  if( DeviceIoControl( hDisk,FSCTL_DISMOUNT_VOLUME,NULL,0,NULL,0,&bytesRead,NULL) ) {
       if( DeviceIoControl( hDisk,FSCTL_LOCK_VOLUME,NULL,0,NULL,0,&bytesRead,NULL) ) {
         wprintf(L"Locked volume and dismounted\n");
@@ -901,7 +901,7 @@ int DiskWriter::LockDevice()
 
 int DiskWriter::UnlockDevice()
 {
-  DWORD bytesRead = 0;
+  uint32_t bytesRead = 0;
     if( DeviceIoControl( hDisk,FSCTL_UNLOCK_VOLUME,NULL,0,NULL,0,&bytesRead,NULL) ) {
       return ERROR_SUCCESS;
     }

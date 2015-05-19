@@ -70,7 +70,7 @@ int SerialPort::Close()
   return ERROR_SUCCESS;
 }
 
-int SerialPort::Write(unsigned char *data, DWORD length)
+int SerialPort::Write(unsigned char *data, uint32_t length)
 {
   int status = ERROR_SUCCESS;
 
@@ -82,7 +82,7 @@ int SerialPort::Write(unsigned char *data, DWORD length)
   return status;
 }
 
-int SerialPort::Read(unsigned char *data, DWORD *length)
+int SerialPort::Read(unsigned char *data, uint32_t *length)
 {
   int status = ERROR_SUCCESS;
 
@@ -96,7 +96,7 @@ int SerialPort::Read(unsigned char *data, DWORD *length)
 int SerialPort::Flush()
 {
   unsigned char tmpBuf[1024];
-  DWORD len = sizeof(tmpBuf);
+  uint32_t len = sizeof(tmpBuf);
   
   // Set timeout to 1ms to just flush any pending data then change back to default
   SetTimeout(1);
@@ -109,9 +109,9 @@ int SerialPort::Flush()
 
 int SerialPort::SendSync(unsigned char *out_buf, int out_length, unsigned char *in_buf, int *in_length)
 {
-  DWORD status = ERROR_SUCCESS;
-  DWORD bytesOut = 0;
-  DWORD bytesIn = 0;
+  uint32_t status = ERROR_SUCCESS;
+  uint32_t bytesOut = 0;
+  uint32_t bytesIn = 0;
   
   // As long as hPort is valid write the data to the serial port and wait for response for timeout
   if( hPort == INVALID_HANDLE_VALUE ) {
@@ -155,10 +155,10 @@ int SerialPort::SetTimeout(int ms)
 {
   COMMTIMEOUTS commTimeout;
   commTimeout.ReadTotalTimeoutConstant = ms;
-  commTimeout.ReadIntervalTimeout = MAXDWORD;
-  commTimeout.ReadTotalTimeoutMultiplier = MAXDWORD;
+  commTimeout.ReadIntervalTimeout = MAXuint32_t;
+  commTimeout.ReadTotalTimeoutMultiplier = MAXuint32_t;
   commTimeout.WriteTotalTimeoutConstant = ms;
-  commTimeout.WriteTotalTimeoutMultiplier = MAXDWORD;
+  commTimeout.WriteTotalTimeoutMultiplier = MAXuint32_t;
   SetCommTimeouts(hPort,&commTimeout);
   
   to_ms = ms;

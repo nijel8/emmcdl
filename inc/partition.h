@@ -25,7 +25,10 @@ when       who     what, where, why
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/types.h>
 #endif
+
 #include "xmlparser.h"
 #include <stdio.h>
 
@@ -33,7 +36,7 @@ when       who     what, where, why
 #define MAX_PATH_LEN    256
 #define SECTOR_SIZE	    512
 
-typedef unsigned __int64 uint64;
+typedef unsigned int64_t uint64;
 class Protocol;
 
 enum cmdEnum {

@@ -50,7 +50,7 @@ SparseImage::~SparseImage()
 // 
 int SparseImage::PreLoadImage(TCHAR *szSparseFile)
 {
-  DWORD dwBytesRead;
+  uint32_t dwBytesRead;
   hSparseImage = CreateFile(szSparseFile,
     GENERIC_READ,
     FILE_SHARE_READ, // We only read from here so let others open the file as well
@@ -78,12 +78,12 @@ int SparseImage::PreLoadImage(TCHAR *szSparseFile)
   return ERROR_SUCCESS;
 }
 
-int SparseImage::ProgramImage(Protocol *pProtocol, __int64 dwOffset)
+int SparseImage::ProgramImage(Protocol *pProtocol, int64_t dwOffset)
 {
   CHUNK_HEADER ChunkHeader;
   unsigned char *bpDataBuf;
-  DWORD dwBytesRead;
-  DWORD dwBytesOut;
+  uint32_t dwBytesRead;
+  uint32_t dwBytesOut;
   int status = ERROR_SUCCESS;
 
   // Make sure we have first successfully found a sparse file and headers are loaded okay

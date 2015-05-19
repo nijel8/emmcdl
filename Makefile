@@ -33,6 +33,12 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 noinst_PROGRAMS = emmcdl$(EXEEXT)
+#am__append_1 = \
+#               src/writedisk_windows.cpp
+
+am__append_2 = \
+               src/writedisk_linux.cpp
+
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
@@ -49,13 +55,20 @@ CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
+am__emmcdl_SOURCES_DIST = src/crc.cpp src/dload.cpp src/emmcdl.cpp \
+	src/ffu.cpp src/firehose.cpp src/partition.cpp \
+	src/protocol.cpp src/sahara.cpp src/serialport.cpp \
+	src/sparse.cpp src/xmlparser.cpp src/writedisk_windows.cpp \
+	src/writedisk_linux.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
-am_emmcdl_OBJECTS = src/crc.$(OBJEXT) src/diskwriter.$(OBJEXT) \
-	src/dload.$(OBJEXT) src/emmcdl.$(OBJEXT) src/ffu.$(OBJEXT) \
-	src/firehose.$(OBJEXT) src/partition.$(OBJEXT) \
-	src/protocol.$(OBJEXT) src/sahara.$(OBJEXT) \
-	src/serialport.$(OBJEXT) src/sparse.$(OBJEXT) \
-	src/xmlparser.$(OBJEXT)
+#am__objects_1 = src/writedisk_windows.$(OBJEXT)
+am__objects_2 = src/writedisk_linux.$(OBJEXT)
+am_emmcdl_OBJECTS = src/crc.$(OBJEXT) src/dload.$(OBJEXT) \
+	src/emmcdl.$(OBJEXT) src/ffu.$(OBJEXT) src/firehose.$(OBJEXT) \
+	src/partition.$(OBJEXT) src/protocol.$(OBJEXT) \
+	src/sahara.$(OBJEXT) src/serialport.$(OBJEXT) \
+	src/sparse.$(OBJEXT) src/xmlparser.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2)
 emmcdl_OBJECTS = $(am_emmcdl_OBJECTS)
 emmcdl_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.
@@ -68,7 +81,7 @@ CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
 SOURCES = $(emmcdl_SOURCES)
-DIST_SOURCES = $(emmcdl_SOURCES)
+DIST_SOURCES = $(am__emmcdl_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -180,20 +193,10 @@ top_srcdir = .
 AUTOMAKE_OPTIONS = subdir-objects
 INCLUDES = -I$(top_srcdir)/inc
 AM_CXXFLAGS = -std=c++11
-emmcdl_SOURCES = \
-               src/crc.cpp\
-               src/diskwriter.cpp\
-               src/dload.cpp\
-               src/emmcdl.cpp\
-               src/ffu.cpp\
-               src/firehose.cpp\
-               src/partition.cpp\
-               src/protocol.cpp\
-               src/sahara.cpp\
-               src/serialport.cpp\
-               src/sparse.cpp\
-               src/xmlparser.cpp
-
+emmcdl_SOURCES = src/crc.cpp src/dload.cpp src/emmcdl.cpp src/ffu.cpp \
+	src/firehose.cpp src/partition.cpp src/protocol.cpp \
+	src/sahara.cpp src/serialport.cpp src/sparse.cpp \
+	src/xmlparser.cpp $(am__append_1) $(am__append_2)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -258,8 +261,6 @@ src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
 src/crc.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/diskwriter.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/dload.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/emmcdl.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -278,6 +279,10 @@ src/sparse.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/xmlparser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/writedisk_windows.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/writedisk_linux.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 emmcdl$(EXEEXT): $(emmcdl_OBJECTS) $(emmcdl_DEPENDENCIES) $(EXTRA_emmcdl_DEPENDENCIES) 
 	@rm -f emmcdl$(EXEEXT)
 	$(CXXLINK) $(emmcdl_OBJECTS) $(emmcdl_LDADD) $(LIBS)
@@ -285,7 +290,6 @@ emmcdl$(EXEEXT): $(emmcdl_OBJECTS) $(emmcdl_DEPENDENCIES) $(EXTRA_emmcdl_DEPENDE
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/crc.$(OBJEXT)
-	-rm -f src/diskwriter.$(OBJEXT)
 	-rm -f src/dload.$(OBJEXT)
 	-rm -f src/emmcdl.$(OBJEXT)
 	-rm -f src/ffu.$(OBJEXT)
@@ -295,13 +299,14 @@ mostlyclean-compile:
 	-rm -f src/sahara.$(OBJEXT)
 	-rm -f src/serialport.$(OBJEXT)
 	-rm -f src/sparse.$(OBJEXT)
+	-rm -f src/writedisk_linux.$(OBJEXT)
+	-rm -f src/writedisk_windows.$(OBJEXT)
 	-rm -f src/xmlparser.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
 include src/$(DEPDIR)/crc.Po
-include src/$(DEPDIR)/diskwriter.Po
 include src/$(DEPDIR)/dload.Po
 include src/$(DEPDIR)/emmcdl.Po
 include src/$(DEPDIR)/ffu.Po
@@ -311,6 +316,8 @@ include src/$(DEPDIR)/protocol.Po
 include src/$(DEPDIR)/sahara.Po
 include src/$(DEPDIR)/serialport.Po
 include src/$(DEPDIR)/sparse.Po
+include src/$(DEPDIR)/writedisk_linux.Po
+include src/$(DEPDIR)/writedisk_windows.Po
 include src/$(DEPDIR)/xmlparser.Po
 
 .cpp.o:

@@ -430,12 +430,12 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, TCHAR *
       }
       else {
         // Update the number of sectors based on real file size, rounded to next sector offset
-        DWORD dwUpperFileSize = 0;
-        DWORD dwLowerFileSize = GetFileSize(hRead, &dwUpperFileSize);
-        __int64 dwTotalSize = dwLowerFileSize + ((__int64)dwUpperFileSize << 32);
-        dwTotalSize = (dwTotalSize + proto->GetDiskSectorSize() - 1) & (__int64)~(proto->GetDiskSectorSize() - 1);
+        uint32_t dwUpperFileSize = 0;
+        uint32_t dwLowerFileSize = GetFileSize(hRead, &dwUpperFileSize);
+        int64_t dwTotalSize = dwLowerFileSize + ((int64_t)dwUpperFileSize << 32);
+        dwTotalSize = (dwTotalSize + proto->GetDiskSectorSize() - 1) & (int64_t)~(proto->GetDiskSectorSize() - 1);
         dwTotalSize = dwTotalSize / proto->GetDiskSectorSize();
-        if (dwTotalSize <= (__int64)pe.num_sectors) {
+        if (dwTotalSize <= (int64_t)pe.num_sectors) {
           pe.num_sectors = dwTotalSize;
         }
         else {
@@ -514,7 +514,7 @@ int Partition::PreLoadImage(TCHAR *fname)
     return GetLastError();
   }
 
-  DWORD xmlSize = GetFileSize(hXML,NULL);
+  uint32_t xmlSize = GetFileSize(hXML,NULL);
   size_t sizeOut;
 
   // Make sure filesize is valid

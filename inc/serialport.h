@@ -41,8 +41,8 @@ public:
   int Open(int port);
   int EnableBinaryLog(TCHAR *szFileName);
   int Close();
-  int Write(unsigned char *data, DWORD length);
-  int Read(unsigned char *data, DWORD *length);
+  int Write(unsigned char *data, uint32_t length);
+  int Read(unsigned char *data, uint32_t *length);
   int Flush();
   int SendSync(unsigned char *out_buf, int out_length, unsigned char *in_buf, int *in_length);
   int SetTimeout(int ms);

@@ -53,9 +53,9 @@ Firehose::Firehose(SerialPort *port,HANDLE hLogFile)
   m_buffer_ptr = NULL;
 }
 
-int Firehose::ReadData(unsigned char *pOutBuf, DWORD dwBufSize, bool bXML)
+int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
 {
-  DWORD dwBytesRead = 0;
+  uint32_t dwBytesRead = 0;
   bool bFoundXML = false;
   int status = ERROR_SUCCESS;
 
@@ -123,8 +123,8 @@ int Firehose::ReadData(unsigned char *pOutBuf, DWORD dwBufSize, bool bXML)
 int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
 {
   int status = ERROR_SUCCESS;
-  DWORD dwBytesRead = dwMaxPacketSize;
-  DWORD retry = 0;
+  uint32_t dwBytesRead = dwMaxPacketSize;
+  uint32_t retry = 0;
 
   // Allocation our global buffers only once when connecting to flash programmer
   if (m_payload == NULL || program_pkt == NULL || m_buffer == NULL) {
@@ -249,9 +249,9 @@ int Firehose::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
   return ReadStatus();
 }
 
-int Firehose::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum)
+int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum)
 {
-  DWORD dwBytesRead;
+  uint32_t dwBytesRead;
   int status = ERROR_SUCCESS;
 
   // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
@@ -283,7 +283,7 @@ int Firehose::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD w
 
   // loop through and write the data
   dwBytesRead = dwMaxPacketSize;
-  for (DWORD i = 0; i < writeBytes; i += dwMaxPacketSize) {
+  for (uint32_t i = 0; i < writeBytes; i += dwMaxPacketSize) {
     if ((writeBytes - i)  < dwMaxPacketSize) {
       dwBytesRead = (int)(writeBytes - i);
     }
@@ -306,9 +306,9 @@ WriteSectorsExit:
   return status;
 }
 
-int Firehose::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum)
+int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum)
 {
-  DWORD dwBytesRead;
+  uint32_t dwBytesRead;
   int status = ERROR_SUCCESS;
 
   // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
@@ -335,7 +335,7 @@ int Firehose::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD read
   if (status == ERROR_INVALID_DATA) goto ReadSectorsExit;
 
   UINT64 ticks = GetTickCount64();
-  DWORD bytesToRead = dwMaxPacketSize;
+  uint32_t bytesToRead = dwMaxPacketSize;
 
   for (UINT32 tmp_sectors = (UINT32)readBytes/DISK_SECTOR_SIZE; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
     if (tmp_sectors < dwMaxPacketSize / DISK_SECTOR_SIZE) {
@@ -345,7 +345,7 @@ int Firehose::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD read
       bytesToRead = dwMaxPacketSize;
     }
 
-    DWORD offset = 0;
+    uint32_t offset = 0;
     while (offset < bytesToRead) {
       dwBytesRead = ReadData(&readBuffer[offset], bytesToRead - offset, false);
       offset += dwBytesRead;
@@ -366,7 +366,7 @@ ReadSectorsExit:
   return status;
 }
 
-int Firehose::CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4)
+int Firehose::CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4)
 {
   int status = ERROR_SUCCESS;
 
@@ -408,7 +408,7 @@ int Firehose::SetActivePartition(int prtn_num)
 
 int Firehose::ProgramRawCommand(TCHAR *key)
 {
-  DWORD dwBytesRead;
+  uint32_t dwBytesRead;
   size_t bytesOut;
   int status = ERROR_SUCCESS;
   memset(program_pkt, 0, MAX_XML_LEN);
@@ -425,12 +425,12 @@ int Firehose::ProgramRawCommand(TCHAR *key)
   return status;
 }
 
-int Firehose::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 sectorWrite, uint64 sectors, UINT8 partNum)
+int Firehose::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum)
 {
-  DWORD dwBytesRead = 0;
+  uint32_t dwBytesRead = 0;
   BOOL bReadStatus = TRUE;
-  __int64 dwWriteOffset = sectorWrite*DISK_SECTOR_SIZE;
-  __int64 dwReadOffset = sectorRead*DISK_SECTOR_SIZE;
+  int64_t dwWriteOffset = sectorWrite*DISK_SECTOR_SIZE;
+  int64_t dwReadOffset = sectorRead*DISK_SECTOR_SIZE;
   int status = ERROR_SUCCESS;
 
   // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
@@ -487,7 +487,7 @@ int Firehose::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 
 
   if (status == ERROR_SUCCESS)
   {
-    DWORD bytesToRead;
+    uint32_t bytesToRead;
     for (UINT32 tmp_sectors = (UINT32)sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
       bytesToRead = dwMaxPacketSize;
       if (tmp_sectors < dwMaxPacketSize / DISK_SECTOR_SIZE) {
@@ -515,7 +515,7 @@ int Firehose::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 
 
       }// Else this is a read command so read data from device in dwMaxPacketSize chunks
       else {
-        DWORD offset = 0;
+        uint32_t offset = 0;
         while (offset < bytesToRead) {
           dwBytesRead = ReadData(&m_payload[offset], bytesToRead - offset, false);
           offset += dwBytesRead;

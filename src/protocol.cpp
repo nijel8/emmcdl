@@ -33,9 +33,9 @@ Protocol::Protocol(void)
   DISK_SECTOR_SIZE = 512;
 
   bufAlloc1 = (unsigned char *)malloc(MAX_TRANSFER_SIZE + 0x200);
-  if (bufAlloc1) buffer1 = (unsigned char *)(((DWORD)bufAlloc1 + 0x200) & ~0x1ff);
+  if (bufAlloc1) buffer1 = (unsigned char *)(((uint32_t)bufAlloc1 + 0x200) & ~0x1ff);
   bufAlloc2 = (unsigned char *)malloc(MAX_TRANSFER_SIZE + 0x200);
-  if (bufAlloc2) buffer2 = (unsigned char *)(((DWORD)bufAlloc2 + 0x200) & ~0x1ff);
+  if (bufAlloc2) buffer2 = (unsigned char *)(((uint32_t)bufAlloc2 + 0x200) & ~0x1ff);
 }
 
 Protocol::~Protocol(void)
@@ -123,7 +123,7 @@ int Protocol::WriteGPT(TCHAR *szPartName, TCHAR *szBinFile)
 int Protocol::ReadGPT(bool debug)
 {
   int status = ERROR_SUCCESS;
-  DWORD bytesRead;
+  uint32_t bytesRead;
   gpt_header_t gpt_hdr;
   gpt_entries = (gpt_entry_t*)malloc(sizeof(gpt_entry_t)* 128);
 

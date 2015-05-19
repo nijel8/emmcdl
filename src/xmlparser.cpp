@@ -58,7 +58,7 @@ int XMLParser::LoadXML(TCHAR *fname)
     return GetLastError();
   }
 
-  DWORD xmlSize = GetFileSize(hXML,NULL);
+  uint32_t xmlSize = GetFileSize(hXML,NULL);
 
   // Make sure filesize is valid
   if( xmlSize == INVALID_FILE_SIZE ) {

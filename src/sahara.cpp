@@ -56,7 +56,7 @@ int Sahara::DeviceReset()
 int Sahara::ReadData(int cmd, unsigned char *buf, int len)
 {
   int status;
-  DWORD bytesRead; 
+  uint32_t bytesRead; 
 
   execute_cmd_t exe_cmd;
   exe_cmd.cmd = SAHARA_EXECUTE_REQ;
@@ -89,7 +89,7 @@ int Sahara::ReadData(int cmd, unsigned char *buf, int len)
 
 int Sahara::DumpDeviceInfo(pbl_info_t *pbl_info)
 {
-  DWORD dataBuf[64];
+  uint32_t dataBuf[64];
   int status = ERROR_SUCCESS;
 
   // Connect to the device in command mode
@@ -100,7 +100,7 @@ int Sahara::DumpDeviceInfo(pbl_info_t *pbl_info)
 
   // Make sure we get command ready back
   execute_rsp_t cmd_rdy;
-  DWORD bytesRead = sizeof(cmd_rdy);
+  uint32_t bytesRead = sizeof(cmd_rdy);
 
   status = sport->Read((unsigned char *)&cmd_rdy, &bytesRead);
   if (status != ERROR_SUCCESS || bytesRead == 0 ) {
@@ -139,7 +139,7 @@ int Sahara::ModeSwitch(int mode)
   int status = ERROR_SUCCESS;
   execute_cmd_t cmd_switch_mode;
   unsigned char read_data_req[256];
-  DWORD bytesRead = sizeof(read_data_req);
+  uint32_t bytesRead = sizeof(read_data_req);
 
   cmd_switch_mode.cmd = SAHARA_SWITCH_MODE;
   cmd_switch_mode.len = sizeof(cmd_switch_mode);
@@ -157,9 +157,9 @@ int Sahara::LoadFlashProg(TCHAR *szFlashPrg)
   read_data_64_t read_data64_req = {0};
   cmd_hdr_t read_cmd_hdr = { 0 };
   image_end_t read_img_end = { 0 };
-  DWORD status = ERROR_SUCCESS;
-  DWORD bytesRead = sizeof(read_data64_req);
-  DWORD totalBytes = 0, read_data_offset = 0, read_data_len = 0;
+  uint32_t status = ERROR_SUCCESS;
+  uint32_t bytesRead = sizeof(read_data64_req);
+  uint32_t totalBytes = 0, read_data_offset = 0, read_data_len = 0;
   unsigned char dataBuf[8192];
 
   HANDLE hFlashPrg = CreateFile( szFlashPrg,
@@ -267,7 +267,7 @@ bool Sahara::CheckDevice(void)
 {
   hello_req_t hello_req = {0};
   int status = ERROR_SUCCESS;
-  DWORD bytesRead = sizeof(hello_req);
+  uint32_t bytesRead = sizeof(hello_req);
   sport->SetTimeout(1);
   status = sport->Read((unsigned char *)&hello_req,&bytesRead);
   sport->SetTimeout(1000);
@@ -278,7 +278,7 @@ int Sahara::ConnectToDevice(bool bReadHello, int mode)
 {
   hello_req_t hello_req = {0};
   int status = ERROR_SUCCESS;
-  DWORD bytesRead = sizeof(hello_req);
+  uint32_t bytesRead = sizeof(hello_req);
 
   if (bReadHello) {
     sport->SetTimeout(10);
@@ -327,7 +327,7 @@ int Sahara::PblHack(void)
 
   // Make sure we get command ready back
   execute_rsp_t cmd_rdy;
-  DWORD bytesRead = sizeof(cmd_rdy);
+  uint32_t bytesRead = sizeof(cmd_rdy);
 
   sport->SetTimeout(10);
   status = sport->Read((unsigned char *)&cmd_rdy, &bytesRead);

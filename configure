@@ -605,6 +605,8 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+SYSDEPS_WIN32_FALSE
+SYSDEPS_WIN32_TRUE
 RANLIB
 LIBOBJS
 EGREP
@@ -698,6 +700,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
+enable_sysdeps
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1329,6 +1332,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-sysdeps Turn on debugging
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -4831,6 +4835,28 @@ else
 fi
 
 
+
+# Check whether --enable-sysdeps was given.
+if test "${enable_sysdeps+set}" = set; then :
+  enableval=$enable_sysdeps; case "${enableval}" in
+  yes) sysdeps=true ;;
+  no)  sysdeps=false ;;
+  *) as_fn_error $? "bad value ${enableval} for --enable-sysdeps" "$LINENO" 5 ;;
+esac
+else
+  sysdeps=false
+fi
+
+ if test x$sysdeps = xtrue; then
+  SYSDEPS_WIN32_TRUE=
+  SYSDEPS_WIN32_FALSE='#'
+else
+  SYSDEPS_WIN32_TRUE='#'
+  SYSDEPS_WIN32_FALSE=
+fi
+
+
+
 ac_config_files="$ac_config_files Makefile"
 
 cat >confcache <<\_ACEOF
@@ -4960,6 +4986,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SYSDEPS_WIN32_TRUE}" && test -z "${SYSDEPS_WIN32_FALSE}"; then
+  as_fn_error $? "conditional \"SYSDEPS_WIN32\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

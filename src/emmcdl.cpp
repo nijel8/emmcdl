@@ -223,7 +223,7 @@ int WipeDisk(int dnum)
   return status;
 }
 
-int CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4)
+int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4)
 {
   int status = ERROR_SUCCESS;
 
@@ -537,7 +537,7 @@ int __cdecl _tmain(int argc, _TCHAR* argv[])
   TCHAR *szOutputFile = NULL;
   TCHAR *szXMLFile[8] = {NULL};
   TCHAR **szSerialData = {NULL};
-  DWORD dwXMLCount = 0;
+  uint32_t dwXMLCount = 0;
   TCHAR *szFFUImage = NULL;
   TCHAR *szFlashProg = NULL;
   TCHAR *szSingleImage = NULL;
@@ -546,7 +546,7 @@ int __cdecl _tmain(int argc, _TCHAR* argv[])
   uint64 uiStartSector = 0;
   uint64 uiNumSectors = 0;
   uint64 uiOffset = 0x40000000;
-  DWORD dwGPP1=0,dwGPP2=0,dwGPP3=0,dwGPP4=0;
+  uint32_t dwGPP1=0,dwGPP2=0,dwGPP3=0,dwGPP4=0;
   bool bGppQuiet = FALSE;
 
   // Print out the version first thing so we know this

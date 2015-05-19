@@ -66,24 +66,24 @@ enum boot_sahara_exec_cmd_id
 };
 
 typedef struct {
-	DWORD cmd;
-	DWORD len;
-	DWORD version;
-	DWORD version_min;
-	DWORD max_cmd_len;
-	DWORD mode;
-	DWORD res1;	DWORD res2;	DWORD res3;	DWORD res4;	DWORD res5;	DWORD res6;
+	uint32_t cmd;
+	uint32_t len;
+	uint32_t version;
+	uint32_t version_min;
+	uint32_t max_cmd_len;
+	uint32_t mode;
+	uint32_t res1;	uint32_t res2;	uint32_t res3;	uint32_t res4;	uint32_t res5;	uint32_t res6;
 } hello_req_t;
 
 typedef struct {
-	DWORD cmd;
-	DWORD len;
+	uint32_t cmd;
+	uint32_t len;
 } cmd_hdr_t;
 
 typedef struct {
-	DWORD id;
-	DWORD data_offset;
-	DWORD data_len;
+	uint32_t id;
+	uint32_t data_offset;
+	uint32_t data_len;
 } read_data_t;
 
 typedef struct {
@@ -93,34 +93,34 @@ typedef struct {
 } read_data_64_t;
 
 typedef struct {
-  DWORD cmd;
-  DWORD len;
-  DWORD client_cmd;
+  uint32_t cmd;
+  uint32_t len;
+  uint32_t client_cmd;
 } execute_cmd_t;
 
 typedef struct {
-  DWORD cmd;
-  DWORD len;
-  DWORD client_cmd;
-  DWORD data_len;
+  uint32_t cmd;
+  uint32_t len;
+  uint32_t client_cmd;
+  uint32_t data_len;
 } execute_rsp_t;
 
 typedef struct {
-	DWORD id;
-	DWORD status;
+	uint32_t id;
+	uint32_t status;
 } image_end_t;
 
 typedef struct {
-  DWORD cmd;
-  DWORD len;
-  DWORD status;
+  uint32_t cmd;
+  uint32_t len;
+  uint32_t status;
 } done_t;
 
 typedef struct {
-  DWORD serial;
-  DWORD msm_id;
+  uint32_t serial;
+  uint32_t msm_id;
   unsigned char pk_hash[32];
-  DWORD pbl_sw;
+  uint32_t pbl_sw;
 } pbl_info_t;
 
 class Sahara {
@@ -138,8 +138,8 @@ private:
   void Log(char *str,...);
   void Log(TCHAR *str,...);
 
-  DWORD HexRunAddress(TCHAR *filename);
-  DWORD HexDataLength(TCHAR *filename);
+  uint32_t HexRunAddress(TCHAR *filename);
+  uint32_t HexDataLength(TCHAR *filename);
   int ReadData(int cmd, unsigned char *buf, int len);
   int PblHack(void);
 

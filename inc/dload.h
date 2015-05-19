@@ -144,11 +144,11 @@ public:
   int DeviceReset(void);
   int LoadPartition(TCHAR *filename);
   int LoadImage(TCHAR *szSingleImage);
-  int CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4);
+  int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4);
   int SetActivePartition();
   int OpenPartition(int partition);
   int ClosePartition();
-  int FastCopySerial(HANDLE hInFile, DWORD sector, DWORD sectors);
+  int FastCopySerial(HANDLE hInFile, uint32_t sector, uint32_t sectors);
   int LoadFlashProg(TCHAR *szFlashPrg);
   int WriteRawProgramFile(TCHAR *szXMLFile);
   int GetDloadParams(unsigned char *rsp, int len);
@@ -157,8 +157,8 @@ public:
 
 private:
   void HexToByte(const char *hex, unsigned char *bin, int len);
-  DWORD HexRunAddress(TCHAR *filename);
-  DWORD HexDataLength(TCHAR *filename);
+  uint32_t HexRunAddress(TCHAR *filename);
+  uint32_t HexDataLength(TCHAR *filename);
   uint64 GetNumDiskSectors();
   int ProgramPartitionEntry(PartitionEntry pe);
 

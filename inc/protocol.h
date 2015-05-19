@@ -32,7 +32,7 @@ when       who     what, where, why
 class Protocol {
 public:
   //int ConnectToFlashProg(fh_configure_t *cfg);
-  //int CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4);
+  //int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4);
   //int SetActivePartition(int prtn_num);
 
   Protocol();
@@ -50,9 +50,9 @@ public:
   HANDLE GetDiskHandle(void);
 
   virtual int DeviceReset(void) = ERROR_SUCCESS;
-  virtual int WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum) = ERROR_SUCCESS;
-  virtual int ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum) = ERROR_SUCCESS;
-  virtual int FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 sectorWrite, uint64 sectors, UINT8 partNum) = ERROR_SUCCESS;
+  virtual int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum) = ERROR_SUCCESS;
+  virtual int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum) = ERROR_SUCCESS;
+  virtual int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum) = ERROR_SUCCESS;
   virtual int ProgramRawCommand(TCHAR *key) = ERROR_SUCCESS;
   virtual int ProgramPatchEntry(PartitionEntry pe, TCHAR *key) = ERROR_SUCCESS;
 
