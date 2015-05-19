@@ -32,7 +32,7 @@ when       who     what, where, why
 #define MAX_RETRY   50
 
 typedef struct {
-  BYTE Version;
+  unsigned char Version;
   char MemoryName[8];
   bool SkipWrite;
   bool SkipStorageInit;
@@ -46,8 +46,8 @@ public:
   Firehose(SerialPort *port, HANDLE hLogFile = NULL);
   ~Firehose();
 
-  int WriteData(BYTE *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum);
-  int ReadData(BYTE *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum);
+  int WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum);
+  int ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum);
 
   int DeviceReset(void);
   int FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 sectorWrite, uint64 sectors, UINT8 partNum);
@@ -62,15 +62,15 @@ public:
 protected:
 
 private:
-  int ReadData(BYTE *pOutBuf, DWORD uiBufSize, bool bXML);
+  int ReadData(unsigned char *pOutBuf, DWORD uiBufSize, bool bXML);
   int ReadStatus(void);
 
   SerialPort *sport;
   uint64 diskSectors;
   bool bSectorAddress;
-  BYTE *m_payload;
-  BYTE *m_buffer;
-  BYTE *m_buffer_ptr;
+  unsigned char *m_payload;
+  unsigned char *m_buffer;
+  unsigned char *m_buffer_ptr;
   DWORD m_buffer_len;
   UINT32 dwMaxPacketSize;
   HANDLE hLog;

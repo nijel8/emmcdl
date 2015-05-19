@@ -40,7 +40,7 @@ const unsigned short crc_16_l_table[] = {
   0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
 
-unsigned short CalcCRC16(BYTE *buf, int length)
+unsigned short CalcCRC16(unsigned char *buf, int length)
 {
   unsigned short crc = CRC_16_L_SEED;
   for (int i=0; i < length; i++) {

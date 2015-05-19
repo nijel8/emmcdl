@@ -53,7 +53,7 @@ Firehose::Firehose(SerialPort *port,HANDLE hLogFile)
   m_buffer_ptr = NULL;
 }
 
-int Firehose::ReadData(BYTE *pOutBuf, DWORD dwBufSize, bool bXML)
+int Firehose::ReadData(unsigned char *pOutBuf, DWORD dwBufSize, bool bXML)
 {
   DWORD dwBytesRead = 0;
   bool bFoundXML = false;
@@ -128,9 +128,9 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
 
   // Allocation our global buffers only once when connecting to flash programmer
   if (m_payload == NULL || program_pkt == NULL || m_buffer == NULL) {
-    m_payload = (BYTE *)malloc(dwMaxPacketSize);
+    m_payload = (unsigned char *)malloc(dwMaxPacketSize);
     program_pkt = (char *)malloc(MAX_XML_LEN);
-    m_buffer = (BYTE *)malloc(dwMaxPacketSize);
+    m_buffer = (unsigned char *)malloc(dwMaxPacketSize);
     if (m_payload == NULL || program_pkt == NULL || m_buffer == NULL) {
       return ERROR_HV_INSUFFICIENT_MEMORY;
     }
@@ -138,7 +138,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
 
   // Read any pending data from the flash programmer
   memset(m_payload, 0, dwMaxPacketSize);
-  dwBytesRead = ReadData((BYTE *)m_payload, dwMaxPacketSize, false);
+  dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
   Log((char*)m_payload);
 
   // If this is UFS and didn't specify the disk_sector_size then update default to 4096
@@ -155,7 +155,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version = \"1.0\" ?><data><configure MemoryName=\"%s\" ZLPAwareHost=\"%i\" SkipStorageInit=\"%i\" SkipWrite=\"%i\" MaxPayloadSizeToTargetInBytes=\"%i\"/></data>",
     cfg->MemoryName, cfg->ZLPAwareHost, cfg->SkipStorageInit, cfg->SkipWrite, dwMaxPacketSize);
   Log(program_pkt);
-  status = sport->Write((BYTE *)program_pkt, strnlen_s(program_pkt,MAX_XML_LEN));
+  status = sport->Write((unsigned char *)program_pkt, strnlen_s(program_pkt,MAX_XML_LEN));
   if (status == ERROR_SUCCESS) {
     // Wait until we get the ACK or NAK back
     for (; retry < MAX_RETRY; retry++)
@@ -191,7 +191,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   }
 
   // read out any pending data 
-  dwBytesRead = ReadData((BYTE *)m_payload, dwMaxPacketSize, false);
+  dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
   Log((char *)m_payload);
 
   return status;
@@ -201,7 +201,7 @@ int Firehose::DeviceReset()
 {
 	int status = ERROR_SUCCESS;
   char reset_pkt[] = "<?xml version=\"1.0\" ?><data><power value=\"reset\"/></data>";
-	status = sport->Write((BYTE *)reset_pkt, sizeof(reset_pkt));
+	status = sport->Write((unsigned char *)reset_pkt, sizeof(reset_pkt));
 	return status;
 }
 
@@ -240,7 +240,7 @@ int Firehose::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
   StringReplace(tmp_key,L".",L"");
   wcstombs_s(&bytesOut,&program_pkt[strlen(program_pkt)],2000,tmp_key,MAX_XML_LEN);
   strcat_s(program_pkt,MAX_XML_LEN,"></data>\n");
-  status= sport->Write((BYTE*)program_pkt,strlen(program_pkt));
+  status= sport->Write((unsigned char*)program_pkt,strlen(program_pkt));
   if( status != ERROR_SUCCESS ) return status;
 
   Log(program_pkt);
@@ -249,7 +249,7 @@ int Firehose::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
   return ReadStatus();
 }
 
-int Firehose::WriteData(BYTE *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum)
+int Firehose::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum)
 {
   DWORD dwBytesRead;
   int status = ERROR_SUCCESS;
@@ -263,15 +263,15 @@ int Firehose::WriteData(BYTE *writeBuffer, __int64 writeOffset, DWORD writeBytes
   memset(program_pkt, 0, MAX_XML_LEN);
   if (writeOffset >= 0) {
     sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+      "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)writeBytes/DISK_SECTOR_SIZE, partNum, (int)(writeOffset/DISK_SECTOR_SIZE));
   }
   else { // If start sector is negative write to back of disk
     sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
+      "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)writeBytes / DISK_SECTOR_SIZE, partNum, (int)(writeOffset / DISK_SECTOR_SIZE));
   }
-  status = sport->Write((BYTE*)program_pkt, strlen(program_pkt));
+  status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
 
   // This should have log information from device
@@ -306,7 +306,7 @@ WriteSectorsExit:
   return status;
 }
 
-int Firehose::ReadData(BYTE *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum)
+int Firehose::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum)
 {
   DWORD dwBytesRead;
   int status = ERROR_SUCCESS;
@@ -319,15 +319,15 @@ int Firehose::ReadData(BYTE *readBuffer, __int64 readOffset, DWORD readBytes, DW
   memset(program_pkt, 0, MAX_XML_LEN);
   if (readOffset >= 0) {
     sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+      "<read SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)readBytes/DISK_SECTOR_SIZE, partNum, (int)(readOffset/DISK_SECTOR_SIZE));
   }
   else { // If start sector is negative read from back of disk
     sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
+      "<read SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)readBytes / DISK_SECTOR_SIZE, partNum, (int)(readOffset / DISK_SECTOR_SIZE));
   }
-  status = sport->Write((BYTE*)program_pkt, strlen(program_pkt));
+  status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
 
   // Wait until device returns with ACK or NAK
@@ -374,7 +374,7 @@ int Firehose::CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4)
                         "<createstoragedrives DRIVE4_SIZE_IN_KB=\"%i\" DRIVE5_SIZE_IN_KB=\"%i\" DRIVE6_SIZE_IN_KB=\"%i\" DRIVE7_SIZE_IN_KB=\"%i\" />"
                         "</data>",dwGPP1,dwGPP2,dwGPP3,dwGPP4);
   
-  status= sport->Write((BYTE*)program_pkt,strlen(program_pkt));
+  status= sport->Write((unsigned char*)program_pkt,strlen(program_pkt));
   Log((char *)program_pkt);
   
   // Read response
@@ -394,7 +394,7 @@ int Firehose::SetActivePartition(int prtn_num)
                         "<setbootablestoragedrive value=\"%i\" />"
                         "</data>\n",prtn_num);
 
-  status= sport->Write((BYTE*)program_pkt,strlen(program_pkt));
+  status= sport->Write((unsigned char*)program_pkt,strlen(program_pkt));
   Log((char *)program_pkt);
 
   // Read response
@@ -415,7 +415,7 @@ int Firehose::ProgramRawCommand(TCHAR *key)
   sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>");
   wcstombs_s(&bytesOut, &program_pkt[strlen(program_pkt)], MAX_STRING_LEN, key, MAX_XML_LEN);
   strcat_s(program_pkt, MAX_XML_LEN, "></data>\n");
-  status = sport->Write((BYTE*)program_pkt, strlen(program_pkt));
+  status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log("Programming RAW command: %s\n",(char *)program_pkt);
 
   // Read and log any response to command we sent
@@ -461,25 +461,25 @@ int Firehose::FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 
   if (hWrite == hDisk){
     if (sectorWrite < 0){
       sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
+        "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
         "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorWrite);
     }
     else
     {
       sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+        "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
         "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorWrite);
     }
   }
   else
   {
     sprintf_s(program_pkt, MAX_XML_LEN, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+      "<read SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorRead);
   }
 
   // Write out the command and wait for ACK/NAK coming back
-  status = sport->Write((BYTE*)program_pkt, strlen(program_pkt));
+  status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
 
   // Wait until device returns with ACK or NAK

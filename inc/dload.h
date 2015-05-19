@@ -138,7 +138,7 @@ when       who     what, where, why
 class Dload {
 public:
   Dload(SerialPort *port);
-  int ConnectToFlashProg(BYTE ver); //ver=2 for byte addressing and ver=3 for sector addressing
+  int ConnectToFlashProg(unsigned char ver); //ver=2 for byte addressing and ver=3 for sector addressing
   int DeviceReset(void);
   int LoadPartition(TCHAR *filename);
   int LoadImage(TCHAR *szSingleImage);
@@ -149,12 +149,12 @@ public:
   int FastCopySerial(HANDLE hInFile, DWORD sector, DWORD sectors);
   int LoadFlashProg(TCHAR *szFlashPrg);
   int WriteRawProgramFile(TCHAR *szXMLFile);
-  int GetDloadParams(BYTE *rsp, int len);
+  int GetDloadParams(unsigned char *rsp, int len);
   int IsDeviceInDload(void);
   int WipeDiskContents(uint64 start_sector, uint64 num_sectors);
 
 private:
-  void HexToByte(const char *hex, BYTE *bin, int len);
+  void HexToByte(const char *hex, unsigned char *bin, int len);
   DWORD HexRunAddress(TCHAR *filename);
   DWORD HexDataLength(TCHAR *filename);
   uint64 GetNumDiskSectors();

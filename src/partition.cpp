@@ -119,7 +119,7 @@ int Partition::Reflect(int data, int len)
    return ref;
 }
 
-unsigned int Partition::CalcCRC32(BYTE *buffer, int len)
+unsigned int Partition::CalcCRC32(unsigned char *buffer, int len)
 {
    int k = 8;                   // length of unit (i.e. byte)
    int MSB = 0;
@@ -129,8 +129,8 @@ unsigned int Partition::CalcCRC32(BYTE *buffer, int len)
    int regsMSB = 0;
 
    for( int i=0; i < len; i++) {
-     BYTE DataByte = buffer[i];
-     DataByte = (BYTE)Reflect(DataByte,8);
+     unsigned char DataByte = buffer[i];
+     DataByte = (unsigned char)Reflect(DataByte,8);
      for(int j=0; j < k; j++) {
        MSB = DataByte >> (k-1);  // get MSB
        MSB &= 1;                 // ensure just 1 bit

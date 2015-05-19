@@ -39,17 +39,17 @@ public:
   int Open(int port);
   int EnableBinaryLog(TCHAR *szFileName);
   int Close();
-  int Write(BYTE *data, DWORD length);
-  int Read(BYTE *data, DWORD *length);
+  int Write(unsigned char *data, DWORD length);
+  int Read(unsigned char *data, DWORD *length);
   int Flush();
-  int SendSync(BYTE *out_buf, int out_length, BYTE *in_buf, int *in_length);
+  int SendSync(unsigned char *out_buf, int out_length, unsigned char *in_buf, int *in_length);
   int SetTimeout(int ms);
 private:
-  int HDLCEncodePacket(BYTE *in_buf, int in_length, BYTE *out_buf, int *out_length);
-  int HDLCDecodePacket(BYTE *in_buf, int in_length, BYTE *out_buf, int *out_length);
+  int HDLCEncodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
+  int HDLCDecodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   
   HANDLE hPort;
-  BYTE *HDLCBuf;
+  unsigned char *HDLCBuf;
   int to_ms;
 
 };

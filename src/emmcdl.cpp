@@ -93,18 +93,18 @@ int PrintHelp()
   return -1;
 }
 
-void StringToByte(TCHAR **szSerialData, BYTE *data, int len)
+void StringToByte(TCHAR **szSerialData, unsigned char *data, int len)
 {
   for(int i=0; i < len; i++) {
    TCHAR *hex = szSerialData[i];
    if( wcsncmp(hex,L"0x",2) == 0 ) {
-     BYTE val1 = (BYTE)(hex[2] - '0');
-     BYTE val2 = (BYTE)(hex[3] - '0');
+     unsigned char val1 = (unsigned char)(hex[2] - '0');
+     unsigned char val2 = (unsigned char)(hex[3] - '0');
      if( val1 > 9 ) val1 = val1 - 7;
      if( val2 > 9 ) val2 = val2 - 7;
      data[i] = (val1 << 4) + val2;
    } else {
-      data[i] = (BYTE)_wtoi(szSerialData[i]);
+      data[i] = (unsigned char)_wtoi(szSerialData[i]);
    }
   }
 }
@@ -112,7 +112,7 @@ void StringToByte(TCHAR **szSerialData, BYTE *data, int len)
 int RawSerialSend(int dnum, TCHAR **szSerialData, int len)
 {
   int status = ERROR_SUCCESS;
-  BYTE data[256];
+  unsigned char data[256];
 
   // Make sure the number of bytes of data we are trying to send is valid
   if( len < 1 || len > sizeof(data) ) {
@@ -367,7 +367,7 @@ int EDownloadProgram(TCHAR *szSingleImage, TCHAR **szXMLFile)
   int status = ERROR_SUCCESS;
   Dload dl(&m_port);
   Firehose fh(&m_port);
-  BYTE prtn=0;
+  unsigned char prtn=0;
 
   if( szSingleImage != NULL ) {
     // Wait for device to re-enumerate with flashprg
@@ -392,7 +392,7 @@ int EDownloadProgram(TCHAR *szSingleImage, TCHAR **szXMLFile)
         StringReplace(szPatchFile,L"rawprogram",L"patch");
         TCHAR *sptr = wcsstr(szXMLFile[i],L".xml");
         if( sptr == NULL ) return ERROR_INVALID_PARAMETER;
-        prtn = (BYTE)((*--sptr) - '0' + PRTN_EMMCUSER);
+        prtn = (unsigned char)((*--sptr) - '0' + PRTN_EMMCUSER);
         wprintf(L"Opening partition %i\n",prtn);
         dl.OpenPartition(prtn);
         //Sleep(1);

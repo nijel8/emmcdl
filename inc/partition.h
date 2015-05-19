@@ -103,7 +103,7 @@ public:
 
   int CloseXML();
   int GetNextXMLKey(TCHAR *keyName, TCHAR **key);
-  unsigned int CalcCRC32(BYTE *buffer, int len);
+  unsigned int CalcCRC32(unsigned char *buffer, int len);
   int ParseXMLKey(TCHAR *key, PartitionEntry *pe);
 
 private:

@@ -117,7 +117,7 @@ typedef struct {
 typedef struct {
   DWORD serial;
   DWORD msm_id;
-  BYTE pk_hash[32];
+  unsigned char pk_hash[32];
   DWORD pbl_sw;
 } pbl_info_t;
 
@@ -132,13 +132,13 @@ public:
 
 private:
   int ModeSwitch(int mode);
-  void HexToByte(const char *hex, BYTE *bin, int len);
+  void HexToByte(const char *hex, unsigned char *bin, int len);
   void Log(char *str,...);
   void Log(TCHAR *str,...);
 
   DWORD HexRunAddress(TCHAR *filename);
   DWORD HexDataLength(TCHAR *filename);
-  int ReadData(int cmd, BYTE *buf, int len);
+  int ReadData(int cmd, unsigned char *buf, int len);
   int PblHack(void);
 
   SerialPort *sport;

@@ -207,7 +207,7 @@ int DiskWriter::InitDiskList(bool verbose)
         break;
       }
       // successfully found entry print out the info
-      if( SetupDiGetDeviceProperty(hDevInfo,&DeviceInfoData,&DEVPKEY_Device_FriendlyName,&ulPropertyType,(BYTE*)szBuffer, sizeof(szBuffer), &dwSize, 0)) {
+      if( SetupDiGetDeviceProperty(hDevInfo,&DeviceInfoData,&DEVPKEY_Device_FriendlyName,&ulPropertyType,(unsigned char*)szBuffer, sizeof(szBuffer), &dwSize, 0)) {
         if( (GetLastError() == ERROR_SUCCESS) && wcsstr(szBuffer,L"QDLoader 9008") != NULL ) {
           wprintf(szBuffer);
           // Get the serial number and display it if verbose is enabled
@@ -492,7 +492,7 @@ int DiskWriter::DiskTest(uint64 offset)
   return status;
 }
 
-int DiskWriter::WriteData(BYTE *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum)
+int DiskWriter::WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum)
 {
   UNREFERENCED_PARAMETER(partNum);
   OVERLAPPED ovlWrite;
@@ -533,7 +533,7 @@ int DiskWriter::WriteData(BYTE *writeBuffer, __int64 writeOffset, DWORD writeByt
   return status;
 }
 
-int DiskWriter::ReadData(BYTE *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum)
+int DiskWriter::ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum)
 {
   UNREFERENCED_PARAMETER(partNum);
   OVERLAPPED ovlRead;

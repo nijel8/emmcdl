@@ -99,11 +99,11 @@ int FFUImage::AddEntryToRawProgram(TCHAR *szRawProgram, TCHAR *szFileName, UINT6
     SetFilePointer(hRawPrg, 0, 0, FILE_END);
     wcstombs_s(&sBytesConvert, szFile, sizeof(szFile), szFileName, sizeof(szFile));
     if (i64StartSector < 0) {
-      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_BYTES=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"NUM_DISK_SECTORS%I64d\"/>\n",
+      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"NUM_DISK_SECTORS%I64d\"/>\n",
         DISK_SECTOR_SIZE,ui64FileOffset, szFile, i64StartSector, ui64NumSectors, ui64NumSectors / 2, i64StartSector * 512, i64StartSector);
     }
     else {
-      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_BYTES=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"%I64d\"/>\n",
+      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"%I64d\"/>\n",
         DISK_SECTOR_SIZE, ui64FileOffset, szFile, i64StartSector, ui64NumSectors, ui64NumSectors / 2, i64StartSector * 512, i64StartSector);
     }
     WriteFile(hRawPrg, szXMLString, strlen(szXMLString), &dwBytesWrite, NULL);
@@ -250,7 +250,7 @@ int FFUImage::ParseHeaders(void)
       (FFUStoreHeader.dwWriteDescriptorLength < 1000000) && 
       (FFUStoreHeader.dwWriteDescriptorCount < 0x10000000) ) {
 
-    ValidationEntries = (BYTE *)malloc(FFUStoreHeader.dwValidateDescriptorLength);
+    ValidationEntries = (unsigned char *)malloc(FFUStoreHeader.dwValidateDescriptorLength);
     BlockDataEntries = (BLOCK_DATA_ENTRY*)malloc(FFUStoreHeader.dwWriteDescriptorLength);
 
     if(ValidationEntries == NULL || BlockDataEntries == NULL ) {
@@ -376,7 +376,7 @@ int FFUImage::FFUDumpDisk(Protocol *proto)
   BLOCK_DATA_ENTRY* BlockDataEntriesPtr = BlockDataEntries;
 
   /* Copy the data to disk */
-  BYTE *dataBlock = (BYTE*)malloc(FFUStoreHeader.dwBlockSizeInBytes*64); // Create storage for 64*128 KB block
+  unsigned char *dataBlock = (unsigned char*)malloc(FFUStoreHeader.dwBlockSizeInBytes*64); // Create storage for 64*128 KB block
   if( dataBlock == NULL ) return ERROR_OUTOFMEMORY;
   for (UINT32 i = 0; i < FFUStoreHeader.dwWriteDescriptorCount; i++) {
     for (UINT32 j = 0; j < BlockDataEntriesPtr->dwLocationCount; j++){
@@ -532,7 +532,7 @@ int FFUImage::SplitFFUBin( TCHAR *szPartName, TCHAR *szOutputFile)
     diskOffset *= FFUStoreHeader.dwBlockSizeInBytes;
 
     if( ((diskOffset/512) >= start_sector) &&  ((diskOffset/512) <= end_sector)) {
-      BYTE *dataBlock = (BYTE*)malloc(FFUStoreHeader.dwBlockSizeInBytes); // Create storage for 128 KB block
+      unsigned char *dataBlock = (unsigned char*)malloc(FFUStoreHeader.dwBlockSizeInBytes); // Create storage for 128 KB block
       if(dataBlock == NULL ) return ERROR_OUTOFMEMORY;
 
       SetOffset(&OvlRead, PayloadDataStart+(i)*FFUStoreHeader.dwBlockSizeInBytes );

@@ -28,7 +28,7 @@ SerialPort::SerialPort()
 {
   hPort = INVALID_HANDLE_VALUE;
   to_ms = 1000;  // 1 second default timeout for packets to send/rcv
-  HDLCBuf = (BYTE *)malloc(MAX_PACKET_SIZE);
+  HDLCBuf = (unsigned char *)malloc(MAX_PACKET_SIZE);
 
 }
 
@@ -70,7 +70,7 @@ int SerialPort::Close()
   return ERROR_SUCCESS;
 }
 
-int SerialPort::Write(BYTE *data, DWORD length)
+int SerialPort::Write(unsigned char *data, DWORD length)
 {
   int status = ERROR_SUCCESS;
 
@@ -82,7 +82,7 @@ int SerialPort::Write(BYTE *data, DWORD length)
   return status;
 }
 
-int SerialPort::Read(BYTE *data, DWORD *length)
+int SerialPort::Read(unsigned char *data, DWORD *length)
 {
   int status = ERROR_SUCCESS;
 
@@ -95,7 +95,7 @@ int SerialPort::Read(BYTE *data, DWORD *length)
 
 int SerialPort::Flush()
 {
-  BYTE tmpBuf[1024];
+  unsigned char tmpBuf[1024];
   DWORD len = sizeof(tmpBuf);
   
   // Set timeout to 1ms to just flush any pending data then change back to default
@@ -107,7 +107,7 @@ int SerialPort::Flush()
   return ERROR_SUCCESS;
 }
 
-int SerialPort::SendSync(BYTE *out_buf, int out_length, BYTE *in_buf, int *in_length)
+int SerialPort::SendSync(unsigned char *out_buf, int out_length, unsigned char *in_buf, int *in_length)
 {
   DWORD status = ERROR_SUCCESS;
   DWORD bytesOut = 0;
@@ -165,9 +165,9 @@ int SerialPort::SetTimeout(int ms)
   return ERROR_SUCCESS;
 }
 
-int SerialPort::HDLCEncodePacket(BYTE *in_buf, int in_length, BYTE *out_buf, int *out_length)
+int SerialPort::HDLCEncodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length)
 {
-  BYTE *outPtr = out_buf;
+  unsigned char *outPtr = out_buf;
   unsigned short crc = (unsigned short)CalcCRC16(in_buf,in_length);
 
   // Encoded packets start and end with 0x7E
@@ -175,7 +175,7 @@ int SerialPort::HDLCEncodePacket(BYTE *in_buf, int in_length, BYTE *out_buf, int
   for(int i=0; i < in_length+2; i++ ) {
     // Read last two bytes of data from crc value
     if( i == in_length ) {
-      in_buf = (BYTE *)&crc;
+      in_buf = (unsigned char *)&crc;
     }
     
     if( *in_buf == ASYNC_HDLC_FLAG ||
@@ -193,9 +193,9 @@ int SerialPort::HDLCEncodePacket(BYTE *in_buf, int in_length, BYTE *out_buf, int
   return ERROR_SUCCESS;
 }
 
-int SerialPort::HDLCDecodePacket(BYTE *in_buf, int in_length, BYTE *out_buf, int *out_length)
+int SerialPort::HDLCDecodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length)
 {
-  BYTE *outPtr = out_buf;
+  unsigned char *outPtr = out_buf;
   // make sure our output buffer is large enough
   if( *out_length < in_length ) {
     return ERROR_NOT_ENOUGH_MEMORY;

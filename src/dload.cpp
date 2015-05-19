@@ -27,11 +27,11 @@ when       who     what, where, why
 
 //using namespace std;
 
-void Dload::HexToByte(const char *hex, BYTE *bin, int len)
+void Dload::HexToByte(const char *hex, unsigned char *bin, int len)
 {
   for(int i=0; i < len; i++) {
-   BYTE val1 = hex[i*2] - '0';
-   BYTE val2 = hex[i*2+1] - '0';
+   unsigned char val1 = hex[i*2] - '0';
+   unsigned char val2 = hex[i*2+1] - '0';
    if( val1 > 9 ) val1 = val1 - 7;
    if( val2 > 9 ) val2 = val2 - 7;
    bin[i] = (val1 << 4) + val2;
@@ -45,11 +45,11 @@ Dload::Dload(SerialPort *port)
   sport = port;
 }
 
-int Dload::ConnectToFlashProg(BYTE ver)
+int Dload::ConnectToFlashProg(unsigned char ver)
 {
-  BYTE hello[] = {EHOST_HELLO_REQ,'Q','C','O','M',' ','f','a','s','t',' ','d','o','w','n','l','o','a','d',' ','p','r','o','t','o','c','o','l',' ','h','o','s','t',ver,2,1};
-  BYTE security[] = {EHOST_SECURITY_REQ,0};
-  BYTE rsp[1060];
+  unsigned char hello[] = {EHOST_HELLO_REQ,'Q','C','O','M',' ','f','a','s','t',' ','d','o','w','n','l','o','a','d',' ','p','r','o','t','o','c','o','l',' ','h','o','s','t',ver,2,1};
+  unsigned char security[] = {EHOST_SECURITY_REQ,0};
+  unsigned char rsp[1060];
   int rspSize = sizeof(rsp);
   int status = ERROR_SUCCESS; 
   int i=0;
@@ -94,8 +94,8 @@ int Dload::ConnectToFlashProg(BYTE ver)
 
 int Dload::DeviceReset()
 {
-  BYTE reset[] = {EHOST_RESET_REQ};
-  BYTE rsp[32];
+  unsigned char reset[] = {EHOST_RESET_REQ};
+  unsigned char rsp[32];
   int rspSize;
 
   rspSize = sizeof(rsp);
@@ -111,10 +111,10 @@ int Dload::LoadPartition(TCHAR *szPrtnFile)
 {
   HANDLE hFile;
   int status = ERROR_SUCCESS;
-  BYTE rsp[32];
+  unsigned char rsp[32];
   DWORD bytesRead=0;
   int rspSize;
-  BYTE partition[1040] = {EHOST_PARTITION_REQ,0};
+  unsigned char partition[1040] = {EHOST_PARTITION_REQ,0};
   
   hFile = CreateFile(szPrtnFile,GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
   if( hFile == INVALID_HANDLE_VALUE ) return ERROR_INVALID_HANDLE;
@@ -139,8 +139,8 @@ int Dload::LoadPartition(TCHAR *szPrtnFile)
 
 int Dload::OpenPartition(int partition)
 {
-  BYTE openmulti[] = {EHOST_OPEN_MULTI_REQ,(BYTE)partition};
-  BYTE rsp[32];
+  unsigned char openmulti[] = {EHOST_OPEN_MULTI_REQ,(unsigned char)partition};
+  unsigned char rsp[32];
   int rspSize;
 
   // Flush out any previous transactions
@@ -159,8 +159,8 @@ int Dload::OpenPartition(int partition)
 
 int Dload::ClosePartition()
 {
-  BYTE close[] = {EHOST_CLOSE_REQ};
-  BYTE rsp[32];
+  unsigned char close[] = {EHOST_CLOSE_REQ};
+  unsigned char rsp[32];
   int rspSize;
   
   // Close the partition we were writing to
@@ -175,12 +175,12 @@ int Dload::ClosePartition()
 int Dload::FastCopySerial(HANDLE hInFile, DWORD offset, DWORD sectors)
 {
   int status = ERROR_SUCCESS;
-  BYTE rsp[32];
+  unsigned char rsp[32];
   DWORD bytesRead=0;
   DWORD count = 0;
   DWORD readSize = 1024;
   int rspSize;
-  BYTE streamwrite[1050] = {EHOST_STREAM_WRITE_REQ,0};
+  unsigned char streamwrite[1050] = {EHOST_STREAM_WRITE_REQ,0};
 
   // For now don't worry about sliding window do a write and wait for response
   while( (status == ERROR_SUCCESS) && (count < sectors)) {
@@ -254,9 +254,9 @@ int Dload::LoadImage(TCHAR *szSingleImage)
 
 int Dload::LoadFlashProg(TCHAR *szFlashPrg)
 {
-  BYTE write32[280] = {CMD_WRITE_32BIT, 0};
-  BYTE *writePtr;
-  BYTE rsp[32];
+  unsigned char write32[280] = {CMD_WRITE_32BIT, 0};
+  unsigned char *writePtr;
+  unsigned char rsp[32];
   int rspSize;
   DWORD goAddr = 0;
   DWORD targetAddr=0;
@@ -273,12 +273,12 @@ int Dload::LoadFlashProg(TCHAR *szFlashPrg)
   }
 
   while( !feof(fMprgFile) ) {
-    BYTE id=0;
+    unsigned char id=0;
     bool bFirst = true;
     writePtr = &write32[7];
     // Read in data till we collect 256 bytes or hit end of file
     for(bytesRead=0; bytesRead < 256;) {
-      BYTE len;
+      unsigned char len;
       fgets(hexline,sizeof(hexline),fMprgFile);
       if( strlen(hexline) > 9 ) {
         HexToByte(&hexline[1],&len,1);
@@ -339,7 +339,7 @@ int Dload::LoadFlashProg(TCHAR *szFlashPrg)
   
 
   if( status == ERROR_SUCCESS ) {
-    BYTE gocmd[5] = {CMD_GO,0};
+    unsigned char gocmd[5] = {CMD_GO,0};
     printf("sending go command 0x%x\n", (UINT32)goAddr);
     gocmd[1] = (goAddr >> 24) & 0xff;
     gocmd[2] = (goAddr >> 16) & 0xff;
@@ -359,9 +359,9 @@ int Dload::LoadFlashProg(TCHAR *szFlashPrg)
   return status;
 }
 
-int Dload::GetDloadParams(BYTE *rsp, int len)
+int Dload::GetDloadParams(unsigned char *rsp, int len)
 {
-  BYTE params[] = {CMD_PREQ};
+  unsigned char params[] = {CMD_PREQ};
   int bytesRead = len;
   // For params response we need at least 256 bytes
   if( len < 16 ) {
@@ -376,8 +376,8 @@ int Dload::GetDloadParams(BYTE *rsp, int len)
 
 int Dload::IsDeviceInDload(void)
 {
-  BYTE nop[] = {CMD_NOP};
-  BYTE rsp[32] = {0};
+  unsigned char nop[] = {CMD_NOP};
+  unsigned char rsp[32] = {0};
   int bytesRead = 32;
 
   sport->SendSync(nop,sizeof(nop),rsp,&bytesRead);
@@ -391,8 +391,8 @@ int Dload::IsDeviceInDload(void)
 int Dload::SetActivePartition()
 {
   // Set currently open partition to active
-  BYTE active_prtn[38] = {EHOST_STREAM_DLOAD_REQ,0x2};
-  BYTE rsp[128] = {0};
+  unsigned char active_prtn[38] = {EHOST_STREAM_DLOAD_REQ,0x2};
+  unsigned char rsp[128] = {0};
   int status = ERROR_SUCCESS;
   int bytesRead = sizeof(rsp);
   unsigned short crc;
@@ -411,8 +411,8 @@ int Dload::SetActivePartition()
 
 int Dload::CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4)
 {
-  BYTE stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x1};
-  BYTE rsp[128] = {0};
+  unsigned char stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x1};
+  unsigned char rsp[128] = {0};
   int bytesRead = sizeof(rsp);
   int status = ERROR_SUCCESS;
   unsigned short crc;
@@ -448,8 +448,8 @@ int Dload::CreateGPP(DWORD dwGPP1, DWORD dwGPP2, DWORD dwGPP3, DWORD dwGPP4)
 
 uint64 Dload::GetNumDiskSectors()
 {
-  BYTE stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x0};
-  BYTE rsp[128] = {0};
+  unsigned char stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x0};
+  unsigned char rsp[128] = {0};
   int bytesRead = sizeof(rsp);
   int status = ERROR_SUCCESS;
   unsigned short crc;

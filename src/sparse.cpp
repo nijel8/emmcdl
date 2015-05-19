@@ -79,7 +79,7 @@ int SparseImage::PreLoadImage(TCHAR *szSparseFile)
 int SparseImage::ProgramImage(Protocol *pProtocol, __int64 dwOffset)
 {
   CHUNK_HEADER ChunkHeader;
-  BYTE *bpDataBuf;
+  unsigned char *bpDataBuf;
   DWORD dwBytesRead;
   DWORD dwBytesOut;
   int status = ERROR_SUCCESS;
@@ -99,7 +99,7 @@ int SparseImage::ProgramImage(Protocol *pProtocol, __int64 dwOffset)
       if (ChunkHeader.wChunkType == SPARSE_RAW_CHUNK){
         UINT32 dwChunkSize = ChunkHeader.dwChunkSize*SparseHeader.dwBlockSize;
         // Allocate a buffer the size of the chunk and read in the data
-        bpDataBuf = (BYTE *)malloc(dwChunkSize);
+        bpDataBuf = (unsigned char *)malloc(dwChunkSize);
         if (bpDataBuf == NULL){
           return ERROR_OUTOFMEMORY;
         }

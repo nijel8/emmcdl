@@ -29,7 +29,7 @@ when       who     what, where, why
 typedef struct _SECURITY_HEADER
 {
     UINT32 cbSize;            // size of struct, overall
-    BYTE   signature[12];     // "SignedImage "
+    unsigned char   signature[12];     // "SignedImage "
     UINT32 dwChunkSizeInKb;   // size of a hashed chunk within the image
     UINT32 dwAlgId;           // algorithm used to hash
     UINT32 dwCatalogSize;     // size of catalog to validate
@@ -40,7 +40,7 @@ typedef struct _SECURITY_HEADER
 typedef struct _IMAGE_HEADER
 {
     DWORD  cbSize;           // sizeof(ImageHeader)
-    BYTE   Signature[12];    // "ImageFlash  "
+    unsigned char   Signature[12];    // "ImageFlash  "
     DWORD  ManifestLength;   // in bytes
     DWORD  dwChunkSize;      // Used only during image generation.
 } IMAGE_HEADER;
@@ -113,7 +113,7 @@ private:
   SECURITY_HEADER FFUSecurityHeader;
   IMAGE_HEADER FFUImageHeader;
   STORE_HEADER FFUStoreHeader;
-  BYTE* ValidationEntries;
+  unsigned char* ValidationEntries;
   BLOCK_DATA_ENTRY* BlockDataEntries;
   UINT64 PayloadDataStart;
 
@@ -122,7 +122,7 @@ private:
   OVERLAPPED OvlWrite;
 
   // GPT Stuff
-  BYTE GptProtectiveMBR[512];
+  unsigned char GptProtectiveMBR[512];
   gpt_header_t GptHeader;
   gpt_entry_t *GptEntries;
   int DISK_SECTOR_SIZE;

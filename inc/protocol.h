@@ -48,8 +48,8 @@ public:
   HANDLE GetDiskHandle(void);
 
   virtual int DeviceReset(void) = ERROR_SUCCESS;
-  virtual int WriteData(BYTE *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum) = ERROR_SUCCESS;
-  virtual int ReadData(BYTE *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum) = ERROR_SUCCESS;
+  virtual int WriteData(unsigned char *writeBuffer, __int64 writeOffset, DWORD writeBytes, DWORD *bytesWritten, UINT8 partNum) = ERROR_SUCCESS;
+  virtual int ReadData(unsigned char *readBuffer, __int64 readOffset, DWORD readBytes, DWORD *bytesRead, UINT8 partNum) = ERROR_SUCCESS;
   virtual int FastCopy(HANDLE hRead, __int64 sectorRead, HANDLE hWrite, __int64 sectorWrite, uint64 sectors, UINT8 partNum) = ERROR_SUCCESS;
   virtual int ProgramRawCommand(TCHAR *key) = ERROR_SUCCESS;
   virtual int ProgramPatchEntry(PartitionEntry pe, TCHAR *key) = ERROR_SUCCESS;
@@ -64,10 +64,10 @@ protected:
   gpt_entry_t *gpt_entries;
   uint64 disk_size;
   HANDLE hDisk;
-  BYTE *buffer1;
-  BYTE *buffer2;
-  BYTE *bufAlloc1;
-  BYTE *bufAlloc2;
+  unsigned char *buffer1;
+  unsigned char *buffer2;
+  unsigned char *bufAlloc1;
+  unsigned char *bufAlloc2;
   int DISK_SECTOR_SIZE;
 
 private:
