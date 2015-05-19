@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "adb.h"
+#include "emmcdl.h"
 
 extern void fatal(const char *fmt, ...);
 
@@ -167,7 +167,7 @@ typedef struct FHRec_
 
 #define  WIN32_MAX_FHS    128
 
-static adb_mutex_t   _win32_lock;
+static emmcdl_mutex_t   _win32_lock;
 static  FHRec        _win32_fhs[ WIN32_MAX_FHS ];
 static  int          _win32_fh_count;
 
@@ -211,7 +211,7 @@ _fh_alloc( FHClass  clazz )
     int  nn;
     FH   f = NULL;
 
-    adb_mutex_lock( &_win32_lock );
+    emmcdl_mutex_lock( &_win32_lock );
 
     if (_win32_fh_count < WIN32_MAX_FHS) {
         f = &_win32_fhs[ _win32_fh_count++ ];
@@ -232,7 +232,7 @@ Exit:
         f->eof   = 0;
         clazz->_fh_init(f);
     }
-    adb_mutex_unlock( &_win32_lock );
+    emmcdl_mutex_unlock( &_win32_lock );
     return f;
 }
 
@@ -271,7 +271,7 @@ static int _fh_file_read( FH  f,  void*  buf, int   len ) {
     DWORD  read_bytes;
 
     if ( !ReadFile( f->fh_handle, buf, (DWORD)len, &read_bytes, NULL ) ) {
-        D( "adb_read: could not read %d bytes from %s\n", len, f->name );
+        D( "emmcdl_read: could not read %d bytes from %s\n", len, f->name );
         errno = EIO;
         return -1;
     } else if (read_bytes < (DWORD)len) {
@@ -284,7 +284,7 @@ static int _fh_file_write( FH  f,  const void*  buf, int   len ) {
     DWORD  wrote_bytes;
 
     if ( !WriteFile( f->fh_handle, buf, (DWORD)len, &wrote_bytes, NULL ) ) {
-        D( "adb_file_write: could not write %d bytes from %s\n", len, f->name );
+        D( "emmcdl_file_write: could not write %d bytes from %s\n", len, f->name );
         errno = EIO;
         return -1;
     } else if (wrote_bytes < (DWORD)len) {
@@ -326,7 +326,7 @@ static int _fh_file_lseek( FH  f, int  pos, int  origin ) {
 /**************************************************************************/
 /**************************************************************************/
 
-int  adb_open(const char*  path, int  options)
+int  emmcdl_open(const char*  path, int  options)
 {
     FH  f;
 
@@ -344,7 +344,7 @@ int  adb_open(const char*  path, int  options)
             desiredAccess = GENERIC_READ | GENERIC_WRITE;
             break;
         default:
-            D("adb_open: invalid options (0x%0x)\n", options);
+            D("emmcdl_open: invalid options (0x%0x)\n", options);
             errno = EINVAL;
             return -1;
     }
@@ -360,7 +360,7 @@ int  adb_open(const char*  path, int  options)
 
     if ( f->fh_handle == INVALID_HANDLE_VALUE ) {
         _fh_close(f);
-        D( "adb_open: could not open '%s':", path );
+        D( "emmcdl_open: could not open '%s':", path );
         switch (GetLastError()) {
             case ERROR_FILE_NOT_FOUND:
                 D( "file not found\n" );
@@ -380,12 +380,12 @@ int  adb_open(const char*  path, int  options)
     }
 
     snprintf( f->name, sizeof(f->name), "%d(%s)", _fh_to_int(f), path );
-    D( "adb_open: '%s' => fd %d\n", path, _fh_to_int(f) );
+    D( "emmcdl_open: '%s' => fd %d\n", path, _fh_to_int(f) );
     return _fh_to_int(f);
 }
 
 /* ignore mode on Win32 */
-int  adb_creat(const char*  path, int  mode)
+int  emmcdl_creat(const char*  path, int  mode)
 {
     FH  f;
 
@@ -401,7 +401,7 @@ int  adb_creat(const char*  path, int  mode)
 
     if ( f->fh_handle == INVALID_HANDLE_VALUE ) {
         _fh_close(f);
-        D( "adb_creat: could not open '%s':", path );
+        D( "emmcdl_creat: could not open '%s':", path );
         switch (GetLastError()) {
             case ERROR_FILE_NOT_FOUND:
                 D( "file not found\n" );
@@ -420,12 +420,12 @@ int  adb_creat(const char*  path, int  mode)
         }
     }
     snprintf( f->name, sizeof(f->name), "%d(%s)", _fh_to_int(f), path );
-    D( "adb_creat: '%s' => fd %d\n", path, _fh_to_int(f) );
+    D( "emmcdl_creat: '%s' => fd %d\n", path, _fh_to_int(f) );
     return _fh_to_int(f);
 }
 
 
-int  adb_read(int  fd, void* buf, int len)
+int  emmcdl_read(int  fd, void* buf, int len)
 {
     FH     f = _fh_from_int(fd);
 
@@ -437,7 +437,7 @@ int  adb_read(int  fd, void* buf, int len)
 }
 
 
-int  adb_write(int  fd, const void*  buf, int  len)
+int  emmcdl_write(int  fd, const void*  buf, int  len)
 {
     FH     f = _fh_from_int(fd);
 
@@ -449,7 +449,7 @@ int  adb_write(int  fd, const void*  buf, int  len)
 }
 
 
-int  adb_lseek(int  fd, int  pos, int  where)
+int  emmcdl_lseek(int  fd, int  pos, int  where)
 {
     FH     f = _fh_from_int(fd);
 
@@ -461,22 +461,22 @@ int  adb_lseek(int  fd, int  pos, int  where)
 }
 
 
-int  adb_shutdown(int  fd)
+int  emmcdl_shutdown(int  fd)
 {
     FH   f = _fh_from_int(fd);
 
     if (!f || f->clazz != &_fh_socket_class) {
-        D("adb_shutdown: invalid fd %d\n", fd);
+        D("emmcdl_shutdown: invalid fd %d\n", fd);
         return -1;
     }
 
-    D( "adb_shutdown: %s\n", f->name);
+    D( "emmcdl_shutdown: %s\n", f->name);
     shutdown( f->fh_socket, SD_BOTH );
     return 0;
 }
 
 
-int  adb_close(int  fd)
+int  emmcdl_close(int  fd)
 {
     FH   f = _fh_from_int(fd);
 
@@ -484,7 +484,7 @@ int  adb_close(int  fd)
         return -1;
     }
 
-    D( "adb_close: %s\n", f->name);
+    D( "emmcdl_close: %s\n", f->name);
     _fh_close(f);
     return 0;
 }
@@ -574,7 +574,7 @@ _init_winsock( void )
         WSADATA  wsaData;
         int      rc = WSAStartup( MAKEWORD(2,2), &wsaData);
         if (rc != 0) {
-            fatal( "adb: could not initialize Winsock\n" );
+            fatal( "emmcdl: could not initialize Winsock\n" );
         }
         atexit( _cleanup_winsock );
         _winsock_init = 1;
@@ -761,41 +761,41 @@ int socket_inaddr_any_server(int port, int type)
 }
 
 #undef accept
-int  adb_socket_accept(int  serverfd, struct sockaddr*  addr, socklen_t  *addrlen)
+int  emmcdl_socket_accept(int  serverfd, struct sockaddr*  addr, socklen_t  *addrlen)
 {
     FH   serverfh = _fh_from_int(serverfd);
     FH   fh;
 
     if ( !serverfh || serverfh->clazz != &_fh_socket_class ) {
-        D( "adb_socket_accept: invalid fd %d\n", serverfd );
+        D( "emmcdl_socket_accept: invalid fd %d\n", serverfd );
         return -1;
     }
 
     fh = _fh_alloc( &_fh_socket_class );
     if (!fh) {
-        D( "adb_socket_accept: not enough memory to allocate accepted socket descriptor\n" );
+        D( "emmcdl_socket_accept: not enough memory to allocate accepted socket descriptor\n" );
         return -1;
     }
 
     fh->fh_socket = accept( serverfh->fh_socket, addr, addrlen );
     if (fh->fh_socket == INVALID_SOCKET) {
         _fh_close( fh );
-        D( "adb_socket_accept: accept on fd %d return error %ld\n", serverfd, GetLastError() );
+        D( "emmcdl_socket_accept: accept on fd %d return error %ld\n", serverfd, GetLastError() );
         return -1;
     }
 
     snprintf( fh->name, sizeof(fh->name), "%d(accept:%s)", _fh_to_int(fh), serverfh->name );
-    D( "adb_socket_accept on fd %d returns fd %d\n", serverfd, _fh_to_int(fh) );
+    D( "emmcdl_socket_accept on fd %d returns fd %d\n", serverfd, _fh_to_int(fh) );
     return  _fh_to_int(fh);
 }
 
 
-int  adb_setsockopt( int  fd, int  level, int  optname, const void*  optval, socklen_t  optlen )
+int  emmcdl_setsockopt( int  fd, int  level, int  optname, const void*  optval, socklen_t  optlen )
 {
     FH   fh = _fh_from_int(fd);
 
     if ( !fh || fh->clazz != &_fh_socket_class ) {
-        D("adb_setsockopt: invalid fd %d\n", fd);
+        D("emmcdl_setsockopt: invalid fd %d\n", fd);
         return -1;
     }
 
@@ -1199,7 +1199,7 @@ static const FHClassRec  _fh_socketpair_class =
 };
 
 
-int  adb_socketpair(int sv[2]) {
+int  emmcdl_socketpair(int sv[2]) {
     SocketPair pair;
 
     FH fa = _fh_alloc(&_fh_socketpair_class);
@@ -1210,7 +1210,7 @@ int  adb_socketpair(int sv[2]) {
 
     pair = reinterpret_cast<SocketPair>(malloc(sizeof(*pair)));
     if (pair == NULL) {
-        D("adb_socketpair: not enough memory to allocate pipes\n" );
+        D("emmcdl_socketpair: not enough memory to allocate pipes\n" );
         goto Fail;
     }
 
@@ -1232,7 +1232,7 @@ int  adb_socketpair(int sv[2]) {
 
     snprintf( fa->name, sizeof(fa->name), "%d(pair:%d)", sv[0], sv[1] );
     snprintf( fb->name, sizeof(fb->name), "%d(pair:%d)", sv[1], sv[0] );
-    D( "adb_socketpair: returns (%d, %d)\n", sv[0], sv[1] );
+    D( "emmcdl_socketpair: returns (%d, %d)\n", sv[0], sv[1] );
     return 0;
 
 Fail:
@@ -1247,7 +1247,7 @@ Fail:
 /*****    fdevents emulation                                          *****/
 /*****                                                                *****/
 /*****   this is a very simple implementation, we rely on the fact    *****/
-/*****   that ADB doesn't use FDE_ERROR.                              *****/
+/*****   that EMMCDL doesn't use FDE_ERROR.                              *****/
 /*****                                                                *****/
 /**************************************************************************/
 /**************************************************************************/
@@ -1440,7 +1440,7 @@ event_looper_unhook( EventLooper  looper, int  fd, int  events )
  * A fixer for WaitForMultipleObjects on condition that there are more than 64
  * handles to wait on.
  *
- * In cetain cases DDMS may establish more than 64 connections with ADB. For
+ * In cetain cases DDMS may establish more than 64 connections with EMMCDL. For
  * instance, this may happen if there are more than 64 processes running on a
  * device, or there are multiple devices connected (including the emulator) with
  * the combined number of running processes greater than 64. In this case using
@@ -1579,7 +1579,7 @@ _wait_for_all(HANDLE* handles, int handles_count)
 
     /* Start the waiting threads. */
     for (chunk = 0; chunk < chunks; chunk++) {
-        /* Note that using adb_thread_create is not appropriate here, since we
+        /* Note that using emmcdl_thread_create is not appropriate here, since we
          * need a handle to wait on for thread termination. */
         threads[chunk].thread = (HANDLE)_beginthreadex(NULL, 0, _in_waiter_thread,
                                                        &threads[chunk], 0, NULL);
@@ -1707,7 +1707,7 @@ static void fdevent_process()
         {
             int   wait_ret;
 
-            D( "adb_win32: waiting for %d events\n", looper->htab_count );
+            D( "emmcdl_win32: waiting for %d events\n", looper->htab_count );
             if (looper->htab_count > MAXIMUM_WAIT_OBJECTS) {
                 D("handle count %d exceeds MAXIMUM_WAIT_OBJECTS.\n", looper->htab_count);
                 wait_ret = _wait_for_all(looper->htab, looper->htab_count);
@@ -1715,9 +1715,9 @@ static void fdevent_process()
                 wait_ret = WaitForMultipleObjects( looper->htab_count, looper->htab, FALSE, INFINITE );
             }
             if (wait_ret == (int)WAIT_FAILED) {
-                D( "adb_win32: wait failed, error %ld\n", GetLastError() );
+                D( "emmcdl_win32: wait failed, error %ld\n", GetLastError() );
             } else {
-                D( "adb_win32: got one (index %d)\n", wait_ret );
+                D( "emmcdl_win32: got one (index %d)\n", wait_ret );
 
                 /* according to Cygwin, some objects like consoles wake up on "inappropriate" events
                  * like mouse movements. we need to filter these with the "check" function
@@ -1729,7 +1729,7 @@ static void fdevent_process()
                         if ( looper->htab[wait_ret] == hook->h       &&
                          (!hook->check || hook->check(hook)) )
                         {
-                            D( "adb_win32: signaling %s for %x\n", hook->fh->name, hook->ready );
+                            D( "emmcdl_win32: signaling %s for %x\n", hook->fh->name, hook->ready );
                             event_hook_signal( hook );
                             gotone = 1;
                             break;
@@ -1799,7 +1799,7 @@ static void fdevent_unregister(fdevent *fde)
 
     if(!(fde->state & FDE_DONT_CLOSE)) {
         dump_fde(fde, "close");
-        adb_close(fde->fd);
+        emmcdl_close(fde->fd);
     }
 }
 
@@ -2143,9 +2143,9 @@ static void  _fh_socketpair_hook( FH  fh, int  events, EventHook  hook )
 
 
 void
-adb_sysdeps_init( void )
+emmcdl_sysdeps_init( void )
 {
-#define  ADB_MUTEX(x)  InitializeCriticalSection( & x );
+#define  EMMCDL_MUTEX(x)  InitializeCriticalSection( & x );
 #include "mutex_list.h"
     InitializeCriticalSection( &_win32_lock );
 }
@@ -2176,7 +2176,7 @@ adb_sysdeps_init( void )
 // This implementation reconfigures the console with SetConsoleMode(), then
 // calls ReadConsoleInput() to get raw input which it remaps to Unix
 // terminal-style sequences which is returned via unix_read() which is used
-// by the 'adb shell' command.
+// by the 'emmcdl shell' command.
 //
 // Code organization:
 //
@@ -3036,7 +3036,7 @@ void stdin_raw_restore(const int fd) {
     }
 }
 
-// Called by 'adb shell' command to read from stdin.
+// Called by 'emmcdl shell' command to read from stdin.
 int unix_read(int fd, void* buf, size_t len) {
     if ((fd == STDIN_FILENO) && (_console_handle != NULL)) {
         // If it is a request to read from stdin, and stdin_raw_init() has been
