@@ -48,19 +48,19 @@ enum cmdEnum {
 
 typedef struct {
   char    signature[8];
-  __int32 revision;
-  __int32 header_size;
-  __int32 crc_header;
-  __int32 reserved;
+  int32_t revision;
+  int32_t header_size;
+  int32_t crc_header;
+  int32_t reserved;
   uint64  current_lba;
   uint64  backup_lba;
   uint64  first_lba;
   uint64  last_lba;
   char    disk_guid[16];
   uint64  partition_lba;
-  __int32 num_entries;
-  __int32 entry_size;
-  __int32 crc_partition;
+  int32_t num_entries;
+  int32_t entry_size;
+  int32_t crc_partition;
   char    reserved2[420];
 } gpt_header_t;
 

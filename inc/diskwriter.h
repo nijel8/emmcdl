@@ -34,8 +34,8 @@ when       who     what, where, why
 
 
 typedef struct {
-  __int32	     serialnum;
-  __int32      drivetype;
+  int32_t	     serialnum;
+  int32_t      drivetype;
   uint64      volsize;
   int          disknum;
   TCHAR        fstype[MAX_PATH+1];
