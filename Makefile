@@ -34,11 +34,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 noinst_PROGRAMS = emmcdl$(EXEEXT)
 #am__append_1 = \
-#               src/writedisk_windows.cpp\
+#               src/diskwriter_windows.cpp\
 #               src/sysdeps_win32.cpp
 
 am__append_2 = \
-               src/writedisk_linux.cpp
+               src/diskwriter_linux.cpp
 
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
@@ -57,22 +57,22 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
 am__emmcdl_SOURCES_DIST = src/crc.cpp src/dload.cpp src/emmcdl.cpp \
-	src/ffu.cpp src/firehose.cpp src/partition.cpp \
-	src/protocol.cpp src/sahara.cpp src/serialport.cpp \
-	src/sparse.cpp src/xmlparser.cpp src/writedisk_windows.cpp \
-	src/sysdeps_win32.cpp src/writedisk_linux.cpp
+	src/firehose.cpp src/ffu.cpp src/sahara.cpp src/partition.cpp \
+	src/protocol.cpp src/serialport.cpp src/sparse.cpp \
+	src/xmlparser.cpp src/diskwriter_windows.cpp \
+	src/sysdeps_win32.cpp src/diskwriter_linux.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
-#am__objects_1 = src/writedisk_windows.$(OBJEXT) \
+#am__objects_1 = src/diskwriter_windows.$(OBJEXT) \
 #	src/sysdeps_win32.$(OBJEXT)
-am__objects_2 = src/writedisk_linux.$(OBJEXT)
+am__objects_2 = src/diskwriter_linux.$(OBJEXT)
 am_emmcdl_OBJECTS = src/crc.$(OBJEXT) src/dload.$(OBJEXT) \
-	src/emmcdl.$(OBJEXT) src/ffu.$(OBJEXT) src/firehose.$(OBJEXT) \
-	src/partition.$(OBJEXT) src/protocol.$(OBJEXT) \
-	src/sahara.$(OBJEXT) src/serialport.$(OBJEXT) \
+	src/emmcdl.$(OBJEXT) src/firehose.$(OBJEXT) src/ffu.$(OBJEXT) \
+	src/sahara.$(OBJEXT) src/partition.$(OBJEXT) \
+	src/protocol.$(OBJEXT) src/serialport.$(OBJEXT) \
 	src/sparse.$(OBJEXT) src/xmlparser.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2)
 emmcdl_OBJECTS = $(am_emmcdl_OBJECTS)
-emmcdl_LDADD = $(LDADD)
+emmcdl_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -195,9 +195,10 @@ top_srcdir = .
 AUTOMAKE_OPTIONS = subdir-objects
 INCLUDES = -I$(top_srcdir)/inc
 AM_CXXFLAGS = -std=c++11
-emmcdl_SOURCES = src/crc.cpp src/dload.cpp src/emmcdl.cpp src/ffu.cpp \
-	src/firehose.cpp src/partition.cpp src/protocol.cpp \
-	src/sahara.cpp src/serialport.cpp src/sparse.cpp \
+emmcdl_LDADD = -lrt
+emmcdl_SOURCES = src/crc.cpp src/dload.cpp src/emmcdl.cpp \
+	src/firehose.cpp src/ffu.cpp src/sahara.cpp src/partition.cpp \
+	src/protocol.cpp src/serialport.cpp src/sparse.cpp \
 	src/xmlparser.cpp $(am__append_1) $(am__append_2)
 #AM_CPPFLAGS = -D_WIN32
 all: config.h
@@ -267,14 +268,14 @@ src/crc.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/dload.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/emmcdl.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/ffu.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/firehose.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/ffu.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/sahara.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/partition.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/protocol.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/sahara.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/serialport.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -282,11 +283,11 @@ src/sparse.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/xmlparser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/writedisk_windows.$(OBJEXT): src/$(am__dirstamp) \
+src/diskwriter_windows.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/sysdeps_win32.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/writedisk_linux.$(OBJEXT): src/$(am__dirstamp) \
+src/diskwriter_linux.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 emmcdl$(EXEEXT): $(emmcdl_OBJECTS) $(emmcdl_DEPENDENCIES) $(EXTRA_emmcdl_DEPENDENCIES) 
 	@rm -f emmcdl$(EXEEXT)
@@ -295,6 +296,8 @@ emmcdl$(EXEEXT): $(emmcdl_OBJECTS) $(emmcdl_DEPENDENCIES) $(EXTRA_emmcdl_DEPENDE
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f src/crc.$(OBJEXT)
+	-rm -f src/diskwriter_linux.$(OBJEXT)
+	-rm -f src/diskwriter_windows.$(OBJEXT)
 	-rm -f src/dload.$(OBJEXT)
 	-rm -f src/emmcdl.$(OBJEXT)
 	-rm -f src/ffu.$(OBJEXT)
@@ -305,14 +308,14 @@ mostlyclean-compile:
 	-rm -f src/serialport.$(OBJEXT)
 	-rm -f src/sparse.$(OBJEXT)
 	-rm -f src/sysdeps_win32.$(OBJEXT)
-	-rm -f src/writedisk_linux.$(OBJEXT)
-	-rm -f src/writedisk_windows.$(OBJEXT)
 	-rm -f src/xmlparser.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
 include src/$(DEPDIR)/crc.Po
+include src/$(DEPDIR)/diskwriter_linux.Po
+include src/$(DEPDIR)/diskwriter_windows.Po
 include src/$(DEPDIR)/dload.Po
 include src/$(DEPDIR)/emmcdl.Po
 include src/$(DEPDIR)/ffu.Po
@@ -323,8 +326,6 @@ include src/$(DEPDIR)/sahara.Po
 include src/$(DEPDIR)/serialport.Po
 include src/$(DEPDIR)/sparse.Po
 include src/$(DEPDIR)/sysdeps_win32.Po
-include src/$(DEPDIR)/writedisk_linux.Po
-include src/$(DEPDIR)/writedisk_windows.Po
 include src/$(DEPDIR)/xmlparser.Po
 
 .cpp.o:

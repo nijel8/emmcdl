@@ -31,8 +31,8 @@ when       who     what, where, why
 #include "serialport.h"
 #include "firehose.h"
 #include "ffu.h"
-#include "tchar.h"
-#include <winerror.h>
+#include "sysdeps.h"
+#include <ctype.h>
 
 using namespace std;
 
@@ -46,50 +46,50 @@ static fh_configure_t m_cfg = { 4, "emmc", false, false, true, -1,1024*1024 };
 
 int PrintHelp()
 {
-  wprintf(L"Usage: emmcdl <option> <value>\n");
-  wprintf(L"       Options:\n");
-  wprintf(L"       -l                             List available mass storage devices\n");
-  wprintf(L"       -info                          List HW information about device attached to COM (eg -p COM8 -info)\n");
-  wprintf(L"       -MaxPayloadSizeToTargetInBytes The max bytes in firehose mode (DDR or large IMEM use 16384, default=8192)\n");
-  wprintf(L"       -SkipWrite                     Do not write actual data to disk (use this for UFS provisioning)\n");
-  wprintf(L"       -SkipStorageInit               Do not initialize storage device (use this for UFS provisioning)\n");
-  wprintf(L"       -MemoryName <ufs/emmc>         Memory type default to emmc if none is specified\n");
-  wprintf(L"       -SetActivePartition <num>      Set the specified partition active for booting\n");
-  wprintf(L"       -disk_sector_size <int>        Dump from start sector to end sector to file\n");
-  wprintf(L"       -d <start> <end>               Dump from start sector to end sector to file\n");
-  wprintf(L"       -d <PartName>                  Dump entire partition based on partition name\n");
-  wprintf(L"       -e <start> <num>               Erase disk from start sector for number of sectors\n");
-  wprintf(L"       -e <PartName>                  Erase the entire partition specified\n");
-  wprintf(L"       -s <sectors>                   Number of sectors in disk image\n");
-  wprintf(L"       -p <port or disk>              Port or disk to program to (eg COM8, for PhysicalDrive1 use 1)\n");
-  wprintf(L"       -o <filename>                  Output filename\n");
-  wprintf(L"       -x <*.xml>                     Program XML file to output type -o (output) -p (port or disk)\n");
-  wprintf(L"       -f <flash programmer>          Flash programmer to load to IMEM eg MPRG8960.hex\n");
-  wprintf(L"       -i <singleimage>               Single image to load at offset 0 eg 8960_msimage.mbn\n");
-  wprintf(L"       -t                             Run performance tests\n");
-  wprintf(L"       -b <prtname> <binfile>         Write <binfile> to GPT <prtname>\n");
-  wprintf(L"       -g GPP1 GPP2 GPP3 GPP4         Create GPP partitions with sizes in MB\n");
-  wprintf(L"       -gq                            Do not prompt when creating GPP (quiet)\n");
-  wprintf(L"       -r                             Reset device\n");
-  wprintf(L"       -ffu <*.ffu>                   Download FFU image to device in emergency download need -o and -p\n");
-  wprintf(L"       -splitffu <*.ffu> -o <xmlfile> Split FFU into binary chunks and create rawprogram0.xml to output location\n");
-  wprintf(L"       -protocol <protocol>           Can be FIREHOSE, STREAMING default is FIREHOSE\n");
-  wprintf(L"       -chipset <chipset>             Can be 8960 or 8974 familes\n");
-  wprintf(L"       -gpt                           Dump the GPT from the connected device\n");
-  wprintf(L"       -raw                           Send and receive RAW data to serial port 0x75 0x25 0x10\n");  
-  wprintf(L"       -verbose                       Enable verbose output\n");
-  wprintf(L"\n\n\nExamples:");
-  wprintf(L" emmcdl -p COM8 -info\n");
-  wprintf(L" emmcdl -p COM8 -gpt\n");
-  wprintf(L" emmcdl -p COM8 -SkipWrite -SkipStorageInit -MemoryName ufs -f prog_emmc_firehose_8994_lite.mbn -x memory_configure.xml\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml -SetActivePartition 0\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -ffu wp8.ffu\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -d 0 1000 -o dump_1_1000.bin\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -d SVRawDump -o svrawdump.bin\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -b SBL1 c:\\temp\\sbl1.mbn\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -e 0 100\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -e MODEM_FSG\n");
-  wprintf(L" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -raw 0x75 0x25 0x10\n");
+  printf("Usage: emmcdl <option> <value>\n");
+  printf("       Options:\n");
+  printf("       -l                             List available mass storage devices\n");
+  printf("       -info                          List HW information about device attached to COM (eg -p COM8 -info)\n");
+  printf("       -MaxPayloadSizeToTargetInBytes The max bytes in firehose mode (DDR or large IMEM use 16384, default=8192)\n");
+  printf("       -SkipWrite                     Do not write actual data to disk (use this for UFS provisioning)\n");
+  printf("       -SkipStorageInit               Do not initialize storage device (use this for UFS provisioning)\n");
+  printf("       -MemoryName <ufs/emmc>         Memory type default to emmc if none is specified\n");
+  printf("       -SetActivePartition <num>      Set the specified partition active for booting\n");
+  printf("       -disk_sector_size <int>        Dump from start sector to end sector to file\n");
+  printf("       -d <start> <end>               Dump from start sector to end sector to file\n");
+  printf("       -d <PartName>                  Dump entire partition based on partition name\n");
+  printf("       -e <start> <num>               Erase disk from start sector for number of sectors\n");
+  printf("       -e <PartName>                  Erase the entire partition specified\n");
+  printf("       -s <sectors>                   Number of sectors in disk image\n");
+  printf("       -p <port or disk>              Port or disk to program to (eg COM8, for PhysicalDrive1 use 1)\n");
+  printf("       -o <filename>                  Output filename\n");
+  printf("       -x <*.xml>                     Program XML file to output type -o (output) -p (port or disk)\n");
+  printf("       -f <flash programmer>          Flash programmer to load to IMEM eg MPRG8960.hex\n");
+  printf("       -i <singleimage>               Single image to load at offset 0 eg 8960_msimage.mbn\n");
+  printf("       -t                             Run performance tests\n");
+  printf("       -b <prtname> <binfile>         Write <binfile> to GPT <prtname>\n");
+  printf("       -g GPP1 GPP2 GPP3 GPP4         Create GPP partitions with sizes in MB\n");
+  printf("       -gq                            Do not prompt when creating GPP (quiet)\n");
+  printf("       -r                             Reset device\n");
+  printf("       -ffu <*.ffu>                   Download FFU image to device in emergency download need -o and -p\n");
+  printf("       -splitffu <*.ffu> -o <xmlfile> Split FFU into binary chunks and create rawprogram0.xml to output location\n");
+  printf("       -protocol <protocol>           Can be FIREHOSE, STREAMING default is FIREHOSE\n");
+  printf("       -chipset <chipset>             Can be 8960 or 8974 familes\n");
+  printf("       -gpt                           Dump the GPT from the connected device\n");
+  printf("       -raw                           Send and receive RAW data to serial port 0x75 0x25 0x10\n");
+  printf("       -verbose                       Enable verbose output\n");
+  printf("\n\n\nExamples:");
+  printf(" emmcdl -p COM8 -info\n");
+  printf(" emmcdl -p COM8 -gpt\n");
+  printf(" emmcdl -p COM8 -SkipWrite -SkipStorageInit -MemoryName ufs -f prog_emmc_firehose_8994_lite.mbn -x memory_configure.xml\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml -SetActivePartition 0\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -ffu wp8.ffu\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -d 0 1000 -o dump_1_1000.bin\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -d SVRawDump -o svrawdump.bin\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -b SBL1 c:\\temp\\sbl1.mbn\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -e 0 100\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -e MODEM_FSG\n");
+  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -raw 0x75 0x25 0x10\n");
   return -1;
 }
 
@@ -97,26 +97,26 @@ void StringToByte(char **szSerialData, unsigned char *data, int len)
 {
   for(int i=0; i < len; i++) {
    char *hex = szSerialData[i];
-   if( wcsncmp(hex,L"0x",2) == 0 ) {
+   if( strncmp(hex,"0x",2) == 0 ) {
      unsigned char val1 = (unsigned char)(hex[2] - '0');
      unsigned char val2 = (unsigned char)(hex[3] - '0');
      if( val1 > 9 ) val1 = val1 - 7;
      if( val2 > 9 ) val2 = val2 - 7;
      data[i] = (val1 << 4) + val2;
    } else {
-      data[i] = (unsigned char)_wtoi(szSerialData[i]);
+      data[i] = (unsigned char)atoi(szSerialData[i]);
    }
   }
 }
 
 int RawSerialSend(int dnum, char **szSerialData, int len)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
   unsigned char data[256];
 
   // Make sure the number of bytes of data we are trying to send is valid
   if( len < 1 || len > sizeof(data) ) {
-    return ERROR_INVALID_PARAMETER;
+    return EINVAL;
   }
 
   m_port.Open(dnum);
@@ -128,40 +128,40 @@ int RawSerialSend(int dnum, char **szSerialData, int len)
 
 int LoadFlashProg(char *mprgFile)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
   // This is PBL so depends on the chip type
 
   if( m_chipset == 8974 ) {
     Sahara sh(&m_port);
-    if( status != ERROR_SUCCESS ) return status;
+    if( status != 0 ) return status;
     status = sh.ConnectToDevice(true,0);
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Downloading flash programmer: %s\n",mprgFile);
+    if( status != 0 ) return status;
+    printf("Downloading flash programmer: %s\n",mprgFile);
     status = sh.LoadFlashProg(mprgFile);
-    if( status != ERROR_SUCCESS ) return status;
+    if( status != 0 ) return status;
   } else {
     Dload dl(&m_port);
-    if( status != ERROR_SUCCESS ) return status;
+    if( status != 0 ) return status;
     status = dl.IsDeviceInDload();
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Downloading flash programmer: %s\n",mprgFile);
+    if( status != 0 ) return status;
+    printf("Downloading flash programmer: %s\n",mprgFile);
     status = dl.LoadFlashProg(mprgFile);
-    if( status != ERROR_SUCCESS ) return status;
+    if( status != 0 ) return status;
   }
   return status;
 }
 
 int EraseDisk(__uint64_t start, __uint64_t num, int dnum, char *szPartName)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
 
   if (m_emergency) {
 	  Firehose fh(&m_port);
     fh.SetDiskSectorSize(m_sector_size);
     if (m_verbose) fh.EnableVerbose();
 	  status = fh.ConnectToFlashProg(&m_cfg);
-	  if (status != ERROR_SUCCESS) return status;
-	  wprintf(L"Connected to flash programmer, starting download\n");
+	  if (status != 0) return status;
+	  printf("Connected to flash programmer, starting download\n");
 	  fh.WipeDiskContents(start, num, szPartName);
   } else {
     DiskWriter dw;
@@ -169,9 +169,9 @@ int EraseDisk(__uint64_t start, __uint64_t num, int dnum, char *szPartName)
     dw.InitDiskList(false);
   
     status = dw.OpenDevice(dnum);
-    if( status == ERROR_SUCCESS ) {
-      wprintf(L"Successfully opened volume\n");
-      wprintf(L"Erase at start_sector %I64d: num_sectors: %I64d\n",start, num);
+    if( status == 0 ) {
+      printf("Successfully opened volume\n");
+      printf("Erase at start_sector %lld: num_sectors: %lld\n",start, num);
       status = dw.WipeDiskContents( start,num, szPartName );
     }
     dw.CloseDevice();
@@ -181,24 +181,24 @@ int EraseDisk(__uint64_t start, __uint64_t num, int dnum, char *szPartName)
 
 int DumpDeviceInfo(void)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
   Sahara sh(&m_port);
   if (m_protocol == FIREHOSE_PROTOCOL) {
     pbl_info_t pbl_info;
     status = sh.DumpDeviceInfo(&pbl_info);
-    if (status == ERROR_SUCCESS) {
-      wprintf(L"SerialNumber: 0x%08x\n", pbl_info.serial);
-      wprintf(L"MSM_HW_ID: 0x%08x\n", pbl_info.msm_id);
-      wprintf(L"OEM_PK_HASH: 0x");
+    if (status == 0) {
+      printf("SerialNumber: 0x%08x\n", pbl_info.serial);
+      printf("MSM_HW_ID: 0x%08x\n", pbl_info.msm_id);
+      printf("OEM_PK_HASH: 0x");
       for (int i = 0; i < sizeof(pbl_info.pk_hash); i++) {
-        wprintf(L"%02x", pbl_info.pk_hash[i]);
+        printf("%02x", pbl_info.pk_hash[i]);
       }
-      wprintf(L"\nSBL SW Version: 0x%08x\n", pbl_info.pbl_sw);
+      printf("\nSBL SW Version: 0x%08x\n", pbl_info.pbl_sw);
     }
   }
   else {
-    wprintf(L"Only devices with Sahara support this information\n");
-    status = ERROR_INVALID_PARAMETER;
+    printf("Only devices with Sahara support this information\n");
+    status = EINVAL;
   }
 
   return status;
@@ -214,9 +214,9 @@ int WipeDisk(int dnum)
   dw.InitDiskList();
   
   status = dw.OpenDevice(dnum);
-  if( status == ERROR_SUCCESS ) {
-    wprintf(L"Successfully opened volume\n");
-    wprintf(L"Wipping GPT and MBR\n");
+  if( status == 0 ) {
+    printf("Successfully opened volume\n");
+    printf("Wipping GPT and MBR\n");
     status = dw.WipeLayout();
   }
   dw.CloseDevice();
@@ -225,17 +225,17 @@ int WipeDisk(int dnum)
 
 int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
 
   if( m_protocol == STREAMING_PROTOCOL ) { 
     Dload dl(&m_port);
   
     // Wait for device to re-enumerate with flashprg
     status = dl.ConnectToFlashProg(4);
-    if( status != ERROR_SUCCESS ) return status;
+    if( status != 0 ) return status;
     status = dl.OpenPartition(PRTN_EMMCUSER);
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Connected to flash programmer, creating GPP\n");
+    if( status != 0 ) return status;
+    printf("Connected to flash programmer, creating GPP\n");
     status = dl.CreateGPP(dwGPP1,dwGPP2,dwGPP3,dwGPP4);
   
   } else if(m_protocol == FIREHOSE_PROTOCOL) {
@@ -243,8 +243,8 @@ int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4
     fh.SetDiskSectorSize(m_sector_size);
     if (m_verbose) fh.EnableVerbose();
     status = fh.ConnectToFlashProg(&m_cfg);
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Connected to flash programmer, creating GPP\n");
+    if( status != 0 ) return status;
+    printf("Connected to flash programmer, creating GPP\n");
     status = fh.CreateGPP(dwGPP1/2,dwGPP2/2,dwGPP3/2,dwGPP4/2);
     status = fh.SetActivePartition(1);
   }    
@@ -261,15 +261,15 @@ int ReadGPT(int dnum)
     fh.SetDiskSectorSize(m_sector_size);
     if(m_verbose) fh.EnableVerbose();
     status = fh.ConnectToFlashProg(&m_cfg);
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Connected to flash programmer, starting download\n");
+    if( status != 0 ) return status;
+    printf("Connected to flash programmer, starting download\n");
     fh.ReadGPT(true);
   } else {
     DiskWriter dw;
     dw.InitDiskList();
     status = dw.OpenDevice(dnum);
   
-    if( status == ERROR_SUCCESS ) {
+    if( status == 0 ) {
       status = dw.ReadGPT(true);
     }
 
@@ -287,15 +287,15 @@ int WriteGPT(int dnum, char *szPartName, char *szBinFile)
     fh.SetDiskSectorSize(m_sector_size);
     if (m_verbose) fh.EnableVerbose();
     status = fh.ConnectToFlashProg(&m_cfg);
-    if (status != ERROR_SUCCESS) return status;
-    wprintf(L"Connected to flash programmer, starting download\n");
+    if (status != 0) return status;
+    printf("Connected to flash programmer, starting download\n");
     status = fh.WriteGPT(szPartName, szBinFile);
   }
   else {
     DiskWriter dw;
     dw.InitDiskList();
     status = dw.OpenDevice(dnum);
-    if (status == ERROR_SUCCESS) {
+    if (status == 0) {
       status = dw.WriteGPT(szPartName, szBinFile);
     }
     dw.CloseDevice();
@@ -306,8 +306,8 @@ int WriteGPT(int dnum, char *szPartName, char *szBinFile)
 int ResetDevice()
 {
   Dload dl(&m_port);
-  int status = ERROR_SUCCESS;
-  if( status != ERROR_SUCCESS ) return status;
+  int status = 0;
+  if( status != 0 ) return status;
   status = dl.DeviceReset();
   return status;
 }
@@ -315,15 +315,15 @@ int ResetDevice()
 int FFUProgram(char *szFFUFile)
 {
   FFUImage ffu;
-  int status = ERROR_SUCCESS;
+  int status = 0;
   Firehose fh(&m_port);
   fh.SetDiskSectorSize(m_sector_size);
   status = fh.ConnectToFlashProg(&m_cfg);
-  if (status != ERROR_SUCCESS) return status;
-  wprintf(L"Trying to open FFU\n");
+  if (status != 0) return status;
+  printf("Trying to open FFU\n");
   status = ffu.PreLoadImage(szFFUFile);
-  if (status != ERROR_SUCCESS) return status;
-  wprintf(L"Valid FFU found trying to program image\n");
+  if (status != 0) return status;
+  printf("Valid FFU found trying to program image\n");
   status = ffu.ProgramImage(&fh, 0);
   ffu.CloseFFUFile();
   return status;
@@ -331,13 +331,13 @@ int FFUProgram(char *szFFUFile)
 
 int FFULoad(char *szFFUFile, char *szPartName, char *szOutputFile)
 {
-  int status = ERROR_SUCCESS;
-  wprintf(_T("Loading FFU\n"));
+  int status = 0;
+  printf("Loading FFU\n");
   if( (szFFUFile != NULL) && (szOutputFile != NULL)) {
     FFUImage ffu;
     ffu.SetDiskSectorSize(m_sector_size);
     status = ffu.PreLoadImage(szFFUFile);
-    if( status == ERROR_SUCCESS ) 
+    if( status == 0 )
       status = ffu.SplitFFUBin(szPartName,szOutputFile);
     status = ffu.CloseFFUFile();
   } else {
@@ -348,8 +348,8 @@ int FFULoad(char *szFFUFile, char *szPartName, char *szOutputFile)
 
 int FFURawProgram(char *szFFUFile, char *szOutputFile)
 {
-  int status = ERROR_SUCCESS;
-  wprintf(_T("Creating rawprogram and files\n"));
+  int status = 0;
+  printf("Creating rawprogram and files\n");
   if( (szFFUFile != NULL) && (szOutputFile != NULL)) {
     FFUImage ffu;
     ffu.SetDiskSectorSize(m_sector_size);
@@ -364,7 +364,7 @@ int FFURawProgram(char *szFFUFile, char *szOutputFile)
 
 int EDownloadProgram(char *szSingleImage, char **szXMLFile)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
   Dload dl(&m_port);
   Firehose fh(&m_port);
   unsigned char prtn=0;
@@ -372,8 +372,8 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
   if( szSingleImage != NULL ) {
     // Wait for device to re-enumerate with flashprg
     status = dl.ConnectToFlashProg(2);
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Connected to flash programmer, starting download\n");
+    if( status != 0 ) return status;
+    printf("Connected to flash programmer, starting download\n");
     dl.OpenPartition(PRTN_EMMCUSER);
     status = dl.LoadImage(szSingleImage);
     dl.ClosePartition();
@@ -381,26 +381,26 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
     // Wait for device to re-enumerate with flashprg
     if( m_protocol == STREAMING_PROTOCOL ) {
       status = dl.ConnectToFlashProg(4);
-      if( status != ERROR_SUCCESS ) return status;
-      wprintf(L"Connected to flash programmer, starting download\n");
+      if( status != 0 ) return status;
+      printf("Connected to flash programmer, starting download\n");
       
       // Download all XML files to device 
       for(int i=0; szXMLFile[i] != NULL; i++) {
         // Use new method to download XML to serial port
         char szPatchFile[MAX_STRING_LEN];
-        wcsncpy_s(szPatchFile,szXMLFile[i],sizeof(szPatchFile));
-        StringReplace(szPatchFile,L"rawprogram",L"patch");
-        char *sptr = wcsstr(szXMLFile[i],L".xml");
-        if( sptr == NULL ) return ERROR_INVALID_PARAMETER;
+        strncpy(szPatchFile,szXMLFile[i],sizeof(szPatchFile));
+        StringReplace(szPatchFile,"rawprogram","patch");
+        char *sptr = strstr(szXMLFile[i],".xml");
+        if( sptr == NULL ) return EINVAL;
         prtn = (unsigned char)((*--sptr) - '0' + PRTN_EMMCUSER);
-        wprintf(L"Opening partition %i\n",prtn);
+        printf("Opening partition %i\n",prtn);
         dl.OpenPartition(prtn);
-        //Sleep(1);
+        //sleep(1);
         status = dl.WriteRawProgramFile(szPatchFile);
-        if( status != ERROR_SUCCESS ) return status;
+        if( status != 0 ) return status;
         status = dl.WriteRawProgramFile(szXMLFile[i]);
       }
-      wprintf(L"Setting Active partition to %i\n",(prtn - PRTN_EMMCUSER));  
+      printf("Setting Active partition to %i\n",(prtn - PRTN_EMMCUSER));
       dl.SetActivePartition();
       dl.DeviceReset();
       dl.ClosePartition();
@@ -408,27 +408,27 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       fh.SetDiskSectorSize(m_sector_size);
       if(m_verbose) fh.EnableVerbose();
       status = fh.ConnectToFlashProg(&m_cfg);
-      if( status != ERROR_SUCCESS ) return status;
-      wprintf(L"Connected to flash programmer, starting download\n");
+      if( status != 0 ) return status;
+      printf("Connected to flash programmer, starting download\n");
 
       // Download all XML files to device
       for (int i = 0; szXMLFile[i] != NULL; i++) {
         Partition rawprg(0);
         status = rawprg.PreLoadImage(szXMLFile[i]);
-        if (status != ERROR_SUCCESS) return status;
+        if (status != 0) return status;
         status = rawprg.ProgramImage(&fh);
 
         // Only try to do patch if filename has rawprogram in it
-        char *sptr = wcsstr(szXMLFile[i], L"rawprogram");
-        if (sptr != NULL && status == ERROR_SUCCESS) {
+        char *sptr = strstr(szXMLFile[i], "rawprogram");
+        if (sptr != NULL && status == 0) {
           Partition patch(0);
-          int pstatus = ERROR_SUCCESS;
+          int pstatus = 0;
           // Check if patch file exist
           char szPatchFile[MAX_STRING_LEN];
-          wcsncpy_s(szPatchFile, szXMLFile[i], sizeof(szPatchFile));
-          StringReplace(szPatchFile, L"rawprogram", L"patch");
+          strncpy(szPatchFile, szXMLFile[i], sizeof(szPatchFile));
+          StringReplace(szPatchFile, "rawprogram", "patch");
           pstatus = patch.PreLoadImage(szPatchFile);
-          if( pstatus == ERROR_SUCCESS ) patch.ProgramImage(&fh);
+          if( pstatus == 0 ) patch.ProgramImage(&fh);
         }
       }
 
@@ -446,7 +446,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
 int RawDiskProgram(char **pFile, char *oFile, __uint64_t dnum)
 {
   DiskWriter dw;
-  int status = ERROR_SUCCESS;
+  int status = 0;
 
   // Depending if we want to write to disk or file get appropriate handle
   if( oFile != NULL ) {
@@ -457,12 +457,12 @@ int RawDiskProgram(char **pFile, char *oFile, __uint64_t dnum)
     dw.InitDiskList();
     status = dw.OpenDevice(disk);
   }
-  if( status == ERROR_SUCCESS ) {
-    wprintf(L"Successfully opened disk\n");
+  if( status == 0 ) {
+    printf("Successfully opened disk\n");
     for(int i=0; pFile[i] != NULL; i++) {
       Partition p(dw.GetNumDiskSectors());
       status = p.PreLoadImage(pFile[i]);
-      if (status != ERROR_SUCCESS) return status;
+      if (status != 0) return status;
       status = p.ProgramImage(&dw);
     }
   }
@@ -474,18 +474,18 @@ int RawDiskProgram(char **pFile, char *oFile, __uint64_t dnum)
 int RawDiskTest(int dnum, __uint64_t offset)
 {
   DiskWriter dw;
-  int status = ERROR_SUCCESS;
+  int status = 0;
   offset = 0x2000000;
 
   // Initialize and print disk list
   dw.InitDiskList();
   status = dw.OpenDevice(dnum);
-  if( status == ERROR_SUCCESS ) {
-    wprintf(L"Successfully opened volume\n");
+  if( status == 0 ) {
+    printf("Successfully opened volume\n");
     //status = dw.CorruptionTest(offset);
     status = dw.DiskTest(offset);
   } else {
-    wprintf(L"Failed to open volume\n");
+    printf("Failed to open volume\n");
   }
 
   dw.CloseDevice();
@@ -495,25 +495,25 @@ int RawDiskTest(int dnum, __uint64_t offset)
 int RawDiskDump(__uint64_t start, __uint64_t num, char *oFile, int dnum, char *szPartName)
 {
   DiskWriter dw;
-  int status = ERROR_SUCCESS;
+  int status = 0;
 
   // Get extra info from the user via command line
-  wprintf(L"Dumping at start sector: %I64d for sectors: %I64d to file: %s\n",start, num, oFile);
+  printf("Dumping at start sector: %lld for sectors: %lld to file: %s\n",start, num, oFile);
   if( m_emergency ) {
     Firehose fh(&m_port);
     fh.SetDiskSectorSize(m_sector_size);
     if(m_verbose) fh.EnableVerbose();
-    if( status != ERROR_SUCCESS ) return status;
+    if( status != 0 ) return status;
     status = fh.ConnectToFlashProg(&m_cfg);
-    if( status != ERROR_SUCCESS ) return status;
-    wprintf(L"Connected to flash programmer, starting dump\n");
+    if( status != 0 ) return status;
+    printf("Connected to flash programmer, starting dump\n");
     status = fh.DumpDiskContents(start,num,oFile,0,szPartName);
   } else {
     // Initialize and print disk list
     dw.InitDiskList();
     status = dw.OpenDevice(dnum);
-    if( status == ERROR_SUCCESS ) {
-      wprintf(L"Successfully opened volume\n");
+    if( status == 0 ) {
+      printf("Successfully opened volume\n");
       status = dw.DumpDiskContents(start,num,oFile,0,szPartName);
     }
     dw.CloseDevice();
@@ -526,14 +526,14 @@ int DiskList()
   DiskWriter dw;
   dw.InitDiskList();
   
-  return ERROR_SUCCESS;
+  return 0;
 }
 
-int __cdecl _tmain(int argc, _char* argv[])
+int main(int argc, char * argv[])
 {
   int dnum = -1;
   int status = 0;
-  bool bEmergdl = FALSE;
+  bool bEmergdl = false;
   char *szOutputFile = NULL;
   char *szXMLFile[8] = {NULL};
   char **szSerialData = {NULL};
@@ -547,10 +547,10 @@ int __cdecl _tmain(int argc, _char* argv[])
   __uint64_t uiNumSectors = 0;
   __uint64_t uiOffset = 0x40000000;
   uint32_t dwGPP1=0,dwGPP2=0,dwGPP3=0,dwGPP4=0;
-  bool bGppQuiet = FALSE;
+  bool bGppQuiet = false;
 
   // Print out the version first thing so we know this
-  wprintf(_T("Version %i.%i\n"), VERSION_MAJOR, VERSION_MINOR);
+  printf("Version %i.%i\n", VERSION_MAJOR, VERSION_MINOR);
 
   if( argc < 2) {
     return PrintHelp();
@@ -559,95 +559,95 @@ int __cdecl _tmain(int argc, _char* argv[])
   // Loop through all our input arguments 
   for(int i=1; i < argc; i++) {
     // Do a list inline
-    if( _wcsicmp(argv[i], L"-l") == 0 ) {
+    if( strcasecmp(argv[i], "-l") == 0 ) {
       DiskWriter dw;
       dw.InitDiskList(false);
     }
-    if (_wcsicmp(argv[i], L"-lv") == 0) {
+    if (strcasecmp(argv[i], "-lv") == 0) {
       DiskWriter dw;
       dw.InitDiskList(true);
     }
-    if (_wcsicmp(argv[i], L"-r") == 0) {
+    if (strcasecmp(argv[i], "-r") == 0) {
       cmd = EMMC_CMD_RESET;
     }
-    if (_wcsicmp(argv[i], L"-o") == 0) {
+    if (strcasecmp(argv[i], "-o") == 0) {
       // Update command with output filename
       szOutputFile = argv[++i];
     }
-    if (_wcsicmp(argv[i], L"-disk_sector_size") == 0) {
+    if (strcasecmp(argv[i], "-disk_sector_size") == 0) {
       // Update the global disk sector size
-      m_sector_size = _wtoi(argv[++i]);
+      m_sector_size = atoi(argv[++i]);
     }
-    if (_wcsicmp(argv[i], L"-d") == 0) {
+    if (strcasecmp(argv[i], "-d") == 0) {
       // Dump from start for number of sectors
       cmd = EMMC_CMD_DUMP;
       // If the next param is alpha then pass in as partition name other wise use sectors
-      if (iswdigit(argv[i+1][0])) {
-        uiStartSector = _wtoi(argv[++i]);
-        uiNumSectors = _wtoi(argv[++i]);
+      if (isdigit(argv[i+1][0])) {
+        uiStartSector = atoi(argv[++i]);
+        uiNumSectors = atoi(argv[++i]);
       } else {
         szPartName = argv[++i];
       }
     }
-    if (_wcsicmp(argv[i], L"-e") == 0) {
+    if (strcasecmp(argv[i], "-e") == 0) {
       cmd = EMMC_CMD_ERASE;
       // If the next param is alpha then pass in as partition name other wise use sectors
-      if (iswdigit(argv[i + 1][0])) {
-        uiStartSector = _wtoi(argv[++i]);
-        uiNumSectors = _wtoi(argv[++i]);
+      if (isdigit(argv[i + 1][0])) {
+        uiStartSector = atoi(argv[++i]);
+        uiNumSectors = atoi(argv[++i]);
       }
       else {
         szPartName = argv[++i];
       }
     }
-    if (_wcsicmp(argv[i], L"-w") == 0) {
+    if (strcasecmp(argv[i], "-w") == 0) {
       cmd = EMMC_CMD_WIPE;
     }
-    if (_wcsicmp(argv[i], L"-x") == 0) {
+    if (strcasecmp(argv[i], "-x") == 0) {
       cmd = EMMC_CMD_WRITE;
       szXMLFile[dwXMLCount++] = argv[++i];
     }
-    if (_wcsicmp(argv[i], L"-p") == 0) {
+    if (strcasecmp(argv[i], "-p") == 0) {
       // Everyone wants to use format COM8 so detect this and accept this as well
-      if( _wcsnicmp(argv[i+1], L"COM",3) == 0 ) {
-        dnum = _wtoi((argv[++i]+3));
+      if( strncasecmp(argv[i+1], "COM",3) == 0 ) {
+        dnum = atoi((argv[++i]+3));
       } else {
-        dnum = _wtoi(argv[++i]);
+        dnum = atoi(argv[++i]);
       }
     }
-    if (_wcsicmp(argv[i], L"-s") == 0) {
-      uiNumSectors = _wtoi(argv[++i]);
+    if (strcasecmp(argv[i], "-s") == 0) {
+      uiNumSectors = atoi(argv[++i]);
     }
-    if (_wcsicmp(argv[i], L"-f") == 0) {
+    if (strcasecmp(argv[i], "-f") == 0) {
       szFlashProg = argv[++i];
       bEmergdl = true;
     }
-    if (_wcsicmp(argv[i], L"-i") == 0) {
+    if (strcasecmp(argv[i], "-i") == 0) {
       cmd = EMMC_CMD_WRITE;
       szSingleImage = argv[++i];
       bEmergdl = true;
     }
-    if (_wcsicmp(argv[i], L"-t") == 0) {
+    if (strcasecmp(argv[i], "-t") == 0) {
       cmd = EMMC_CMD_TEST;
       if( i < argc ) {
-        uiOffset = (__uint64_t )(_wtoi(argv[++i])) * 512;
+        uiOffset = (__uint64_t )(atoi(argv[++i])) * 512;
       }
     }
-    if (_wcsicmp(argv[i], L"-g") == 0) {
+    if (strcasecmp(argv[i], "-g") == 0) {
       if( (i + 4) < argc ) {
         cmd = EMMC_CMD_GPP;
-        dwGPP1 = _wtoi(argv[++i]);
-        dwGPP2 = _wtoi(argv[++i]);
-        dwGPP3 = _wtoi(argv[++i]);
-        dwGPP4 = _wtoi(argv[++i]);
+        dwGPP1 = atoi(argv[++i]);
+        dwGPP2 = atoi(argv[++i]);
+        dwGPP3 = atoi(argv[++i]);
+        dwGPP4 = atoi(argv[++i]);
       } else {
         PrintHelp();
       }
     }
-    if (_wcsicmp(argv[i], L"-gq") == 0) {
-      bGppQuiet = TRUE;
+    if (strcasecmp(argv[i], "-gq") == 0) {
+      bGppQuiet = true;
 	}
-    if (_wcsicmp(argv[i], L"-b") == 0) {
+    if (strcasecmp(argv[i], "-b") == 0) {
       if( (i+2) < argc ) {
         cmd = EMMC_CMD_WRITE_GPT;
         szPartName = argv[++i];
@@ -657,15 +657,15 @@ int __cdecl _tmain(int argc, _char* argv[])
       }
     }
 
-    if (_wcsicmp(argv[i], L"-gpt") == 0) {
+    if (strcasecmp(argv[i], "-gpt") == 0) {
       cmd = EMMC_CMD_GPT;
     }
 
-    if (_wcsicmp(argv[i], L"-info") == 0) {
+    if (strcasecmp(argv[i], "-info") == 0) {
       cmd = EMMC_CMD_INFO;
     }
 
-    if (_wcsicmp(argv[i], L"-ffu") == 0) {
+    if (strcasecmp(argv[i], "-ffu") == 0) {
       if( (i+1) < argc ) {
         szFFUImage = argv[++i];
         cmd = EMMC_CMD_LOAD_FFU;
@@ -674,7 +674,7 @@ int __cdecl _tmain(int argc, _char* argv[])
       }
     }
 
-    if (_wcsicmp(argv[i], L"-dumpffu") == 0) {
+    if (strcasecmp(argv[i], "-dumpffu") == 0) {
       if( (i+1) < argc ) {
         szFFUImage = argv[++i];
         szPartName = argv[++i];
@@ -684,7 +684,7 @@ int __cdecl _tmain(int argc, _char* argv[])
       }
     }
 
-    if (_wcsicmp(argv[i], L"-raw") == 0) {
+    if (strcasecmp(argv[i], "-raw") == 0) {
       if( (i+1) < argc ) {
         szSerialData = &argv[i+1];
         cmd = EMMC_CMD_RAW;
@@ -694,7 +694,7 @@ int __cdecl _tmain(int argc, _char* argv[])
 	  break;
     }
 
-    if (_wcsicmp(argv[i], L"-splitffu") == 0) {
+    if (strcasecmp(argv[i], "-splitffu") == 0) {
       if( (i+1) < argc ) {
         szFFUImage = argv[++i];
         cmd = EMMC_CMD_SPLIT_FFU;
@@ -703,11 +703,11 @@ int __cdecl _tmain(int argc, _char* argv[])
       }
     }
 
-    if (_wcsicmp(argv[i], L"-protocol") == 0) {
+    if (strcasecmp(argv[i], "-protocol") == 0) {
       if( (i+1) < argc ) {
-        if( wcscmp(argv[i+1], L"STREAMING") == 0 ) {
+        if( strcmp(argv[i+1], "STREAMING") == 0 ) {
           m_protocol = STREAMING_PROTOCOL;
-        } else if( wcscmp(argv[i+1], L"FIREHOSE") == 0 ) {
+        } else if( strcmp(argv[i+1], "FIREHOSE") == 0 ) {
           m_protocol = FIREHOSE_PROTOCOL;
         }
       } else {
@@ -715,11 +715,11 @@ int __cdecl _tmain(int argc, _char* argv[])
       }
     }
 
-    if (_wcsicmp(argv[i], L"-chipset") == 0) {
+    if (strcasecmp(argv[i], "-chipset") == 0) {
       if( (i+1) < argc ) {
-        if (_wcsicmp(argv[i + 1], L"8960") == 0) {
+        if (strcasecmp(argv[i + 1], "8960") == 0) {
           m_chipset = 8960;
-        } else if( _wcsicmp(argv[i+1], L"8974") == 0 ) {
+        } else if( strcasecmp(argv[i+1], "8974") == 0 ) {
           m_chipset = 8974;
         }
       } else {
@@ -727,39 +727,39 @@ int __cdecl _tmain(int argc, _char* argv[])
       }
     }
 
-    if (_wcsicmp(argv[i], L"-MaxPayloadSizeToTargetInBytes") == 0) {
+    if (strcasecmp(argv[i], "-MaxPayloadSizeToTargetInBytes") == 0) {
       if ((i + 1) < argc) {
-        m_cfg.MaxPayloadSizeToTargetInBytes = _wtoi(argv[++i]);
+        m_cfg.MaxPayloadSizeToTargetInBytes = atoi(argv[++i]);
       }
       else {
         PrintHelp();
       }
     }
 
-    if (_wcsicmp(argv[i], L"-SkipWrite") == 0) {
+    if (strcasecmp(argv[i], "-SkipWrite") == 0) {
       m_cfg.SkipWrite = true;
     }
 
-    if (_wcsicmp(argv[i], L"-SkipStorageInit") == 0) {
+    if (strcasecmp(argv[i], "-SkipStorageInit") == 0) {
       m_cfg.SkipStorageInit = true;
     }
 
-    if (_wcsicmp(argv[i], L"-SetActivePartition") == 0) {
+    if (strcasecmp(argv[i], "-SetActivePartition") == 0) {
       if ((i + 1) < argc) {
-        m_cfg.ActivePartition = _wtoi(argv[++i]);
+        m_cfg.ActivePartition = atoi(argv[++i]);
       } else {
         PrintHelp();
       }
     }
 
-    if (_wcsicmp(argv[i], L"-MemoryName") == 0) {
+    if (strcasecmp(argv[i], "-MemoryName") == 0) {
       if ((i + 1) < argc) {
         i++;
-        if (_wcsicmp(argv[i], L"emmc") == 0) {
-          strcpy_s(m_cfg.MemoryName,sizeof(m_cfg.MemoryName),"emmc");
+        if (strcasecmp(argv[i], "emmc") == 0) {
+          strcpy(m_cfg.MemoryName,"emmc");
         }
-        else if (_wcsicmp(argv[i], L"ufs") == 0) {
-          strcpy_s(m_cfg.MemoryName,sizeof(m_cfg.MemoryName), "ufs");
+        else if (strcasecmp(argv[i], "ufs") == 0) {
+          strcpy(m_cfg.MemoryName, "ufs");
         }
       }
       else {
@@ -771,12 +771,12 @@ int __cdecl _tmain(int argc, _char* argv[])
   if( szFlashProg != NULL ) {
      m_port.Open(dnum);
      status = LoadFlashProg(szFlashProg);
-     if (status == ERROR_SUCCESS) {
-       wprintf(_T("Waiting for flash programmer to boot\n"));
-       Sleep(2000);
+     if (status == 0) {
+       printf("Waiting for flash programmer to boot\n");
+       sleep(2000);
      }
      else {
-       wprintf(_T("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n"));
+       printf("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n");
      }
      m_emergency = true;
   }
@@ -785,14 +785,14 @@ int __cdecl _tmain(int argc, _char* argv[])
   switch(cmd) {
   case EMMC_CMD_DUMP:
     if( szOutputFile && (dnum >= 0)) {
-      wprintf(_T("Dumping data to file %s\n"),szOutputFile);
+      printf("Dumping data to file %s\n",szOutputFile);
       status = RawDiskDump(uiStartSector, uiNumSectors, szOutputFile, dnum, szPartName);
     } else {
       return PrintHelp();
     }
     break;
   case EMMC_CMD_ERASE:
-    wprintf(_T("Erasing Disk\n"));
+    printf("Erasing Disk\n");
     status = EraseDisk(uiStartSector,uiNumSectors,dnum, szPartName);
     break;
   case EMMC_CMD_SPLIT_FFU:
@@ -811,37 +811,37 @@ int __cdecl _tmain(int argc, _char* argv[])
     if( m_emergency ) {
       status = EDownloadProgram(szSingleImage, szXMLFile);
     } else {
-      wprintf(_T("Programming image\n"));
+      printf("Programming image\n");
       status = RawDiskProgram(szXMLFile, szOutputFile, dnum);
     }
     break;
   case EMMC_CMD_WIPE:
-    wprintf(_T("Wipping Disk\n"));
+    printf("Wipping Disk\n");
     if( dnum > 0 ) {
       status = WipeDisk(dnum);
     }
     break;
   case EMMC_CMD_RAW:
-    wprintf(_T("Sending RAW data to COM%i\n"),dnum);
+    printf("Sending RAW data to COM%i\n",dnum);
     status = RawSerialSend(dnum, szSerialData,argc-4);
     break;
   case EMMC_CMD_TEST:
-    wprintf(_T("Running performance tests disk %i\n"),dnum);
+    printf("Running performance tests disk %i\n",dnum);
     status = RawDiskTest(dnum,uiOffset);
     break;
   case EMMC_CMD_GPP:
-    wprintf(_T("Create GPP1=%iMB, GPP2=%iMB, GPP3=%iMB, GPP4=%iMB\n"),(int)dwGPP1,(int)dwGPP2,(int)dwGPP3,(int)dwGPP4);
+    printf("Create GPP1=%iMB, GPP2=%iMB, GPP3=%iMB, GPP4=%iMB\n",(int)dwGPP1,(int)dwGPP2,(int)dwGPP3,(int)dwGPP4);
 	if(!bGppQuiet) {
-      wprintf(_T("Are you sure? (y/n)"));
+      printf("Are you sure? (y/n)");
       if( getchar() != 'y') {
-        wprintf(_T("\nGood choice back to safety\n"));
+        printf("\nGood choice back to safety\n");
 		break;
 	  }
 	}
-    wprintf(_T("Sending command to create GPP\n"));
+    printf("Sending command to create GPP\n");
     status = CreateGPP(dwGPP1*1024*2,dwGPP2*1024*2,dwGPP3*1024*2,dwGPP4*1024*2);
-    if( status == ERROR_SUCCESS ) {
-      wprintf(_T("Power cycle device to complete operation\n"));
+    if( status == 0 ) {
+      printf("Power cycle device to complete operation\n");
     }
 	break;
   case EMMC_CMD_WRITE_GPT:
@@ -867,19 +867,8 @@ int __cdecl _tmain(int argc, _char* argv[])
   }
  
   // Print error information
-  LPVOID lpMsgBuf;
-
-  FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        status,
-        MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-        (LPTSTR) &lpMsgBuf,
-        0, NULL );
 
   // Display the error message and exit the process
-  wprintf(_T("Status: %i %s\n"),status, (char*)lpMsgBuf);
+  printf("Status: %i %s\n",status, (char*)"TODO");
   return status;
 }

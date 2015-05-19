@@ -24,11 +24,7 @@ when       who     what, where, why
 #include "serialport.h"
 #include "partition.h"
 #include <stdio.h>
-#ifdef _WIN32
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#endif
+#include "sysdeps.h"
 
 #define PACKET_TIMEOUT  1000
 
@@ -148,7 +144,7 @@ public:
   int SetActivePartition();
   int OpenPartition(int partition);
   int ClosePartition();
-  int FastCopySerial(HANDLE hInFile, uint32_t sector, uint32_t sectors);
+  int FastCopySerial(int hInFile, uint32_t sector, uint32_t sectors);
   int LoadFlashProg(char *szFlashPrg);
   int WriteRawProgramFile(char *szXMLFile);
   int GetDloadParams(unsigned char *rsp, int len);

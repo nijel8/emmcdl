@@ -22,17 +22,14 @@ when       who     what, where, why
 
 #include "stdio.h"
 #include "stdlib.h"
-#include "tchar.h"
 #include "ffu.h"
-#ifdef _WIN32
-#include "windows.h"
-#endif
+#include "sysdeps.h"
 #include "string.h"
 
 // Constructor
 FFUImage::FFUImage()
 {
-  hFFU = INVALID_HANDLE_VALUE;
+  hFFU = -1;
   ValidationEntries = NULL;
   BlockDataEntries = NULL;
   GptEntries = NULL;
@@ -58,18 +55,18 @@ void FFUImage::SetDiskSectorSize(int size)
 }
 
 // Given a 64 bit memory address, set the Offset and OffsetHigh of an OVERLAPPED variable 
-void FFUImage::SetOffset(OVERLAPPED* ovlVariable, UINT64 offset)
+void FFUImage::SetOffset(void** ovlVariable, uint64_t offset)
 {
-  ResetEvent(ovlVariable->hEvent);
+/*  ResetEvent(ovlVariable->hEvent);
   ovlVariable->Offset = offset & 0xffffffff;
-  ovlVariable->OffsetHigh = (offset & 0xffffffff00000000) >> 32;
+  ovlVariable->OffsetHigh = (offset & 0xffffffff00000000) >> 32;*/
 }
 
 // Compute the size of the padding at the end of each section of the FFU, and return
 // the offset into the file of the next starting area.
-UINT64 FFUImage::GetNextStartingArea(UINT64 chunkSizeInBytes, UINT64 sizeOfArea)
+uint64_t FFUImage::GetNextStartingArea(uint64_t chunkSizeInBytes, uint64_t sizeOfArea)
 {
-  UINT64 extraSpacePastBoundary = sizeOfArea % chunkSizeInBytes;
+  uint64_t extraSpacePastBoundary = sizeOfArea % chunkSizeInBytes;
   // If the area does not end on a chunk boundary (i.e. there is a padding), compute next boundary.
   if (extraSpacePastBoundary != 0) {
     return sizeOfArea + (chunkSizeInBytes - extraSpacePastBoundary);
@@ -79,9 +76,9 @@ UINT64 FFUImage::GetNextStartingArea(UINT64 chunkSizeInBytes, UINT64 sizeOfArea)
 
 }
 
-int FFUImage::AddEntryToRawProgram(char *szRawProgram, char *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors)
+int FFUImage::AddEntryToRawProgram(char *szRawProgram, char *szFileName, uint64_t ui64FileOffset, int64_t i64StartSector, uint64_t ui64NumSectors)
 {
-  HANDLE hRawPrg;
+/*  HANDLE hRawPrg;
   char szXMLString[MAX_STRING_LEN * 2];
   char szFile[MAX_STRING_LEN];
   uint32_t dwBytesWrite;
@@ -94,7 +91,7 @@ int FFUImage::AddEntryToRawProgram(char *szRawProgram, char *szFileName, UINT64 
     OPEN_EXISTING,
     FILE_ATTRIBUTE_NORMAL,
     NULL);
-  if (hRawPrg == INVALID_HANDLE_VALUE) {
+  if (hRawPrg == -1) {
     status = GetLastError();
   }
   else {
@@ -112,12 +109,13 @@ int FFUImage::AddEntryToRawProgram(char *szRawProgram, char *szFileName, UINT64 
     CloseHandle(hRawPrg);
   }
 
-  return status;
+  return status;*/
+	return 0;
 }
 
 int FFUImage::TerminateRawProgram(char *szFileName)
 {
-  HANDLE hRawPrg;
+/*  HANDLE hRawPrg;
   uint32_t dwBytesOut;
   char szXMLString[] = "</data>\n";
   hRawPrg = CreateFile( szFileName,
@@ -128,7 +126,7 @@ int FFUImage::TerminateRawProgram(char *szFileName)
     FILE_ATTRIBUTE_NORMAL,
     NULL);
   
-  if( hRawPrg == INVALID_HANDLE_VALUE ) {
+  if( hRawPrg == -1 ) {
     return GetLastError();
   }
 
@@ -138,12 +136,13 @@ int FFUImage::TerminateRawProgram(char *szFileName)
   WriteFile(hRawPrg,szXMLString,sizeof(szXMLString)-1,&dwBytesOut,NULL);
 
   CloseHandle(hRawPrg);
-  return ERROR_SUCCESS;
+  return ERROR_SUCCESS;*/
+  return 0;
 }
 
 int FFUImage::CreateRawProgram(char *szFFUFile, char *szFileName)
 {
-  HANDLE hRawPrg;
+  /*HANDLE hRawPrg;
   uint32_t dwBytesOut;
   char szPath[256] = { 0 };
   char szOut[256] = { 0 };
@@ -156,7 +155,7 @@ int FFUImage::CreateRawProgram(char *szFFUFile, char *szFileName)
     CREATE_ALWAYS,
     FILE_ATTRIBUTE_NORMAL,
     NULL);
-  if (hRawPrg == INVALID_HANDLE_VALUE) {
+  if (hRawPrg == -1) {
     return GetLastError();
   }
 
@@ -169,15 +168,16 @@ int FFUImage::CreateRawProgram(char *szFFUFile, char *szFileName)
   WriteFile(hRawPrg, szXMLString, strlen(szXMLString), &dwBytesOut, NULL);
 
   CloseHandle(hRawPrg);
-  return ERROR_SUCCESS;
+  return ERROR_SUCCESS;*/
+	return 0;
 }
 
 int FFUImage::ReadGPT(void)
 {
-  // Read in the data chunk for GPT
-  if (hFFU == INVALID_HANDLE_VALUE ) return ERROR_INVALID_HANDLE;
+ /* // Read in the data chunk for GPT
+  if (hFFU == -1 ) return ERROR_INVALID_HANDLE;
   uint32_t bytesRead = 0;
-  UINT64 readOffset = PayloadDataStart + FFUStoreHeader.dwFinalTableIndex*FFUStoreHeader.dwBlockSizeInBytes;
+  uint64_t readOffset = PayloadDataStart + FFUStoreHeader.dwFinalTableIndex*FFUStoreHeader.dwBlockSizeInBytes;
 
   GptEntries = (gpt_entry_t*)malloc(sizeof(gpt_entry_t)*128);
   SetOffset(&OvlRead, readOffset);
@@ -198,21 +198,22 @@ int FFUImage::ReadGPT(void)
     return GetLastError();
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_SUCCESS;*/
+	return 0;
 }
 
 
 int FFUImage::ParseHeaders(void)
 {
-  int hashedChunkSizeInBytes;
+ /* int hashedChunkSizeInBytes;
   int hashedChunkSizeInKB;
-  UINT64 currentAreaEndSpot = 0;
-  UINT64 nextAreaStartSpot = 0;
+  uint64_t currentAreaEndSpot = 0;
+  uint64_t nextAreaStartSpot = 0;
   uint32_t bytesRead = 0;
 
-  if( hFFU == INVALID_HANDLE_VALUE ) return ERROR_INVALID_HANDLE;
+  if( hFFU == -1 ) return ERROR_INVALID_HANDLE;
 
-  /* Read the Security Header */
+   Read the Security Header
   SetOffset(&OvlRead, 0);
   if( !ReadFile(hFFU, &FFUSecurityHeader, sizeof(FFUSecurityHeader), &bytesRead, &OvlRead) ) {
     return ERROR_READ_FAULT;
@@ -221,7 +222,7 @@ int FFUImage::ParseHeaders(void)
   hashedChunkSizeInKB = FFUSecurityHeader.dwChunkSizeInKb;
   hashedChunkSizeInBytes = hashedChunkSizeInKB * 1024;
 
-  /* Read the Image Header */
+   Read the Image Header
 
   // Get the location in the file of the ImageHeader
   currentAreaEndSpot = sizeof(FFUSecurityHeader) + FFUSecurityHeader.dwCatalogSize + FFUSecurityHeader.dwHashTableSize;
@@ -232,7 +233,7 @@ int FFUImage::ParseHeaders(void)
   if (!ReadFile(hFFU, &FFUImageHeader, sizeof(FFUImageHeader), &bytesRead, &OvlRead)) 
     return GetLastError();
 
-  /* Read the StoreHeader */
+   Read the StoreHeader
 
   // Get the location in the file of the StoreHeader
   currentAreaEndSpot = nextAreaStartSpot + sizeof(FFUImageHeader) + FFUImageHeader.ManifestLength;
@@ -280,12 +281,13 @@ int FFUImage::ParseHeaders(void)
     nextAreaStartSpot = GetNextStartingArea(hashedChunkSizeInBytes, nextAreaStartSpot);
     PayloadDataStart = nextAreaStartSpot;
   }
-  return ERROR_SUCCESS;
+  return ERROR_SUCCESS;*/
+	return 0;
 }
 
 int FFUImage::DumpRawProgram(char *szFFUFile, char *szRawProgram)
 {
-  BOOL  bPendingData = FALSE;
+  /*BOOL  bPendingData = FALSE;
   uint32_t dwNextBlockIndex = 0;
   uint32_t dwBlockOffset = 0;
   uint32_t dwStartBlock = 0;
@@ -303,7 +305,7 @@ int FFUImage::DumpRawProgram(char *szFFUFile, char *szRawProgram)
             AddEntryToRawProgram(szRawProgram, szFFUFile, (PayloadDataStart + dwStartBlock*FFUStoreHeader.dwBlockSizeInBytes) / 512,
               (diskOffset / 512), (dwBlockOffset - dwStartBlock) * 128 * 2);
           }
-          diskOffset = (UINT64)BlockDataEntriesPtr->rgDiskLocations[j].dwBlockIndex*(UINT64)FFUStoreHeader.dwBlockSizeInBytes;
+          diskOffset = (uint64_t)BlockDataEntriesPtr->rgDiskLocations[j].dwBlockIndex*(uint64_t)FFUStoreHeader.dwBlockSizeInBytes;
           dwStartBlock = dwBlockOffset;
           bPendingData = TRUE;
         }
@@ -344,12 +346,12 @@ int FFUImage::DumpRawProgram(char *szFFUFile, char *szRawProgram)
       (diskOffset / 512), (dwBlockOffset - dwStartBlock) * 128 * 2);
   }
 
-  return status;
+  return status;*/
 }
 
 int FFUImage::FFUToRawProgram(char *szFFUName, char *szImageFile)
 {
-  char *szFFUFile = wcsrchr(szFFUName, L'\\');
+ /* char *szFFUFile = wcsrchr(szFFUName, L'\\');
   int status = PreLoadImage(szFFUName);
   if (status != ERROR_SUCCESS) goto FFUToRawProgramExit;
   status = CreateRawProgram(szFFUName, szImageFile);
@@ -363,12 +365,12 @@ int FFUImage::FFUToRawProgram(char *szFFUName, char *szImageFile)
 
 FFUToRawProgramExit:
   CloseFFUFile();
-  return status;
+  return status;*/
 }
 
 int FFUImage::FFUDumpDisk(Protocol *proto)
 {
-  int status = ERROR_SUCCESS;
+  /*int status = ERROR_SUCCESS;
   uint32_t bytesRead = 0;
   uint32_t dwTotalBytes = 0;
   uint32_t dwBlockCount = 0;
@@ -377,7 +379,7 @@ int FFUImage::FFUDumpDisk(Protocol *proto)
   int64_t diskOffset = 0;
   BLOCK_DATA_ENTRY* BlockDataEntriesPtr = BlockDataEntries;
 
-  /* Copy the data to disk */
+   Copy the data to disk
   unsigned char *dataBlock = (unsigned char*)malloc(FFUStoreHeader.dwBlockSizeInBytes*64); // Create storage for 64*128 KB block
   if( dataBlock == NULL ) return ERROR_OUTOFMEMORY;
   for (UINT32 i = 0; i < FFUStoreHeader.dwWriteDescriptorCount; i++) {
@@ -446,13 +448,13 @@ int FFUImage::FFUDumpDisk(Protocol *proto)
 
 FFUDumpDiskCleanUp:
   free(dataBlock);
-  return status;
+  return status;*/
 
 }
 
 int FFUImage::ProgramImage(Protocol *proto, int64_t dwOffset)
 {
-  UNREFERENCED_PARAMETER(dwOffset); // This value is embedded in the FFU
+ /* UNREFERENCED_PARAMETER(dwOffset); // This value is embedded in the FFU
   int status = ERROR_SUCCESS;
 
   // Make sure parameters passed in are valid
@@ -461,12 +463,12 @@ int FFUImage::ProgramImage(Protocol *proto, int64_t dwOffset)
   }
 
   status = FFUDumpDisk(proto);
-  return status;
+  return status;*/
 }
 
 int FFUImage::PreLoadImage(char *szFFUPath)
 {
-  int status = ERROR_SUCCESS;
+ /* int status = ERROR_SUCCESS;
   OvlRead.hEvent = CreateEvent(NULL, FALSE, NULL, NULL);
   OvlWrite.hEvent = CreateEvent(NULL, FALSE, NULL, NULL);
   if( (OvlRead.hEvent == NULL) || (OvlWrite.hEvent == NULL)) {
@@ -482,22 +484,22 @@ int FFUImage::PreLoadImage(char *szFFUPath)
     4,
     FILE_ATTRIBUTE_NORMAL,
     NULL);
-  if (hFFU == INVALID_HANDLE_VALUE) return GetLastError();
+  if (hFFU == -1) return GetLastError();
 
   status = ParseHeaders();
   if( status != ERROR_SUCCESS ) return status;
   status = ReadGPT();
 
-  return status;
+  return status;*/
 }
 
 int FFUImage::SplitFFUBin( char *szPartName, char *szOutputFile)
 {
-  uint32_t bytesRead = 0;
+  /*uint32_t bytesRead = 0;
   uint32_t start_sector = 0;
   uint32_t end_sector = 0;
   int status = ERROR_SUCCESS;
-  HANDLE hImage = INVALID_HANDLE_VALUE;
+  HANDLE hImage = -1;
   uint32_tLONG diskOffset = 0;
   UINT32 i=0;
   char szNewFile[256];
@@ -544,7 +546,7 @@ int FFUImage::SplitFFUBin( char *szPartName, char *szOutputFile)
       }
 
       // Only create the file if there is data to write to it
-      if( hImage == INVALID_HANDLE_VALUE ) {
+      if( hImage == -1 ) {
         wprintf(_T("Exporting file: %s\n"),szNewFile);
         hImage = CreateFile( szNewFile,
           GENERIC_WRITE | GENERIC_READ,
@@ -553,7 +555,7 @@ int FFUImage::SplitFFUBin( char *szPartName, char *szOutputFile)
           CREATE_ALWAYS,
           FILE_ATTRIBUTE_NORMAL,
           NULL);
-        if( hImage == INVALID_HANDLE_VALUE ) return GetLastError();
+        if( hImage == -1 ) return GetLastError();
       }
 
       uint32_tLONG tmp = start_sector; // Needed to force 64bit calc
@@ -567,15 +569,15 @@ int FFUImage::SplitFFUBin( char *szPartName, char *szOutputFile)
   }
   //}
 
-  if(hImage != INVALID_HANDLE_VALUE ) CloseHandle(hImage);
-  return status;
+  if(hImage != -1 ) CloseHandle(hImage);
+  return status;*/
 }
 
 int FFUImage::CloseFFUFile(void)
 {
-  CloseHandle(OvlRead.hEvent);
+/*  CloseHandle(OvlRead.hEvent);
   CloseHandle(OvlWrite.hEvent);
   CloseHandle(hFFU);
-  hFFU = INVALID_HANDLE_VALUE;
-  return ERROR_SUCCESS;
+  hFFU = -1;
+  return ERROR_SUCCESS;*/
 }

@@ -22,11 +22,7 @@ when       who     what, where, why
 
 #include "stdio.h"
 #include "stdlib.h"
-#include "tchar.h"
 #include "sparse.h"
-#ifdef _WIN32
-#include "windows.h"
-#endif
 #include "string.h"
 
 // Constructor
@@ -40,42 +36,36 @@ SparseImage::~SparseImage()
 {
   if (bSparseImage)
   {
-    CloseHandle(hSparseImage);
+    emmcdl_close(hSparseImage);
   }
 }
 
 // This will load a sparse image into memory and read headers if it is a sparse image
 // RETURN: 
-// ERROR_SUCCESS - Image and headers we loaded successfully
+// 0 - Image and headers we loaded successfully
 // 
 int SparseImage::PreLoadImage(char *szSparseFile)
 {
-  uint32_t dwBytesRead;
-  hSparseImage = CreateFile(szSparseFile,
-    GENERIC_READ,
-    FILE_SHARE_READ, // We only read from here so let others open the file as well
-    NULL,
-    OPEN_EXISTING,
-    FILE_ATTRIBUTE_NORMAL,
-    NULL);
-  if (hSparseImage == INVALID_HANDLE_VALUE) return GetLastError();
+  //uint32_t_t dwBytesRead;
+  hSparseImage = emmcdl_creat(szSparseFile, O_RDONLY);
+  if (hSparseImage < 0) return -ENOENT;
 
   // Load the sparse file header and verify it is valid
-  if (ReadFile(hSparseImage, &SparseHeader, sizeof(SparseHeader), &dwBytesRead, NULL)) {
+  if (emmcdl_read(hSparseImage, &SparseHeader, sizeof(SparseHeader))) {
     // Check the magic number in the sparse header to see if this is a vaild sparse file
     if (SparseHeader.dwMagic != SPARSE_MAGIC) {
-      CloseHandle(hSparseImage);
-      return ERROR_BAD_FORMAT;
+      emmcdl_close(hSparseImage);
+      return -9;
     }
   }
   else {
     // Couldn't read the file likely someone else has it open for exclusive access
-    CloseHandle(hSparseImage);
-    return ERROR_READ_FAULT;
+    emmcdl_close(hSparseImage);
+    return errno;
   }
 
   bSparseImage = true;
-  return ERROR_SUCCESS;
+  return 0;
 }
 
 int SparseImage::ProgramImage(Protocol *pProtocol, int64_t dwOffset)
@@ -84,34 +74,34 @@ int SparseImage::ProgramImage(Protocol *pProtocol, int64_t dwOffset)
   unsigned char *bpDataBuf;
   uint32_t dwBytesRead;
   uint32_t dwBytesOut;
-  int status = ERROR_SUCCESS;
+  int status = 0;
 
   // Make sure we have first successfully found a sparse file and headers are loaded okay
   if (!bSparseImage)
   {
-    return ERROR_FILE_NOT_FOUND;
+    return -EBADF;
   }
 
   // Allocated a buffer 
 
   // Main loop through all block entries in the sparse image
-  for (UINT32 i=0; i < SparseHeader.dwTotalChunks; i++){
+  for (uint32_t i=0; i < SparseHeader.dwTotalChunks; i++){
     // Read chunk header 
-    if (ReadFile(hSparseImage, &ChunkHeader, sizeof(ChunkHeader), &dwBytesRead, NULL)){
+    if (emmcdl_read(hSparseImage, &ChunkHeader, sizeof(ChunkHeader))){
       if (ChunkHeader.wChunkType == SPARSE_RAW_CHUNK){
-        UINT32 dwChunkSize = ChunkHeader.dwChunkSize*SparseHeader.dwBlockSize;
+        uint32_t dwChunkSize = ChunkHeader.dwChunkSize*SparseHeader.dwBlockSize;
         // Allocate a buffer the size of the chunk and read in the data
         bpDataBuf = (unsigned char *)malloc(dwChunkSize);
         if (bpDataBuf == NULL){
-          return ERROR_OUTOFMEMORY;
+          return -ENOMEM;
         }
-        if (ReadFile(hSparseImage, bpDataBuf, dwChunkSize, &dwBytesRead, NULL)) {
+        if (emmcdl_read(hSparseImage, bpDataBuf, dwChunkSize)) {
           // Now we have the data so use whatever protocol we need to write this out
           pProtocol->WriteData(bpDataBuf, dwOffset, dwChunkSize, &dwBytesOut,0);
           dwOffset += ChunkHeader.dwChunkSize;
         }
         else {
-          status = GetLastError();
+          status = errno;
           break;
         }
         free(bpDataBuf);
@@ -132,15 +122,15 @@ int SparseImage::ProgramImage(Protocol *pProtocol, int64_t dwOffset)
     }
     else {
       // Failed to read data something is wrong with the file
-      status = GetLastError();
+      status = errno;
       break;
     }
   }
 
   // If we failed to load the file close the handle and set sparse image back to false
-  if (status != ERROR_SUCCESS) {
+  if (status != 0) {
     bSparseImage = false;
-    CloseHandle(hSparseImage);
+    emmcdl_close(hSparseImage);
   }
 
   return status;

@@ -4,15 +4,17 @@ AM_CXXFLAGS= -std=c++11
 
 noinst_PROGRAMS = emmcdl
 
+emmcdl_LDADD = -lrt
+
 emmcdl_SOURCES = \
                src/crc.cpp\
                src/dload.cpp\
                src/emmcdl.cpp\
-               src/ffu.cpp\
                src/firehose.cpp\
+               src/ffu.cpp\
+               src/sahara.cpp\
                src/partition.cpp\
                src/protocol.cpp\
-               src/sahara.cpp\
                src/serialport.cpp\
                src/sparse.cpp\
                src/xmlparser.cpp
@@ -20,9 +22,9 @@ emmcdl_SOURCES = \
 if SYSDEPS_WIN32
 AM_CPPFLAGS = -D_WIN32
 emmcdl_SOURCES += \
-               src/writedisk_windows.cpp\
+               src/diskwriter_windows.cpp\
                src/sysdeps_win32.cpp
 else
 emmcdl_SOURCES += \
-               src/writedisk_linux.cpp
+               src/diskwriter_linux.cpp
 endif

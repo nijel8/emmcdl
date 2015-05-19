@@ -22,7 +22,7 @@ when       who     what, where, why
 
 #include "sahara.h"
 
-Sahara::Sahara(SerialPort *port, HANDLE hLogFile)
+Sahara::Sahara(SerialPort *port, int hLogFile)
 {
   sport = port;
   hLog = hLogFile;
@@ -36,14 +36,6 @@ void Sahara::Log(char *str,...)
   vprintf(str,ap);
   va_end(ap);
 }
-void Sahara::Log(char *str,...)
-{
-  // For now map the log to dump output to console
-  va_list ap;
-  va_start(ap,str);
-  vwprintf(str,ap);
-  va_end(ap);
-}
 
 int Sahara::DeviceReset()
 {
@@ -55,7 +47,7 @@ int Sahara::DeviceReset()
 
 int Sahara::ReadData(int cmd, unsigned char *buf, int len)
 {
-  int status;
+ /* int status;
   uint32_t bytesRead; 
 
   execute_cmd_t exe_cmd;
@@ -84,12 +76,12 @@ int Sahara::ReadData(int cmd, unsigned char *buf, int len)
     return bytesRead;
   }
 
-  return -ERROR_INVALID_DATA;
+  return -ERROR_INVALID_DATA;*/
 }
 
 int Sahara::DumpDeviceInfo(pbl_info_t *pbl_info)
 {
-  uint32_t dataBuf[64];
+ /* uint32_t dataBuf[64];
   int status = ERROR_SUCCESS;
 
   // Connect to the device in command mode
@@ -130,12 +122,12 @@ int Sahara::DumpDeviceInfo(pbl_info_t *pbl_info)
   }
   
   ModeSwitch(0);
-  return ERROR_SUCCESS;
+  return ERROR_SUCCESS;*/
 }
 
 int Sahara::ModeSwitch(int mode)
 {
-  // Finally at the end send switch mode to put us back in original EDL state
+/*  // Finally at the end send switch mode to put us back in original EDL state
   int status = ERROR_SUCCESS;
   execute_cmd_t cmd_switch_mode;
   unsigned char read_data_req[256];
@@ -148,12 +140,12 @@ int Sahara::ModeSwitch(int mode)
   
   // Read the response to switch mode if the device responds
   status = sport->Read((unsigned char *)&read_data_req, &bytesRead);
-  return status;
+  return status;*/
 }
 
 int Sahara::LoadFlashProg(char *szFlashPrg)
 {
-  read_data_t read_data_req = {0};
+/*  read_data_t read_data_req = {0};
   read_data_64_t read_data64_req = {0};
   cmd_hdr_t read_cmd_hdr = { 0 };
   image_end_t read_img_end = { 0 };
@@ -260,23 +252,23 @@ int Sahara::LoadFlashProg(char *szFlashPrg)
   // After Sahara is done set timeout back to 500ms for firehose
   sport->SetTimeout(500);
   Sleep(500);
-  return status;
+  return status;*/
 }
 
 bool Sahara::CheckDevice(void)
 {
-  hello_req_t hello_req = {0};
+/*  hello_req_t hello_req = {0};
   int status = ERROR_SUCCESS;
   uint32_t bytesRead = sizeof(hello_req);
   sport->SetTimeout(1);
   status = sport->Read((unsigned char *)&hello_req,&bytesRead);
   sport->SetTimeout(1000);
-  return ( hello_req.cmd == SAHARA_HELLO_REQ );
+  return ( hello_req.cmd == SAHARA_HELLO_REQ );*/
 }
 
 int Sahara::ConnectToDevice(bool bReadHello, int mode)
 {
-  hello_req_t hello_req = {0};
+ /* hello_req_t hello_req = {0};
   int status = ERROR_SUCCESS;
   uint32_t bytesRead = sizeof(hello_req);
 
@@ -311,13 +303,13 @@ int Sahara::ConnectToDevice(bool bReadHello, int mode)
     return ERROR_INVALID_HANDLE;
  }
 
-  return ERROR_SUCCESS;
+  return ERROR_SUCCESS;*/
 }
 
 // This function is to fix issue where PBL does not propery handle PIPE reset need to make sure 1 TX and 1 RX is working we may be out of sync...
 int Sahara::PblHack(void)
 {
-  int status = ERROR_SUCCESS;
+/*  int status = ERROR_SUCCESS;
 
   // Assume that we already got the hello req so send hello response
   status = ConnectToDevice(false, 3);
@@ -340,5 +332,5 @@ int Sahara::PblHack(void)
   }
 
   // Successfully got the CMD_READY so now switch back to normal mode
-  return ModeSwitch(0);
+  return ModeSwitch(0);*/
 }

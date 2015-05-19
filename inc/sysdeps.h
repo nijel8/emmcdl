@@ -267,9 +267,12 @@ static __inline__  int  emmcdl_is_absolute_host_path( const char*  path )
 
 #else /* !_WIN32 a.k.a. Unix */
 
+#ifdef ANDROID
 #include "fdevent.h"
 #include <cutils/sockets.h>
 #include <cutils/misc.h>
+#endif
+#include <errno.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -307,7 +310,9 @@ typedef  pthread_mutex_t          emmcdl_mutex_t;
 
 /* declare all mutexes */
 #define  EMMCDL_MUTEX(x)   extern emmcdl_mutex_t  x;
+#ifdef ANDROID
 #include "mutex_list.h"
+#endif
 
 static __inline__ void  close_on_exec(int  fd)
 {
@@ -494,12 +499,12 @@ static __inline__ void  emmcdl_sysdeps_init(void)
 
 static __inline__ char*  emmcdl_dirstart(const char*  path)
 {
-    return strchr(path, '/');
+    return strchr((char*)path, '/');
 }
 
 static __inline__ char*  emmcdl_dirstop(const char*  path)
 {
-    return strrchr(path, '/');
+    return strrchr((char*)path, '/');
 }
 
 static __inline__  int  emmcdl_is_absolute_host_path( const char*  path )

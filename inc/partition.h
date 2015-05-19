@@ -23,20 +23,16 @@ when       who     what, where, why
 #pragma once
 
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/types.h>
-#endif
+#include "sysdeps.h"
 
 #include "xmlparser.h"
 #include <stdio.h>
 
+#define MAX_PATH 512
 #define MAX_LIST_SIZE   100
 #define MAX_PATH_LEN    256
 #define SECTOR_SIZE	    512
 
-typedef unsigned int64_t __uint64_t ;
 class Protocol;
 
 enum cmdEnum {
@@ -83,7 +79,7 @@ typedef struct {
   __uint64_t start_sector;
   __uint64_t offset;
   __uint64_t num_sectors;
-  UINT8 physical_partition_number;
+  uint8_t physical_partition_number;
   __uint64_t patch_value;
   __uint64_t patch_offset;
   __uint64_t patch_size;
@@ -128,7 +124,6 @@ private:
   int ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe);
   bool CheckEmptyLine(char *str);
   int Log(char *str,...);
-  int Log(char *str,...);
 
-  HANDLE hLog;
+  int hLog;
 };

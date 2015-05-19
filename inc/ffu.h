@@ -23,19 +23,17 @@ when       who     what, where, why
 #include "partition.h"
 #include "serialport.h"
 #include "firehose.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include "sysdeps.h"
 
 // Security Header struct. The first data read in from the FFU.
 typedef struct _SECURITY_HEADER
 {
-    UINT32 cbSize;            // size of struct, overall
+    uint32_t cbSize;            // size of struct, overall
     unsigned char   signature[12];     // "SignedImage "
-    UINT32 dwChunkSizeInKb;   // size of a hashed chunk within the image
-    UINT32 dwAlgId;           // algorithm used to hash
-    UINT32 dwCatalogSize;     // size of catalog to validate
-    UINT32 dwHashTableSize;   // size of hash table
+    uint32_t dwChunkSizeInKb;   // size of a hashed chunk within the image
+    uint32_t dwAlgId;           // algorithm used to hash
+    uint32_t dwCatalogSize;     // size of catalog to validate
+    uint32_t dwHashTableSize;   // size of hash table
 } SECURITY_HEADER;
 
 // Image Header struct found within Image Header region of FFU
@@ -50,21 +48,21 @@ typedef struct _IMAGE_HEADER
 // Store Header struct found within Store Header region of FFU
 typedef struct _STORE_HEADER
 {
-    UINT32 dwUpdateType; // indicates partial or full flash
-    UINT16 MajorVersion, MinorVersion; // used to validate struct
-    UINT16 FullFlashMajorVersion, FullFlashMinorVersion; // FFU version, i.e. the image format
+    uint32_t dwUpdateType; // indicates partial or full flash
+    uint16_t MajorVersion, MinorVersion; // used to validate struct
+    uint16_t FullFlashMajorVersion, FullFlashMinorVersion; // FFU version, i.e. the image format
     char szPlatformId[192]; // string which indicates what device this FFU is intended to be written to
-    UINT32 dwBlockSizeInBytes; // size of an image block in bytes – the device’s actual sector size may differ
-    UINT32 dwWriteDescriptorCount; // number of write descriptors to iterate through
-    UINT32 dwWriteDescriptorLength; // total size of all the write descriptors, in bytes (included so they can be read out up front and interpreted later)
-    UINT32 dwValidateDescriptorCount; // number of validation descriptors to check
-    UINT32 dwValidateDescriptorLength; // total size of all the validation descriptors, in bytes
-    UINT32 dwInitialTableIndex; // block index in the payload of the initial (invalid) GPT
-    UINT32 dwInitialTableCount; // count of blocks for the initial GPT, i.e. the GPT spans blockArray[idx..(idx + count -1)]
-    UINT32 dwFlashOnlyTableIndex; // first block index in the payload of the flash-only GPT (included so safe flashing can be accomplished)
-    UINT32 dwFlashOnlyTableCount; // count of blocks in the flash-only GPT
-    UINT32 dwFinalTableIndex; // index in the table of the real GPT
-    UINT32 dwFinalTableCount; // number of blocks in the real GPT
+    uint32_t dwBlockSizeInBytes; // size of an image block in bytes ï¿½ the deviceï¿½s actual sector size may differ
+    uint32_t dwWriteDescriptorCount; // number of write descriptors to iterate through
+    uint32_t dwWriteDescriptorLength; // total size of all the write descriptors, in bytes (included so they can be read out up front and interpreted later)
+    uint32_t dwValidateDescriptorCount; // number of validation descriptors to check
+    uint32_t dwValidateDescriptorLength; // total size of all the validation descriptors, in bytes
+    uint32_t dwInitialTableIndex; // block index in the payload of the initial (invalid) GPT
+    uint32_t dwInitialTableCount; // count of blocks for the initial GPT, i.e. the GPT spans blockArray[idx..(idx + count -1)]
+    uint32_t dwFlashOnlyTableIndex; // first block index in the payload of the flash-only GPT (included so safe flashing can be accomplished)
+    uint32_t dwFlashOnlyTableCount; // count of blocks in the flash-only GPT
+    uint32_t dwFinalTableIndex; // index in the table of the real GPT
+    uint32_t dwFinalTableCount; // number of blocks in the real GPT
 } STORE_HEADER;
 
 
@@ -78,14 +76,14 @@ enum DISK_ACCESS_METHOD
 // Struct used in BLOCK_DATA_ENTRY structs to define where to put data on disk
 typedef struct _DISK_LOCATION
 {
-    UINT32 dwDiskAccessMethod;
-    UINT32 dwBlockIndex;
+    uint32_t dwDiskAccessMethod;
+    uint32_t dwBlockIndex;
 } DISK_LOCATION; 
 
 typedef struct _BLOCK_DATA_ENTRY
 {
-    UINT32 dwLocationCount;
-    UINT32 dwBlockCount;
+    uint32_t dwLocationCount;
+    uint32_t dwBlockCount;
     DISK_LOCATION rgDiskLocations[1];
 } BLOCK_DATA_ENTRY;
 
@@ -101,15 +99,15 @@ public:
   ~FFUImage();
 
 private:
-  void SetOffset(OVERLAPPED* ovlVariable, UINT64 offset);
+  void SetOffset(void** ovlVariable, uint64_t offset);
   int CreateRawProgram(char *szFFUFile, char *szFileName);
   int TerminateRawProgram(char *szFileName);
   int DumpRawProgram(char *szFFUFile, char *szRawProgram);
   int FFUDumpDisk(Protocol *proto);
-  int AddEntryToRawProgram(char *szRawProgram, char *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors);
+  int AddEntryToRawProgram(char *szRawProgram, char *szFileName, uint64_t ui64FileOffset, int64_t i64StartSector, uint64_t ui64NumSectors);
   int ReadGPT(void);
   int ParseHeaders(void);
-  UINT64 GetNextStartingArea(UINT64 chunkSizeInBytes, UINT64 sizeOfArea);
+  uint64_t GetNextStartingArea(uint64_t chunkSizeInBytes, uint64_t sizeOfArea);
 
   // Headers found within FFU image
   SECURITY_HEADER FFUSecurityHeader;
@@ -117,11 +115,11 @@ private:
   STORE_HEADER FFUStoreHeader;
   unsigned char* ValidationEntries;
   BLOCK_DATA_ENTRY* BlockDataEntries;
-  UINT64 PayloadDataStart;
+  uint64_t PayloadDataStart;
 
-  HANDLE hFFU;
-  OVERLAPPED OvlRead;
-  OVERLAPPED OvlWrite;
+  int hFFU;
+  void* OvlRead;
+  void* OvlWrite;
 
   // GPT Stuff
   unsigned char GptProtectiveMBR[512];

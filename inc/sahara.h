@@ -22,11 +22,7 @@ when       who     what, where, why
 #pragma once
 
 #include "serialport.h"
-#ifdef _WIN32
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#endif
+#include "sysdeps.h"
 
 #define SAHARA_HELLO_REQ      0x1
 #define SAHARA_HELLO_RSP      0x2
@@ -87,9 +83,9 @@ typedef struct {
 } read_data_t;
 
 typedef struct {
-	UINT64 id;
-	UINT64 data_offset;
-	UINT64 data_len;
+	uint64_t id;
+	uint64_t data_offset;
+	uint64_t data_len;
 } read_data_64_t;
 
 typedef struct {
@@ -125,7 +121,7 @@ typedef struct {
 
 class Sahara {
 public:
-  Sahara(SerialPort *port,HANDLE hLogFile = NULL);
+  Sahara(SerialPort *port,int hLogFile = 0);
   int DeviceReset(void);
   int LoadFlashProg(char *szFlashPrg);
   int ConnectToDevice(bool bReadHello, int mode);
@@ -136,7 +132,7 @@ private:
   int ModeSwitch(int mode);
   void HexToByte(const char *hex, unsigned char *bin, int len);
   void Log(char *str,...);
-  void Log(char *str,...);
+  void Log(wchar_t *str,...);
 
   uint32_t HexRunAddress(char *filename);
   uint32_t HexDataLength(char *filename);
@@ -145,5 +141,5 @@ private:
 
   SerialPort *sport;
   bool bSectorAddress;
-  HANDLE hLog;
+  int hLog;
 };

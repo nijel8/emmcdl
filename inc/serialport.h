@@ -22,11 +22,7 @@ when       who     what, where, why
 #pragma once
 
 #include <stdio.h>
-#ifdef _WIN32
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#endif
+#include "sysdeps.h"
 #include "crc.h"
 
 #define  ASYNC_HDLC_FLAG      0x7e
@@ -50,7 +46,7 @@ private:
   int HDLCEncodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   int HDLCDecodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   
-  HANDLE hPort;
+  int hPort;
   unsigned char *HDLCBuf;
   int to_ms;
 

@@ -23,13 +23,12 @@ when       who     what, where, why
 #pragma once
 
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include "sysdeps.h"
 #include <stdio.h>
 
+#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define MAX_STRING_LEN   512
-typedef unsigned int64_t __uint64_t ;
+#define ERROR_INVALID_DATA  -10
 
 class XMLParser {
 public:

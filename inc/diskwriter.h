@@ -24,9 +24,7 @@ when       who     what, where, why
 
 #include "partition.h"
 #include "protocol.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include "sysdeps.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -62,10 +60,10 @@ public:
   DiskWriter();
   ~DiskWriter();
 
-  int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum);
-  int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum);
+  int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum);
+  int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum);
 
-  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum=0);
+  int FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sectorWrite, __uint64_t sectors, uint8_t partNum=0);
   int OpenDevice(int dn);
   int OpenDiskFile(char *oFile, __uint64_t sectors);
   void CloseDevice();
@@ -82,10 +80,10 @@ public:
 protected:
 
 private:
-  HANDLE hVolume;
+  int hVolume;
   int disk_num;
-  HANDLE hFS;
-  OVERLAPPED ovl;
+  int hFS;
+  //OVERLAPPED ovl;
   disk_entry_t *disks;
   vol_entry_t *volumes;
 

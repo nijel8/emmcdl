@@ -20,11 +20,10 @@ when       who     what, where, why
 11/08/11   pgw     Initial version.
 =============================================================================*/
 
-#include "tchar.h"
 #include "dload.h"
 #include "partition.h"
 #include "diskwriter.h"
-
+#define ERROR_WRITE_FAULT -19
 //using namespace std;
 
 void Dload::HexToByte(const char *hex, unsigned char *bin, int len)
@@ -51,7 +50,7 @@ int Dload::ConnectToFlashProg(unsigned char ver)
   unsigned char security[] = {EHOST_SECURITY_REQ,0};
   unsigned char rsp[1060];
   int rspSize = sizeof(rsp);
-  int status = ERROR_SUCCESS; 
+  int status = 0;
   int i=0;
 
   if( ver > 2 ) {
@@ -64,17 +63,17 @@ int Dload::ConnectToFlashProg(unsigned char ver)
   for(; i < 10; i++) {
     rspSize = sizeof(rsp);
     status = sport->SendSync(hello,sizeof(hello),rsp,&rspSize);
-    if( (status == ERROR_SUCCESS) && (rspSize > 0) && (rsp[0] == EHOST_HELLO_RSP)) {
+    if( (status == 0) && (rspSize > 0) && (rsp[0] == EHOST_HELLO_RSP)) {
       break;
     }
     sport->Flush();
-    Sleep(500);
+    sleep(500);
   }
 
   // Clear out any stale data so we start on a new buffer
   sport->Flush();
   if( i == 10 ) {
-    return ERROR_INVALID_HANDLE;
+    return EINVAL;
   }
 
 
@@ -83,13 +82,13 @@ int Dload::ConnectToFlashProg(unsigned char ver)
     rspSize = sizeof(rsp);
     sport->SendSync(security,sizeof(security),rsp,&rspSize);
     if( (rspSize > 0) && (rsp[0] == EHOST_SECURITY_RSP)) {
-      return ERROR_SUCCESS;
+      return 0;
     }
     sport->Flush();
-    Sleep(500);
+    sleep(500);
   }
 
-  return ERROR_INVALID_HANDLE;
+  return EINVAL;
 }
 
 int Dload::DeviceReset()
@@ -101,27 +100,27 @@ int Dload::DeviceReset()
   rspSize = sizeof(rsp);
   sport->SendSync(reset,sizeof(reset),rsp,&rspSize);
   if( (rspSize == 0) || (rsp[0] != EHSOT_RESET_ACK)) {
-    return ERROR_INVALID_HANDLE;
+    return EINVAL;
   }
 
-  return ERROR_SUCCESS;
+  return 0;
 }
 
 int Dload::LoadPartition(char *szPrtnFile)
 {
-  HANDLE hFile;
-  int status = ERROR_SUCCESS;
+  int hFile;
+  int status = 0;
   unsigned char rsp[32];
   uint32_t bytesRead=0;
   int rspSize;
   unsigned char partition[1040] = {EHOST_PARTITION_REQ,0};
   
-  hFile = CreateFile(szPrtnFile,GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
-  if( hFile == INVALID_HANDLE_VALUE ) return ERROR_INVALID_HANDLE;
+  hFile = emmcdl_creat(szPrtnFile,O_RDWR);
+  if( hFile == -1 ) return EINVAL;
 
   // Download the partition table as one large chunk
-  if(!ReadFile(hFile,&partition[2],1024,&bytesRead,NULL) ) {
-    status = GetLastError();
+  if((bytesRead = emmcdl_read(hFile,&partition[2],1024)) < 0 ) {
+    status = errno;
   }
 
   if( bytesRead > 0 ) {
@@ -131,9 +130,8 @@ int Dload::LoadPartition(char *szPrtnFile)
       status = ERROR_WRITE_FAULT;
     }
   }
-  CloseHandle(hFile);
+  emmcdl_close(hFile);
 
-  if( status == ERROR_HANDLE_EOF) status = ERROR_SUCCESS;
   return status;
 }
 
@@ -150,11 +148,11 @@ int Dload::OpenPartition(int partition)
   rspSize = sizeof(rsp);
   sport->SendSync(openmulti,sizeof(openmulti),rsp,&rspSize);
   if( (rspSize == 0) || (rsp[0] != EHOST_OPEN_MULTI_RSP)) {
-    wprintf(L"Could not open partition\n");
-    return ERROR_INVALID_HANDLE;
+    printf("Could not open partition\n");
+    return EINVAL;
   }
 
-  return ERROR_SUCCESS;
+  return 0;
 }
 
 int Dload::ClosePartition()
@@ -167,14 +165,14 @@ int Dload::ClosePartition()
   rspSize = sizeof(rsp);
   sport->SendSync(close,sizeof(close),rsp,&rspSize);
   if( (rspSize == 0) || (rsp[0] != EHOST_CLOSE_RSP)) {
-    return ERROR_INVALID_HANDLE;
+    return EINVAL;
   }
-  return ERROR_SUCCESS;
+  return 0;
 }
 
-int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
+int Dload::FastCopySerial(int hInFile, uint32_t offset, uint32_t sectors)
 {
-  int status = ERROR_SUCCESS;
+  int status = 0;
   unsigned char rsp[32];
   uint32_t bytesRead=0;
   uint32_t count = 0;
@@ -183,14 +181,14 @@ int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
   unsigned char streamwrite[1050] = {EHOST_STREAM_WRITE_REQ,0};
 
   // For now don't worry about sliding window do a write and wait for response
-  while( (status == ERROR_SUCCESS) && (count < sectors)) {
+  while( (status == 0) && (count < sectors)) {
     if( (count + 2) > sectors) {
       readSize = 512;
     }
-    // If HANDLE value is invalid then just write 0's
-    if( hInFile != INVALID_HANDLE_VALUE ) {
-      if(!ReadFile(hInFile,&streamwrite[5],readSize,&bytesRead,NULL) ) {
-        status = GetLastError();
+    // If int value is invalid then just write 0's
+    if( hInFile != -1 ) {
+      if((bytesRead = emmcdl_read(hInFile,&streamwrite[5],readSize)) < 0 ) {
+        status = errno;
       }
     } else {
       memset(&streamwrite[5],0,readSize);
@@ -208,7 +206,7 @@ int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
 
       sport->SendSync(streamwrite,bytesRead+5,rsp,&rspSize);
       if( (rspSize == 0) || (rsp[0] != EHOST_STREAM_WRITE_RSP) ) {
-        wprintf(L"Device returned error: %i\n",rsp[0]);
+        printf("Device returned error: %i\n",rsp[0]);
         if( rsp[0] == EHOST_LOG && rspSize >= 2) {
           rsp[rspSize-2] = 0;
           printf((char *)&rsp[1]);
@@ -217,10 +215,10 @@ int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
       }
       if( bSectorAddress ) {
         offset += bytesRead/SECTOR_SIZE;
-        wprintf(L"Destination sector: %i\r",(int)offset);
+        printf("Destination sector: %i\r",(int)offset);
       } else {
         offset += bytesRead;
-        wprintf(L"Destination offset: %i\r",(int)offset);
+        printf("Destination offset: %i\r",(int)offset);
       }
     } else {
       // If we didn't read anything then break
@@ -231,23 +229,22 @@ int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
   printf("\n");
 
   // If we hit end of file that means we sent it all
-  if( status == ERROR_HANDLE_EOF) status = ERROR_SUCCESS;
   return status;
 }
 
 int Dload::LoadImage(char *szSingleImage)
 {
-  HANDLE hFile;
-  int status = ERROR_SUCCESS;
+  int hFile;
+  int status = 0;
 
-  hFile = CreateFile(szSingleImage,GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_EXISTING,NULL,NULL);
-  if( hFile == INVALID_HANDLE_VALUE ) {
-    wprintf(L"Filename not found %s\n",szSingleImage);
-    return ERROR_INVALID_HANDLE;
+  hFile = emmcdl_creat(szSingleImage, O_RDWR);
+  if( hFile == -1 ) {
+    printf("Filename not found %s\n",szSingleImage);
+    return EINVAL;
   }
 
   status = FastCopySerial(hFile,0,(uint32_t)-1);
-  CloseHandle(hFile);
+  emmcdl_close(hFile);
 
   return status;
 }
@@ -262,14 +259,13 @@ int Dload::LoadFlashProg(char *szFlashPrg)
   uint32_t targetAddr=0;
   uint32_t newAddr=0;
   uint32_t bytesRead;
-  uint32_t status = ERROR_SUCCESS;
+  uint32_t status = 0;
 
   char hexline[128];
-  FILE *fMprgFile;
-  _wfopen_s(&fMprgFile,szFlashPrg,L"r");
+  FILE *fMprgFile = fopen(szFlashPrg,"rb");
 
   if( fMprgFile == NULL ) {
-    return ERROR_OPEN_FAILED;
+    return EBADF;
   }
 
   while( !feof(fMprgFile) ) {
@@ -325,7 +321,7 @@ int Dload::LoadFlashProg(char *szFlashPrg)
       write32[5] = (bytesRead >> 8) & 0xff;
       write32[6] = bytesRead & 0xff;
       rspSize = sizeof(rsp);
-      //wprintf(L"Program at: 0x%x length %i\n",targetAddr,bytesRead);
+      //printf("Program at: 0x%x length %i\n",targetAddr,bytesRead);
       sport->SendSync(write32,bytesRead+7,rsp,&rspSize);
       if( (rspSize == 0) || (rsp[0] != CMD_ACK) ) {
         status = ERROR_WRITE_FAULT;
@@ -338,9 +334,9 @@ int Dload::LoadFlashProg(char *szFlashPrg)
   fclose(fMprgFile);
   
 
-  if( status == ERROR_SUCCESS ) {
+  if( status == 0 ) {
     unsigned char gocmd[5] = {CMD_GO,0};
-    printf("sending go command 0x%x\n", (UINT32)goAddr);
+    printf("sending go command 0x%x\n", (uint32_t)goAddr);
     gocmd[1] = (goAddr >> 24) & 0xff;
     gocmd[2] = (goAddr >> 16) & 0xff;
     gocmd[3] = (goAddr >> 8) & 0xff;
@@ -350,7 +346,7 @@ int Dload::LoadFlashProg(char *szFlashPrg)
     rspSize = sizeof(rsp);
     sport->SendSync(gocmd,sizeof(gocmd),rsp,&rspSize);
     if( (rspSize > 0) && (rsp[0] == CMD_ACK)) {
-      status = ERROR_SUCCESS;
+      status = 0;
     } else {
       status = ERROR_WRITE_FAULT;
     }
@@ -369,7 +365,7 @@ int Dload::GetDloadParams(unsigned char *rsp, int len)
   }
   sport->SendSync(params,sizeof(params),rsp,&bytesRead);
   if( (bytesRead > 0) && (rsp[0] == CMD_PARAMS) ) {
-    return ERROR_SUCCESS;
+    return 0;
   }
   return -2;
 }
@@ -382,10 +378,10 @@ int Dload::IsDeviceInDload(void)
 
   sport->SendSync(nop,sizeof(nop),rsp,&bytesRead);
   if( rsp[0] == CMD_ACK ) {
-    return ERROR_SUCCESS;
+    return 0;
   }
   
-  return ERROR_INVALID_HANDLE;
+  return EINVAL;
 }
 
 int Dload::SetActivePartition()
@@ -393,7 +389,7 @@ int Dload::SetActivePartition()
   // Set currently open partition to active
   unsigned char active_prtn[38] = {EHOST_STREAM_DLOAD_REQ,0x2};
   unsigned char rsp[128] = {0};
-  int status = ERROR_SUCCESS;
+  int status = 0;
   int bytesRead = sizeof(rsp);
   unsigned short crc;
   active_prtn[34] = 0xAD;
@@ -402,8 +398,8 @@ int Dload::SetActivePartition()
   active_prtn[36] = crc & 0xff;
   active_prtn[37] = crc >> 8;
   status = sport->SendSync(active_prtn,sizeof(active_prtn),rsp,&bytesRead);
-  if( (status == ERROR_SUCCESS) && (rsp[0] == EHOST_STREAM_DLOAD_RSP) ) {
-    return ERROR_SUCCESS;
+  if( (status == 0) && (rsp[0] == EHOST_STREAM_DLOAD_RSP) ) {
+    return 0;
   }
 
   return status;
@@ -414,7 +410,7 @@ int Dload::CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t
   unsigned char stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x1};
   unsigned char rsp[128] = {0};
   int bytesRead = sizeof(rsp);
-  int status = ERROR_SUCCESS;
+  int status = 0;
   unsigned short crc;
   stream_dload[2] = dwGPP1 & 0xff;
   stream_dload[3] = (dwGPP1 >> 8) & 0xff;
@@ -438,9 +434,9 @@ int Dload::CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t
   stream_dload[36] = crc & 0xff;
   stream_dload[37] = crc >> 8;
   status = sport->SendSync(stream_dload,sizeof(stream_dload),rsp,&bytesRead);
-  if( (status == ERROR_SUCCESS) && (rsp[0] == EHOST_STREAM_DLOAD_RSP) ) {
+  if( (status == 0) && (rsp[0] == EHOST_STREAM_DLOAD_RSP) ) {
     // Return actual size of the card
-    return ERROR_SUCCESS;
+    return 0;
   }
   return status;
 }
@@ -451,7 +447,7 @@ __uint64_t Dload::GetNumDiskSectors()
   unsigned char stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x0};
   unsigned char rsp[128] = {0};
   int bytesRead = sizeof(rsp);
-  int status = ERROR_SUCCESS;
+  int status = 0;
   unsigned short crc;
   stream_dload[34] = 0xAD;
   stream_dload[35] = 0xDE;
@@ -459,7 +455,7 @@ __uint64_t Dload::GetNumDiskSectors()
   stream_dload[36] = crc & 0xff;
   stream_dload[37] = crc >> 8;
   status = sport->SendSync(stream_dload,sizeof(stream_dload),rsp,&bytesRead);
-  if( (status == ERROR_SUCCESS) && (rsp[0] == EHOST_STREAM_DLOAD_RSP) ) {
+  if( (status == 0) && (rsp[0] == EHOST_STREAM_DLOAD_RSP) ) {
     // Return actual size of the card
     return (rsp[5] | rsp[6] << 8 | rsp[7] << 16 | rsp[8] << 24);
   }
@@ -468,35 +464,29 @@ __uint64_t Dload::GetNumDiskSectors()
 
 int Dload::ProgramPartitionEntry(PartitionEntry pe)
 {
-  int status = ERROR_SUCCESS;
-  HANDLE hInFile = INVALID_HANDLE_VALUE;
+  int status = 0;
+  int hInFile = -1;
 
-  if( wcscmp(pe.filename,L"ZERO") == 0 ) {
-    wprintf(L"Zeroing out area\n");
+  if( strcmp(pe.filename,"ZERO") == 0 ) {
+    printf("Zeroing out area\n");
   } else {
     // Open the file that we are supposed to dump
-    hInFile = CreateFile( pe.filename,
-                          GENERIC_READ,
-                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                          NULL,
-                          OPEN_EXISTING,
-                          FILE_ATTRIBUTE_NORMAL,
-                          NULL);
-    if( hInFile == INVALID_HANDLE_VALUE ) {
-      status = GetLastError();
+    hInFile = emmcdl_creat( pe.filename, O_RDWR);
+
+    if( hInFile == -1 ) {
+      status = errno;
     } else {
-      LONG dwOffsetHigh = (pe.offset >> 32);
-      status = SetFilePointer(hInFile,(LONG)pe.offset,&dwOffsetHigh,FILE_BEGIN);
+      status = emmcdl_lseek(hInFile, pe.offset, SEEK_SET);
     }
   }
   
-  if( status == ERROR_SUCCESS ) {
+  if( status == 0 ) {
     // Fast copy from input file to Serial port
-    wprintf(L"\nIn offset: %I64d out offset: %I64d sectors: %I64d\n",pe.offset, pe.start_sector,pe.num_sectors);
+    printf("\nIn offset: %I64d out offset: %I64d sectors: %I64d\n",pe.offset, pe.start_sector,pe.num_sectors);
     status = FastCopySerial(hInFile,(uint32_t)pe.start_sector,(uint32_t)pe.num_sectors);
   }
   
-  if( hInFile != INVALID_HANDLE_VALUE ) CloseHandle(hInFile);
+  if( hInFile != -1 ) emmcdl_close(hInFile);
   return status;
 }
 
@@ -504,7 +494,7 @@ int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
 {
   PartitionEntry pe;
   memset(&pe,0,sizeof(pe));
-  wcscpy_s(pe.filename,L"ZERO");
+  strcpy(pe.filename,"ZERO");
   pe.start_sector = start_sector;
   pe.num_sectors = num_sectors;
   return ProgramPartitionEntry(pe);
@@ -512,14 +502,14 @@ int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
 
  int Dload::WriteRawProgramFile(char *szXMLFile)
  {
-  int status = ERROR_SUCCESS;
+  int status = 0;
   Partition *p;
   p = new Partition(GetNumDiskSectors());
 
-  wprintf(L"Parsing partition table: %s\n", szXMLFile);
+  printf("Parsing partition table: %s\n", szXMLFile);
   status = p->PreLoadImage(szXMLFile);
-  if( status != ERROR_SUCCESS ) {
-    wprintf(L"Partition table failed to load\n");
+  if( status != 0 ) {
+	printf("Partition table failed to load\n");
     delete p;
     return status;
   }
@@ -527,9 +517,9 @@ int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
   PartitionEntry pe;
   char keyName[MAX_STRING_LEN];
   char *key;
-  while( p->GetNextXMLKey(keyName,&key) == ERROR_SUCCESS ) {
+  while( p->GetNextXMLKey(keyName,&key) == 0 ) {
     // parse the XML key if we don't understand it then continue
-    if( p->ParseXMLKey(key,&pe) != ERROR_SUCCESS ) continue;
+    if( p->ParseXMLKey(key,&pe) != 0 ) continue;
     // If there is a CRC then calculate this value before we write it out
     if( pe.eCmd == CMD_PROGRAM ) {
       status = ProgramPartitionEntry(pe);
@@ -542,7 +532,7 @@ int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
       status = WipeDiskContents(pe.start_sector,pe.num_sectors);
     }
 
-    if( status != ERROR_SUCCESS ) {
+    if( status != 0 ) {
       break;
     }
   }

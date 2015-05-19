@@ -25,11 +25,8 @@ when       who     what, where, why
 #include "protocol.h"
 #include "partition.h"
 #include <stdio.h>
-#ifdef _WIN32
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-#endif
+#include <stdint.h>
+#include "sysdeps.h"
 
 #define MAX_RETRY   50
 
@@ -45,14 +42,13 @@ typedef struct {
 
 class Firehose : public Protocol {
 public:
-  Firehose(SerialPort *port, HANDLE hLogFile = NULL);
+  Firehose(SerialPort *port, int hLogFile = -1);
   ~Firehose();
-
-  int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum);
-  int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum);
+  int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum);
+  int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum);
 
   int DeviceReset(void);
-  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum);
+  int FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sectorWrite, __uint64_t sectors, uint8_t partNum);
   int ProgramPatchEntry(PartitionEntry pe, char *key);
   int ProgramRawCommand(char *key);
 
@@ -74,7 +70,7 @@ private:
   unsigned char *m_buffer;
   unsigned char *m_buffer_ptr;
   uint32_t m_buffer_len;
-  UINT32 dwMaxPacketSize;
-  HANDLE hLog;
+  uint32_t dwMaxPacketSize;
+  int hLog;
   char *program_pkt;
 };
