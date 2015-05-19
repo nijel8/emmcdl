@@ -20,7 +20,8 @@ emmcdl_SOURCES = \
 if SYSDEPS_WIN32
 AM_CPPFLAGS = -D_WIN32
 emmcdl_SOURCES += \
-               src/writedisk_windows.cpp
+               src/writedisk_windows.cpp\
+               src/sysdeps_win32.cpp
 else
 emmcdl_SOURCES += \
                src/writedisk_linux.cpp

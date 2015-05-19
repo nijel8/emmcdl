@@ -34,7 +34,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 noinst_PROGRAMS = emmcdl$(EXEEXT)
 #am__append_1 = \
-#               src/writedisk_windows.cpp
+#               src/writedisk_windows.cpp\
+#               src/sysdeps_win32.cpp
 
 am__append_2 = \
                src/writedisk_linux.cpp
@@ -59,9 +60,10 @@ am__emmcdl_SOURCES_DIST = src/crc.cpp src/dload.cpp src/emmcdl.cpp \
 	src/ffu.cpp src/firehose.cpp src/partition.cpp \
 	src/protocol.cpp src/sahara.cpp src/serialport.cpp \
 	src/sparse.cpp src/xmlparser.cpp src/writedisk_windows.cpp \
-	src/writedisk_linux.cpp
+	src/sysdeps_win32.cpp src/writedisk_linux.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
-#am__objects_1 = src/writedisk_windows.$(OBJEXT)
+#am__objects_1 = src/writedisk_windows.$(OBJEXT) \
+#	src/sysdeps_win32.$(OBJEXT)
 am__objects_2 = src/writedisk_linux.$(OBJEXT)
 am_emmcdl_OBJECTS = src/crc.$(OBJEXT) src/dload.$(OBJEXT) \
 	src/emmcdl.$(OBJEXT) src/ffu.$(OBJEXT) src/firehose.$(OBJEXT) \
@@ -282,6 +284,8 @@ src/xmlparser.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/writedisk_windows.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/sysdeps_win32.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/writedisk_linux.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 emmcdl$(EXEEXT): $(emmcdl_OBJECTS) $(emmcdl_DEPENDENCIES) $(EXTRA_emmcdl_DEPENDENCIES) 
@@ -300,6 +304,7 @@ mostlyclean-compile:
 	-rm -f src/sahara.$(OBJEXT)
 	-rm -f src/serialport.$(OBJEXT)
 	-rm -f src/sparse.$(OBJEXT)
+	-rm -f src/sysdeps_win32.$(OBJEXT)
 	-rm -f src/writedisk_linux.$(OBJEXT)
 	-rm -f src/writedisk_windows.$(OBJEXT)
 	-rm -f src/xmlparser.$(OBJEXT)
@@ -317,6 +322,7 @@ include src/$(DEPDIR)/protocol.Po
 include src/$(DEPDIR)/sahara.Po
 include src/$(DEPDIR)/serialport.Po
 include src/$(DEPDIR)/sparse.Po
+include src/$(DEPDIR)/sysdeps_win32.Po
 include src/$(DEPDIR)/writedisk_linux.Po
 include src/$(DEPDIR)/writedisk_windows.Po
 include src/$(DEPDIR)/xmlparser.Po
