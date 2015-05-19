@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{58BBC25A-B7DA-4FEA-83BF-8C33DC4F7C1F}") = "emmcdl", "emmcdl.win32.vcxproj", "{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}.Debug|Win32.Build.0 = Debug|Win32
+		{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}.Debug|Win32.Deploy.0 = Debug|Win32
+		{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}.Release|Win32.ActiveCfg = Release|Win32
+		{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}.Release|Win32.Build.0 = Release|Win32
+		{6DDC320B-E4EF-40E3-AF4E-E2C4402BAE2D}.Release|Win32.Deploy.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
