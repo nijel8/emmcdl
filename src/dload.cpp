@@ -107,7 +107,7 @@ int Dload::DeviceReset()
   return ERROR_SUCCESS;
 }
 
-int Dload::LoadPartition(TCHAR *szPrtnFile)
+int Dload::LoadPartition(char *szPrtnFile)
 {
   HANDLE hFile;
   int status = ERROR_SUCCESS;
@@ -235,7 +235,7 @@ int Dload::FastCopySerial(HANDLE hInFile, uint32_t offset, uint32_t sectors)
   return status;
 }
 
-int Dload::LoadImage(TCHAR *szSingleImage)
+int Dload::LoadImage(char *szSingleImage)
 {
   HANDLE hFile;
   int status = ERROR_SUCCESS;
@@ -252,7 +252,7 @@ int Dload::LoadImage(TCHAR *szSingleImage)
   return status;
 }
 
-int Dload::LoadFlashProg(TCHAR *szFlashPrg)
+int Dload::LoadFlashProg(char *szFlashPrg)
 {
   unsigned char write32[280] = {CMD_WRITE_32BIT, 0};
   unsigned char *writePtr;
@@ -446,7 +446,7 @@ int Dload::CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t
 }
 
 
-uint64 Dload::GetNumDiskSectors()
+__uint64_t Dload::GetNumDiskSectors()
 {
   unsigned char stream_dload[38] = {EHOST_STREAM_DLOAD_REQ,0x0};
   unsigned char rsp[128] = {0};
@@ -500,7 +500,7 @@ int Dload::ProgramPartitionEntry(PartitionEntry pe)
   return status;
 }
 
-int Dload::WipeDiskContents(uint64 start_sector, uint64 num_sectors)
+int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
 {
   PartitionEntry pe;
   memset(&pe,0,sizeof(pe));
@@ -510,7 +510,7 @@ int Dload::WipeDiskContents(uint64 start_sector, uint64 num_sectors)
   return ProgramPartitionEntry(pe);
 }
 
- int Dload::WriteRawProgramFile(TCHAR *szXMLFile)
+ int Dload::WriteRawProgramFile(char *szXMLFile)
  {
   int status = ERROR_SUCCESS;
   Partition *p;
@@ -525,8 +525,8 @@ int Dload::WipeDiskContents(uint64 start_sector, uint64 num_sectors)
   }
 
   PartitionEntry pe;
-  TCHAR keyName[MAX_STRING_LEN];
-  TCHAR *key;
+  char keyName[MAX_STRING_LEN];
+  char *key;
   while( p->GetNextXMLKey(keyName,&key) == ERROR_SUCCESS ) {
     // parse the XML key if we don't understand it then continue
     if( p->ParseXMLKey(key,&pe) != ERROR_SUCCESS ) continue;

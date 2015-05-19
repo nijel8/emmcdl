@@ -42,7 +42,7 @@ SerialPort::~SerialPort()
 
 int SerialPort::Open(int port)
 {
-  TCHAR tPath[32];
+  char tPath[32];
   
   swprintf_s(tPath,32,L"\\\\.\\COM%i",port );
   // Open handle to serial port and set proper port settings

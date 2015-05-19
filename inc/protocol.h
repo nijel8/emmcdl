@@ -38,33 +38,33 @@ public:
   Protocol();
   ~Protocol();
 
-  int DumpDiskContents(uint64 start_sector, uint64 num_sectors, TCHAR *szOutFile, UINT8 partNum, TCHAR *szPartName);
-  int WipeDiskContents(uint64 start_sector, uint64 num_sectors, TCHAR *szPartName);
+  int DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szOutFile, UINT8 partNum, char *szPartName);
+  int WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szPartName);
 
   int ReadGPT(bool debug);
-  int WriteGPT(TCHAR *szPartName, TCHAR *szBinFile);
+  int WriteGPT(char *szPartName, char *szBinFile);
   void EnableVerbose(void);
   int GetDiskSectorSize(void);
   void SetDiskSectorSize(int size);
-  uint64 GetNumDiskSectors(void);
+  __uint64_t GetNumDiskSectors(void);
   HANDLE GetDiskHandle(void);
 
   virtual int DeviceReset(void) = ERROR_SUCCESS;
   virtual int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum) = ERROR_SUCCESS;
   virtual int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum) = ERROR_SUCCESS;
-  virtual int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum) = ERROR_SUCCESS;
-  virtual int ProgramRawCommand(TCHAR *key) = ERROR_SUCCESS;
-  virtual int ProgramPatchEntry(PartitionEntry pe, TCHAR *key) = ERROR_SUCCESS;
+  virtual int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum) = ERROR_SUCCESS;
+  virtual int ProgramRawCommand(char *key) = ERROR_SUCCESS;
+  virtual int ProgramPatchEntry(PartitionEntry pe, char *key) = ERROR_SUCCESS;
 
 protected:
 
-  int LoadPartitionInfo(TCHAR *szPartName, PartitionEntry *pEntry);
+  int LoadPartitionInfo(char *szPartName, PartitionEntry *pEntry);
   void Log(char *str, ...);
-  void Log(TCHAR *str, ...);
+  void Log(char *str, ...);
 
   gpt_header_t gpt_hdr;
   gpt_entry_t *gpt_entries;
-  uint64 disk_size;
+  __uint64_t disk_size;
   HANDLE hDisk;
   unsigned char *buffer1;
   unsigned char *buffer2;

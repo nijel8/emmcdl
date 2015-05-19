@@ -31,9 +31,9 @@ when       who     what, where, why
 #include <stdlib.h>
 
 // Note currently just replace in place and fill in spaces
-TCHAR *StringSetValue(TCHAR *key, TCHAR *keyName, TCHAR *value)
+char *StringSetValue(char *key, char *keyName, char *value)
 {
-  TCHAR *sptr = wcsstr(key, keyName);
+  char *sptr = wcsstr(key, keyName);
   if( sptr == NULL) return key;
 
   sptr = wcsstr(sptr,L"\"");
@@ -41,7 +41,7 @@ TCHAR *StringSetValue(TCHAR *key, TCHAR *keyName, TCHAR *value)
 
   // Loop through and replace with actual size;
   for(sptr++;;) {
-    TCHAR tmp = *value++;
+    char tmp = *value++;
     if( *sptr == '"') break;
     if( tmp == 0 ) {
       *sptr++ = '"';
@@ -56,12 +56,12 @@ TCHAR *StringSetValue(TCHAR *key, TCHAR *keyName, TCHAR *value)
   return key;
 }
 
-TCHAR *StringReplace(TCHAR *inp, TCHAR *find, TCHAR *rep)
+char *StringReplace(char *inp, char *find, char *rep)
 {
-  TCHAR tmpstr[MAX_STRING_LEN];
+  char tmpstr[MAX_STRING_LEN];
   int max_len = MAX_STRING_LEN;
-  TCHAR *tptr = tmpstr;;
-  TCHAR *sptr = wcsstr(inp, find);
+  char *tptr = tmpstr;;
+  char *sptr = wcsstr(inp, find);
 
   if( sptr != NULL ) {
     // Copy part of string before the value to replace
@@ -94,7 +94,7 @@ int Partition::Log(char *str,...)
   return ERROR_SUCCESS;
 }
 
-int Partition::Log(TCHAR *str,...)
+int Partition::Log(char *str,...)
 {
   // For now map the log to dump output to console
   va_list ap;
@@ -148,10 +148,10 @@ unsigned int Partition::CalcCRC32(unsigned char *buffer, int len)
    return Reflect(regs,32) ^ 0xFFFFFFFF;
 }
 
-int Partition::ParseXMLString(TCHAR *line, TCHAR *key, TCHAR *value)
+int Partition::ParseXMLString(char *line, char *key, char *value)
 {
-  TCHAR *eptr;
-  TCHAR *sptr = wcsstr(line,key);
+  char *eptr;
+  char *sptr = wcsstr(line,key);
   if( sptr == NULL ) return ERROR_INVALID_DATA;
   sptr = wcschr(sptr, L'"');
   if( sptr == NULL ) return ERROR_INVALID_DATA;
@@ -163,18 +163,18 @@ int Partition::ParseXMLString(TCHAR *line, TCHAR *key, TCHAR *value)
   return ERROR_SUCCESS;
 }
 
-int Partition::ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe)
+int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe)
 {
   // Parse simple expression understands -+/*, NUM_DISK_SECTORS,CRC32(offset:length)
-  TCHAR disk_sectors[64];
-  TCHAR *sptr, *sptr1, *sptr2;
+  char disk_sectors[64];
+  char *sptr, *sptr1, *sptr2;
   _i64tow_s(d_sectors,disk_sectors,64,10);
   expr = StringReplace(expr,_T("NUM_DISK_SECTORS"),disk_sectors);
   value = _wtoi64(expr);
 
   sptr = wcsstr(expr,L"CRC32");
   if( sptr != NULL ) {
-    TCHAR tmp[MAX_STRING_LEN];
+    char tmp[MAX_STRING_LEN];
     sptr1 = wcsstr(sptr,L"(") + 1;
     if( sptr1 == NULL ) return ERROR_INVALID_PARAMETER;
     sptr2 = wcsstr(sptr1,L",");
@@ -194,8 +194,8 @@ int Partition::ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe)
   sptr = wcsstr(expr,L"*");
   if( sptr != NULL ) {
     // Found * do multiplication
-    TCHAR val1[64];
-    TCHAR val2[64];
+    char val1[64];
+    char val2[64];
     wcsncpy_s(val1,64,expr,(sptr-expr));
     wcscpy_s(val2,64,sptr+1);
     value = _wtoi64(val1) * _wtoi64(val2);
@@ -204,8 +204,8 @@ int Partition::ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe)
   sptr = wcsstr(expr,L"/");
   if( sptr != NULL ) {
     // Found / do division
-    TCHAR val1[64];
-    TCHAR val2[64];
+    char val1[64];
+    char val2[64];
     wcsncpy_s(val1,64,expr,(sptr-expr));
     wcscpy_s(val2,64,sptr+1);
     value = _wtoi64(val1) / _wtoi64(val2);
@@ -214,8 +214,8 @@ int Partition::ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe)
   sptr = wcsstr(expr,L"-");
   if( sptr != NULL ) {
     // Found - do subtraction
-    TCHAR val1[32];
-    TCHAR val2[32];
+    char val1[32];
+    char val2[32];
     wcsncpy_s(val1,32,expr,(sptr-expr));
     wcscpy_s(val2,32,sptr+1);
     value = _wtoi64(val1) - _wtoi64(val2);
@@ -224,8 +224,8 @@ int Partition::ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe)
   sptr = wcsstr(expr,L"+");
   if( sptr != NULL ) {
     // Found + do addition
-    TCHAR val1[32];
-    TCHAR val2[32];
+    char val1[32];
+    char val2[32];
     wcsncpy_s(val1,32,expr,(sptr-expr));
     wcscpy_s(val2,32,sptr+1);
     value = _wtoi64(val1) + _wtoi64(val2);
@@ -234,11 +234,11 @@ int Partition::ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe)
   return ERROR_SUCCESS;
 }
 
-int Partition::ParseXMLInt64(TCHAR *line, TCHAR *key, uint64 &value, PartitionEntry *pe)
+int Partition::ParseXMLInt64(char *line, char *key, __uint64_t &value, PartitionEntry *pe)
 {
-  TCHAR tmp[MAX_STRING_LEN];
-  TCHAR *eptr;
-  TCHAR *sptr = wcsstr(line,key);
+  char tmp[MAX_STRING_LEN];
+  char *eptr;
+  char *sptr = wcsstr(line,key);
   if( sptr == NULL ) return ERROR_INVALID_DATA;
   sptr = wcschr(sptr,L'"');
   if( sptr == NULL ) return ERROR_INVALID_DATA;
@@ -263,7 +263,7 @@ int Partition::ParsePathList()
   return ERROR_SUCCESS;
 }
 
-bool Partition::CheckEmptyLine(TCHAR *str)
+bool Partition::CheckEmptyLine(char *str)
 {
   int keylen = wcslen(str);
   while (iswspace(*str) && (keylen > 0))
@@ -275,7 +275,7 @@ bool Partition::CheckEmptyLine(TCHAR *str)
   return (keylen == 0);
 }
 
-int Partition::ParseXMLKey(TCHAR *key, PartitionEntry *pe)
+int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
 {
   // If line is whitepsace return CMD_NOP
   if (CheckEmptyLine(key)) {
@@ -318,7 +318,7 @@ int Partition::ParseXMLKey(TCHAR *key, PartitionEntry *pe)
     Log("start_sector: %I64d ",  pe->start_sector);
   }
 	
-  uint64 partNum;
+  __uint64_t partNum;
   if( ParseXMLInt64(key,L"physical_partition_number", partNum, pe) != ERROR_SUCCESS ) {
     Log("physical_partition_number missing in XML line\n");
     return ERROR_INVALID_DATA;
@@ -331,7 +331,7 @@ int Partition::ParseXMLKey(TCHAR *key, PartitionEntry *pe)
     Log("num_partition_sectors: %I64d ", pe->num_sectors);
     // If zero then write out all sectors for size of file
   } else {
-    pe->num_sectors = (uint64)-1;
+    pe->num_sectors = (__uint64_t )-1;
   }
 
   if( pe->eCmd == CMD_PATCH || pe->eCmd == CMD_PROGRAM || pe->eCmd == CMD_READ) {
@@ -352,7 +352,7 @@ int Partition::ParseXMLKey(TCHAR *key, PartitionEntry *pe)
     if( ParseXMLInt64(key,L"file_sector_offset", pe->offset, pe) == ERROR_SUCCESS ) {
       Log("file_sector_offset: %I64d ", pe->offset);
     } else {
-      pe->offset = (uint64)-1;
+      pe->offset = (__uint64_t )-1;
     }
 	
     // The following entries should only be used in patching
@@ -390,7 +390,7 @@ int Partition::ParseXMLKey(TCHAR *key, PartitionEntry *pe)
 
 
 
-int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, TCHAR *key)
+int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *key)
 {
   UNREFERENCED_PARAMETER(key);
   HANDLE hRead = INVALID_HANDLE_VALUE;
@@ -460,8 +460,8 @@ int Partition::ProgramImage(Protocol *proto)
   int status = ERROR_SUCCESS;
 
   PartitionEntry pe;
-  TCHAR keyName[MAX_STRING_LEN];
-  TCHAR *key;
+  char keyName[MAX_STRING_LEN];
+  char *key;
   while (GetNextXMLKey(keyName, &key) == ERROR_SUCCESS) {
     // parse the XML key if we don't understand it then continue
     if (ParseXMLKey(key, &pe) != ERROR_SUCCESS) {
@@ -495,7 +495,7 @@ int Partition::ProgramImage(Protocol *proto)
   return status;
 }
 
-int Partition::PreLoadImage(TCHAR *fname)
+int Partition::PreLoadImage(char *fname)
 {
   HANDLE hXML;
   int status = ERROR_SUCCESS;
@@ -524,7 +524,7 @@ int Partition::PreLoadImage(TCHAR *fname)
   }
 
   char *xmlTmp = (char *)malloc(xmlSize);
-  xmlStart = (TCHAR *)malloc((xmlSize+2)*sizeof(TCHAR));
+  xmlStart = (char *)malloc((xmlSize+2)*sizeof(char));
   xmlEnd = xmlStart + xmlSize;
   keyStart = xmlStart;
 
@@ -582,7 +582,7 @@ int Partition::CloseXML(void)
   return ERROR_SUCCESS;
 }
 
-int Partition::GetNextXMLKey(TCHAR *keyName, TCHAR **key)
+int Partition::GetNextXMLKey(char *keyName, char **key)
 {
   bool bRecordKey = true;
   // Find < and make sure it's not a comment

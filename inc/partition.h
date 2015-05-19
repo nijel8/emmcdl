@@ -36,7 +36,7 @@ when       who     what, where, why
 #define MAX_PATH_LEN    256
 #define SECTOR_SIZE	    512
 
-typedef unsigned int64_t uint64;
+typedef unsigned int64_t __uint64_t ;
 class Protocol;
 
 enum cmdEnum {
@@ -57,12 +57,12 @@ typedef struct {
   int32_t header_size;
   int32_t crc_header;
   int32_t reserved;
-  uint64  current_lba;
-  uint64  backup_lba;
-  uint64  first_lba;
-  uint64  last_lba;
+  __uint64_t current_lba;
+  __uint64_t backup_lba;
+  __uint64_t first_lba;
+  __uint64_t last_lba;
   char    disk_guid[16];
-  uint64  partition_lba;
+  __uint64_t partition_lba;
   int32_t num_entries;
   int32_t entry_size;
   int32_t crc_partition;
@@ -72,63 +72,63 @@ typedef struct {
 typedef struct {
   char    type_guid[16];
   char    unique_guid[16];
-  uint64  first_lba;
-  uint64  last_lba;
-  uint64  attributes;
-  TCHAR   part_name[36];
+  __uint64_t first_lba;
+  __uint64_t last_lba;
+  __uint64_t attributes;
+  char   part_name[36];
 } gpt_entry_t;
 
 typedef struct {
   cmdEnum eCmd;
-  uint64 start_sector;
-  uint64 offset;
-  uint64 num_sectors;
+  __uint64_t start_sector;
+  __uint64_t offset;
+  __uint64_t num_sectors;
   UINT8 physical_partition_number;
-  uint64 patch_value;
-  uint64 patch_offset;
-  uint64 patch_size;
-  uint64 crc_start;
-  uint64 crc_size;
-  TCHAR  filename[MAX_PATH];
+  __uint64_t patch_value;
+  __uint64_t patch_offset;
+  __uint64_t patch_size;
+  __uint64_t crc_start;
+  __uint64_t crc_size;
+  char  filename[MAX_PATH];
 } PartitionEntry;
 
-TCHAR *StringReplace(TCHAR *inp, TCHAR *find, TCHAR *rep);
-TCHAR *StringSetValue(TCHAR *key, TCHAR *keyName, TCHAR *value);
+char *StringReplace(char *inp, char *find, char *rep);
+char *StringSetValue(char *key, char *keyName, char *value);
 
 
 class Partition {
 public:
   int num_entries;
 
-  Partition(uint64 ds=0) {num_entries = 0; cur_action = 0; d_sectors = ds;};
+  Partition(__uint64_t ds=0) {num_entries = 0; cur_action = 0; d_sectors = ds;};
   ~Partition() {};
-  int PreLoadImage(TCHAR * fname);
+  int PreLoadImage(char * fname);
   int ProgramImage(Protocol *proto);
-  int ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, TCHAR *key);
+  int ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *key);
 
   int CloseXML();
-  int GetNextXMLKey(TCHAR *keyName, TCHAR **key);
+  int GetNextXMLKey(char *keyName, char **key);
   unsigned int CalcCRC32(unsigned char *buffer, int len);
-  int ParseXMLKey(TCHAR *key, PartitionEntry *pe);
+  int ParseXMLKey(char *key, PartitionEntry *pe);
 
 private:
-  TCHAR *xmlStart;
-  TCHAR *xmlEnd;
-  TCHAR *keyStart;
-  TCHAR *keyEnd;
+  char *xmlStart;
+  char *xmlEnd;
+  char *keyStart;
+  char *keyEnd;
 
   int cur_action;
-  uint64 d_sectors;
+  __uint64_t d_sectors;
 
   int Reflect(int data, int len);
   int ParseXMLOptions();
   int ParsePathList();
-  int ParseXMLString(TCHAR *line, TCHAR *key, TCHAR *value);
-  int ParseXMLInt64(TCHAR *line, TCHAR *key, uint64 &value, PartitionEntry *pe);
-  int ParseXMLEvaluate(TCHAR *expr, uint64 &value, PartitionEntry *pe);
-  bool CheckEmptyLine(TCHAR *str);
+  int ParseXMLString(char *line, char *key, char *value);
+  int ParseXMLInt64(char *line, char *key, __uint64_t &value, PartitionEntry *pe);
+  int ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe);
+  bool CheckEmptyLine(char *str);
   int Log(char *str,...);
-  int Log(TCHAR *str,...);
+  int Log(char *str,...);
 
   HANDLE hLog;
 };

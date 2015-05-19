@@ -29,15 +29,15 @@ when       who     what, where, why
 #include <stdio.h>
 
 #define MAX_STRING_LEN   512
-typedef unsigned int64_t uint64;
+typedef unsigned int64_t __uint64_t ;
 
 class XMLParser {
 public:
   XMLParser();
   ~XMLParser();
-  int LoadXML(TCHAR * fname);
+  int LoadXML(char * fname);
   int ParseXMLString(char *line, char *key, char *value);
-  int ParseXMLInteger(char *line, char *key, uint64 *value);
+  int ParseXMLInteger(char *line, char *key, __uint64_t *value);
   char *StringReplace(char *inp, char *find, char *rep);
   char *StringSetValue(char *key, char *keyName, char *value);
 
@@ -47,6 +47,6 @@ private:
   char *keyStart;
   char *keyEnd;
 
-  int ParseXMLEvaluate(char *expr, uint64 &value);
+  int ParseXMLEvaluate(char *expr, __uint64_t &value);
 
 };

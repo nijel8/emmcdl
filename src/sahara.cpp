@@ -36,7 +36,7 @@ void Sahara::Log(char *str,...)
   vprintf(str,ap);
   va_end(ap);
 }
-void Sahara::Log(TCHAR *str,...)
+void Sahara::Log(char *str,...)
 {
   // For now map the log to dump output to console
   va_list ap;
@@ -151,7 +151,7 @@ int Sahara::ModeSwitch(int mode)
   return status;
 }
 
-int Sahara::LoadFlashProg(TCHAR *szFlashPrg)
+int Sahara::LoadFlashProg(char *szFlashPrg)
 {
   read_data_t read_data_req = {0};
   read_data_64_t read_data64_req = {0};

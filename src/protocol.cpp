@@ -58,7 +58,7 @@ void Protocol::Log(char *str, ...)
   }
 }
 
-void Protocol::Log(TCHAR *str, ...)
+void Protocol::Log(char *str, ...)
 {
   // For now map the log to dump output to console
   if (bVerbose) {
@@ -75,7 +75,7 @@ void Protocol::EnableVerbose()
   bVerbose = true;
 }
 
-int Protocol::LoadPartitionInfo(TCHAR *szPartName, PartitionEntry *pEntry)
+int Protocol::LoadPartitionInfo(char *szPartName, PartitionEntry *pEntry)
 {
   int status = ERROR_SUCCESS;
 
@@ -97,12 +97,12 @@ int Protocol::LoadPartitionInfo(TCHAR *szPartName, PartitionEntry *pEntry)
   return status;
 }
 
-int Protocol::WriteGPT(TCHAR *szPartName, TCHAR *szBinFile)
+int Protocol::WriteGPT(char *szPartName, char *szBinFile)
 {
   int status = ERROR_SUCCESS;
   PartitionEntry partEntry;
 
-  TCHAR *cmd_pkt = (TCHAR *)malloc(MAX_XML_LEN*sizeof(TCHAR));
+  char *cmd_pkt = (char *)malloc(MAX_XML_LEN*sizeof(char));
   if (cmd_pkt == NULL) {
     return ERROR_HV_INSUFFICIENT_MEMORY;
   }
@@ -153,7 +153,7 @@ int Protocol::ReadGPT(bool debug)
 }
 
 
-uint64 Protocol::GetNumDiskSectors()
+__uint64_t Protocol::GetNumDiskSectors()
 {
   return disk_size / DISK_SECTOR_SIZE;
 
@@ -174,7 +174,7 @@ HANDLE Protocol::GetDiskHandle(void)
   return hDisk;
 }
 
-int Protocol::DumpDiskContents(uint64 start_sector, uint64 num_sectors, TCHAR *szOutFile, UINT8 partNum, TCHAR *szPartName)
+int Protocol::DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szOutFile, UINT8 partNum, char *szPartName)
 {
   int status = ERROR_SUCCESS;
 
@@ -211,10 +211,10 @@ int Protocol::DumpDiskContents(uint64 start_sector, uint64 num_sectors, TCHAR *s
   return status;
 }
 
-int Protocol::WipeDiskContents(uint64 start_sector, uint64 num_sectors, TCHAR *szPartName)
+int Protocol::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szPartName)
 {
   PartitionEntry pe;
-  TCHAR *cmd_pkt;
+  char *cmd_pkt;
   int status = ERROR_SUCCESS;
 
   // If there is a partition name provided load the info for the partition name
@@ -230,7 +230,7 @@ int Protocol::WipeDiskContents(uint64 start_sector, uint64 num_sectors, TCHAR *s
 
   }
 
-  cmd_pkt = (TCHAR *)malloc(MAX_XML_LEN*sizeof(TCHAR));
+  cmd_pkt = (char *)malloc(MAX_XML_LEN*sizeof(char));
   if (cmd_pkt == NULL) {
     return ERROR_HV_INSUFFICIENT_MEMORY;
   }

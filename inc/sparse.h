@@ -54,7 +54,7 @@ typedef struct _CHUNK_HEADER
 
 class SparseImage {
 public:
-  int PreLoadImage(TCHAR *szSparseFile);
+  int PreLoadImage(char *szSparseFile);
   int ProgramImage(Protocol *pProtocol, int64_t dwOffset);
 
   SparseImage();

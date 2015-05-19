@@ -39,7 +39,7 @@ XMLParser::~XMLParser()
   if( xmlStart ) free(xmlStart);
 }
 
-int XMLParser::LoadXML(TCHAR *fname)
+int XMLParser::LoadXML(char *fname)
 {
   HANDLE hXML;
   int status = ERROR_SUCCESS;
@@ -140,7 +140,7 @@ char *XMLParser::StringReplace(char *inp, char *find, char *rep)
   return inp;
 }
 
-int XMLParser::ParseXMLEvaluate(char *expr, uint64 &value)
+int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
 {
   // Parse simple expression understands -+/*, NUM_DISK_SECTORS,CRC32(offset:length)
   char *sptr, *sptr1, *sptr2;
@@ -150,7 +150,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, uint64 &value)
   sptr = strstr(expr,"CRC32");
   if( sptr != NULL ) {
     char tmp[MAX_STRING_LEN];
-    uint64 crc;
+    __uint64_t crc;
     sptr1 = strstr(sptr,"(") + 1;
     if( sptr1 == NULL ) {
       return ERROR_INVALID_PARAMETER;
@@ -244,7 +244,7 @@ int XMLParser::ParseXMLString(char *line, char *key, char *value)
   return ERROR_SUCCESS;
 }
 
-int XMLParser::ParseXMLInteger(char *line, char *key, uint64 *value)
+int XMLParser::ParseXMLInteger(char *line, char *key, __uint64_t *value)
 {
   // Check to make sure none of the parameters are null
   if( line == NULL || key == NULL || value == NULL ) {

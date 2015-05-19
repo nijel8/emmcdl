@@ -79,7 +79,7 @@ UINT64 FFUImage::GetNextStartingArea(UINT64 chunkSizeInBytes, UINT64 sizeOfArea)
 
 }
 
-int FFUImage::AddEntryToRawProgram(TCHAR *szRawProgram, TCHAR *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors)
+int FFUImage::AddEntryToRawProgram(char *szRawProgram, char *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors)
 {
   HANDLE hRawPrg;
   char szXMLString[MAX_STRING_LEN * 2];
@@ -115,7 +115,7 @@ int FFUImage::AddEntryToRawProgram(TCHAR *szRawProgram, TCHAR *szFileName, UINT6
   return status;
 }
 
-int FFUImage::TerminateRawProgram(TCHAR *szFileName)
+int FFUImage::TerminateRawProgram(char *szFileName)
 {
   HANDLE hRawPrg;
   uint32_t dwBytesOut;
@@ -141,7 +141,7 @@ int FFUImage::TerminateRawProgram(TCHAR *szFileName)
   return ERROR_SUCCESS;
 }
 
-int FFUImage::CreateRawProgram(TCHAR *szFFUFile, TCHAR *szFileName)
+int FFUImage::CreateRawProgram(char *szFFUFile, char *szFileName)
 {
   HANDLE hRawPrg;
   uint32_t dwBytesOut;
@@ -283,7 +283,7 @@ int FFUImage::ParseHeaders(void)
   return ERROR_SUCCESS;
 }
 
-int FFUImage::DumpRawProgram(TCHAR *szFFUFile, TCHAR *szRawProgram)
+int FFUImage::DumpRawProgram(char *szFFUFile, char *szRawProgram)
 {
   BOOL  bPendingData = FALSE;
   uint32_t dwNextBlockIndex = 0;
@@ -347,9 +347,9 @@ int FFUImage::DumpRawProgram(TCHAR *szFFUFile, TCHAR *szRawProgram)
   return status;
 }
 
-int FFUImage::FFUToRawProgram(TCHAR *szFFUName, TCHAR *szImageFile)
+int FFUImage::FFUToRawProgram(char *szFFUName, char *szImageFile)
 {
-  TCHAR *szFFUFile = wcsrchr(szFFUName, L'\\');
+  char *szFFUFile = wcsrchr(szFFUName, L'\\');
   int status = PreLoadImage(szFFUName);
   if (status != ERROR_SUCCESS) goto FFUToRawProgramExit;
   status = CreateRawProgram(szFFUName, szImageFile);
@@ -464,7 +464,7 @@ int FFUImage::ProgramImage(Protocol *proto, int64_t dwOffset)
   return status;
 }
 
-int FFUImage::PreLoadImage(TCHAR *szFFUPath)
+int FFUImage::PreLoadImage(char *szFFUPath)
 {
   int status = ERROR_SUCCESS;
   OvlRead.hEvent = CreateEvent(NULL, FALSE, NULL, NULL);
@@ -491,7 +491,7 @@ int FFUImage::PreLoadImage(TCHAR *szFFUPath)
   return status;
 }
 
-int FFUImage::SplitFFUBin( TCHAR *szPartName, TCHAR *szOutputFile)
+int FFUImage::SplitFFUBin( char *szPartName, char *szOutputFile)
 {
   uint32_t bytesRead = 0;
   uint32_t start_sector = 0;
@@ -500,7 +500,7 @@ int FFUImage::SplitFFUBin( TCHAR *szPartName, TCHAR *szOutputFile)
   HANDLE hImage = INVALID_HANDLE_VALUE;
   uint32_tLONG diskOffset = 0;
   UINT32 i=0;
-  TCHAR szNewFile[256];
+  char szNewFile[256];
 
   for(i=0; i < 128; i++) {
     // If all is selected then dump all partitions

@@ -142,24 +142,24 @@ public:
   Dload(SerialPort *port);
   int ConnectToFlashProg(unsigned char ver); //ver=2 for byte addressing and ver=3 for sector addressing
   int DeviceReset(void);
-  int LoadPartition(TCHAR *filename);
-  int LoadImage(TCHAR *szSingleImage);
+  int LoadPartition(char *filename);
+  int LoadImage(char *szSingleImage);
   int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4);
   int SetActivePartition();
   int OpenPartition(int partition);
   int ClosePartition();
   int FastCopySerial(HANDLE hInFile, uint32_t sector, uint32_t sectors);
-  int LoadFlashProg(TCHAR *szFlashPrg);
-  int WriteRawProgramFile(TCHAR *szXMLFile);
+  int LoadFlashProg(char *szFlashPrg);
+  int WriteRawProgramFile(char *szXMLFile);
   int GetDloadParams(unsigned char *rsp, int len);
   int IsDeviceInDload(void);
-  int WipeDiskContents(uint64 start_sector, uint64 num_sectors);
+  int WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors);
 
 private:
   void HexToByte(const char *hex, unsigned char *bin, int len);
-  uint32_t HexRunAddress(TCHAR *filename);
-  uint32_t HexDataLength(TCHAR *filename);
-  uint64 GetNumDiskSectors();
+  uint32_t HexRunAddress(char *filename);
+  uint32_t HexDataLength(char *filename);
+  __uint64_t GetNumDiskSectors();
   int ProgramPartitionEntry(PartitionEntry pe);
 
   SerialPort *sport;

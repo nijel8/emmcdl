@@ -39,7 +39,7 @@ public:
   SerialPort();
   ~SerialPort();
   int Open(int port);
-  int EnableBinaryLog(TCHAR *szFileName);
+  int EnableBinaryLog(char *szFileName);
   int Close();
   int Write(unsigned char *data, uint32_t length);
   int Read(unsigned char *data, uint32_t *length);

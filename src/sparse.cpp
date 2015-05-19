@@ -48,7 +48,7 @@ SparseImage::~SparseImage()
 // RETURN: 
 // ERROR_SUCCESS - Image and headers we loaded successfully
 // 
-int SparseImage::PreLoadImage(TCHAR *szSparseFile)
+int SparseImage::PreLoadImage(char *szSparseFile)
 {
   uint32_t dwBytesRead;
   hSparseImage = CreateFile(szSparseFile,

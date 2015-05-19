@@ -52,9 +52,9 @@ public:
   int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum);
 
   int DeviceReset(void);
-  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum);
-  int ProgramPatchEntry(PartitionEntry pe, TCHAR *key);
-  int ProgramRawCommand(TCHAR *key);
+  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum);
+  int ProgramPatchEntry(PartitionEntry pe, char *key);
+  int ProgramRawCommand(char *key);
 
   // Firehose specific operations
   int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4);
@@ -68,7 +68,7 @@ private:
   int ReadStatus(void);
 
   SerialPort *sport;
-  uint64 diskSectors;
+  __uint64_t diskSectors;
   bool bSectorAddress;
   unsigned char *m_payload;
   unsigned char *m_buffer;

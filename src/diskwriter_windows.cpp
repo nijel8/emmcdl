@@ -19,7 +19,7 @@ when       who     what, where, why
 -------------------------------------------------------------------------------
 10/10/11   pgw     Keep volume open otherwise windows will remount it on us
 06/28/11   pgw     Aligned all buffers to 128 bytes for ARM SDCC suport
-05/18/11   pgw     Changed to uint64 use local handle rather than passing it in
+05/18/11   pgw     Changed to __uint64_t use local handle rather than passing it in
                    updated performance tests and API's.
 04/13/11   pgw     Fixed bug for empty card readers.
 03/21/11   pgw     Initial version.
@@ -65,7 +65,7 @@ DiskWriter::~DiskWriter()
   CloseHandle(ovl.hEvent);
 }
 
-int DiskWriter::ProgramRawCommand(TCHAR *key)
+int DiskWriter::ProgramRawCommand(char *key)
 {
   UNREFERENCED_PARAMETER(key);
   return ERROR_INVALID_FUNCTION;
@@ -79,7 +79,7 @@ int DiskWriter::DeviceReset(void)
 
 int DiskWriter::GetVolumeInfo(vol_entry_t *vol)
 {
-  TCHAR mount[MAX_PATH+1];
+  char mount[MAX_PATH+1];
   uint32_t mountsize;
 
   //try {
@@ -97,7 +97,7 @@ int DiskWriter::GetVolumeInfo(vol_entry_t *vol)
       if( vol->drivetype == DRIVE_REMOVABLE || vol->drivetype == DRIVE_FIXED ) {
         GetVolumeInformation(vol->mount,vol->volume,MAX_PATH+1,(LPuint32_t)&vol->serialnum,&maxcomplen,&fsflags,vol->fstype,MAX_PATH);
         // Create handle to volume and get disk number
-        TCHAR volPath[MAX_PATH+1] = _T("\\\\.\\");
+        char volPath[MAX_PATH+1] = _T("\\\\.\\");
         wcscat_s(volPath,vol->mount);
 
         // Create the file using the volume name
@@ -128,7 +128,7 @@ int DiskWriter::GetVolumeInfo(vol_entry_t *vol)
 
 int DiskWriter::GetDiskInfo(disk_entry_t *de)
 {
-  TCHAR tPath[MAX_PATH+1];
+  char tPath[MAX_PATH+1];
   
   int status = ERROR_SUCCESS;
 
@@ -156,7 +156,7 @@ int DiskWriter::GetDiskInfo(disk_entry_t *de)
       ))
     {
       wcscpy_s(de->diskname, MAX_PATH, tPath);
-      de->disksize = *(uint64*)(&info.DiskSize);
+      de->disksize = *(__uint64_t *)(&info.DiskSize);
       de->blocksize = info.Geometry.BytesPerSector;
     }
     else {
@@ -171,7 +171,7 @@ int DiskWriter::GetDiskInfo(disk_entry_t *de)
 
   if (status != ERROR_SUCCESS) {
     de->disknum = -1;
-    de->disksize = (uint64)-1;
+    de->disksize = (__uint64_t )-1;
     de->diskname[0] = 0;
     de->volnum[0] = -1;
   }
@@ -182,7 +182,7 @@ int DiskWriter::GetDiskInfo(disk_entry_t *de)
 int DiskWriter::InitDiskList(bool verbose)
 {
   HANDLE vHandle;
-  TCHAR VolumeName[MAX_PATH+1];
+  char VolumeName[MAX_PATH+1];
   BOOL bValid = true;
   int i=0;
 #ifndef ARM
@@ -279,7 +279,7 @@ int DiskWriter::InitDiskList(bool verbose)
 }
 
 // Patch a file on computer and put it in %temp% directory
-int DiskWriter::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
+int DiskWriter::ProgramPatchEntry(PartitionEntry pe, char *key)
 {
   UNREFERENCED_PARAMETER(key);
   uint32_t bytesIn, bytesOut;
@@ -337,7 +337,7 @@ int DiskWriter::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
 #define MAX_TEST_SIZE (4*1024*1024)
 #define LOOP_COUNT 1000
 
-int DiskWriter::CorruptionTest(uint64 offset)
+int DiskWriter::CorruptionTest(__uint64_t offset)
 {
   int status = ERROR_SUCCESS;
   BOOL bWriteDone = FALSE;
@@ -396,7 +396,7 @@ int DiskWriter::CorruptionTest(uint64 offset)
   return ERROR_SUCCESS;
 }
 
-int DiskWriter::DiskTest(uint64 offset)
+int DiskWriter::DiskTest(__uint64_t offset)
 {
   int status = ERROR_SUCCESS;
   BOOL bWriteDone = FALSE;
@@ -581,7 +581,7 @@ int DiskWriter::UnmountVolume(vol_entry_t vol)
   uint32_t bytesRead = 0;
 
   //try {
-    TCHAR volPath[MAX_PATH+1] = _T("\\\\.\\");
+    char volPath[MAX_PATH+1] = _T("\\\\.\\");
     wcscat_s(volPath,vol.mount);
     // Create the file using the volume name
     hVolume = CreateFile( volPath,
@@ -604,7 +604,7 @@ int DiskWriter::UnmountVolume(vol_entry_t vol)
   return ERROR_SUCCESS;
 }
 
-int DiskWriter::OpenDiskFile(TCHAR *oFile, uint64 sectors)
+int DiskWriter::OpenDiskFile(char *oFile, __uint64_t sectors)
 {
   int status = ERROR_SUCCESS;
   if( oFile == NULL ) {
@@ -655,7 +655,7 @@ int DiskWriter::OpenDevice(int dn)
   }
 
   // All associated volumes have been unlocked so now open handle to physical disk
-  TCHAR tPath[MAX_PATH];
+  char tPath[MAX_PATH];
   swprintf_s(tPath, _T("\\\\.\\PhysicalDrive%i"), dn);
   wprintf(tPath);
   // Create the file using the volume name
@@ -700,7 +700,7 @@ int DiskWriter::WipeLayout()
   return ERROR_GEN_FAILURE;
 }
 
-int DiskWriter::RawReadTest(uint64 offset)
+int DiskWriter::RawReadTest(__uint64_t offset)
 {
   // Set up the overlapped structure
   OVERLAPPED ovlp;
@@ -741,12 +741,12 @@ int DiskWriter::RawReadTest(uint64 offset)
   return status;
 }
 
-int DiskWriter::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum)
+int DiskWriter::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum)
 {  // Set up the overlapped structure
   UNREFERENCED_PARAMETER(partNum);
   OVERLAPPED ovlWrite, ovlRead;
   int stride;
-  uint64 sec;
+  __uint64_t sec;
   uint32_t bytesOut = 0;
   uint32_t bytesRead = 0;
   int readStatus = ERROR_SUCCESS;
@@ -854,11 +854,11 @@ int DiskWriter::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_
   return status;
 }
 
-int DiskWriter::GetRawDiskSize( uint64 *ds)
+int DiskWriter::GetRawDiskSize( __uint64_t *ds)
 {
   int status = ERROR_SUCCESS;
   // Start at 512 MB for good measure to get us to size quickly
-  uint64 diff = DISK_SECTOR_SIZE * 1024;
+  __uint64_t diff = DISK_SECTOR_SIZE * 1024;
 
   // Read data from various sectors till we figure out how big disk is
   if( ds == NULL || hDisk == INVALID_HANDLE_VALUE) {

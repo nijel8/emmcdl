@@ -38,20 +38,20 @@ when       who     what, where, why
 typedef struct {
   int32_t	     serialnum;
   int32_t      drivetype;
-  uint64      volsize;
+  __uint64_t volsize;
   int          disknum;
-  TCHAR        fstype[MAX_PATH+1];
-  TCHAR        mount[MAX_PATH+1];
-  TCHAR        rootpath[MAX_PATH+1];
-  TCHAR        volume[MAX_PATH+1];
+  char        fstype[MAX_PATH+1];
+  char        mount[MAX_PATH+1];
+  char        rootpath[MAX_PATH+1];
+  char        volume[MAX_PATH+1];
 } vol_entry_t;
 
 typedef struct {
-  uint64      disksize;
+  __uint64_t disksize;
   int          blocksize;
   int          disknum;
   int          volnum[MAX_VOLUMES+1];
-  TCHAR        diskname[MAX_PATH+1];
+  char        diskname[MAX_PATH+1];
 } disk_entry_t;
 
 class DiskWriter : public Protocol {
@@ -65,18 +65,18 @@ public:
   int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, UINT8 partNum);
   int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, UINT8 partNum);
 
-  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum=0);
+  int FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum=0);
   int OpenDevice(int dn);
-  int OpenDiskFile(TCHAR *oFile, uint64 sectors);
+  int OpenDiskFile(char *oFile, __uint64_t sectors);
   void CloseDevice();
   int InitDiskList(bool verbose = false);
   int DeviceReset(void);
-  int ProgramPatchEntry(PartitionEntry pe, TCHAR *key);
-  int ProgramRawCommand(TCHAR *key);
+  int ProgramPatchEntry(PartitionEntry pe, char *key);
+  int ProgramRawCommand(char *key);
 
   // Functions for testing purposes
-  int CorruptionTest(uint64 offset);
-  int DiskTest(uint64 offset);
+  int CorruptionTest(__uint64_t offset);
+  int DiskTest(__uint64_t offset);
   int WipeLayout();
 
 protected:
@@ -91,11 +91,11 @@ private:
 
   int GetVolumeInfo(vol_entry_t *vol);
   int GetDiskInfo(disk_entry_t *de);
-  TCHAR *TCharToString(TCHAR *p);
+  char *TCharToString(char *p);
   int UnmountVolume(vol_entry_t vol);
   int LockDevice();
   int UnlockDevice();
   bool IsDeviceWriteable();
-  int GetRawDiskSize(uint64 *ds);
-  int RawReadTest(uint64 offset);
+  int GetRawDiskSize(__uint64_t *ds);
+  int RawReadTest(__uint64_t offset);
 };

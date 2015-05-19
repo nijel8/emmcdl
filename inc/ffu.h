@@ -91,22 +91,22 @@ typedef struct _BLOCK_DATA_ENTRY
 
 class FFUImage {
 public:
-  int PreLoadImage(TCHAR *szFFUPath);
+  int PreLoadImage(char *szFFUPath);
   int ProgramImage(Protocol *proto, int64_t dwOffset);
   int CloseFFUFile(void);
   void SetDiskSectorSize(int size);
-  int SplitFFUBin(TCHAR *szPartName, TCHAR *szOutputFile);
-  int FFUToRawProgram(TCHAR *szFFUName, TCHAR *szImagePath);
+  int SplitFFUBin(char *szPartName, char *szOutputFile);
+  int FFUToRawProgram(char *szFFUName, char *szImagePath);
   FFUImage();
   ~FFUImage();
 
 private:
   void SetOffset(OVERLAPPED* ovlVariable, UINT64 offset);
-  int CreateRawProgram(TCHAR *szFFUFile, TCHAR *szFileName);
-  int TerminateRawProgram(TCHAR *szFileName);
-  int DumpRawProgram(TCHAR *szFFUFile, TCHAR *szRawProgram);
+  int CreateRawProgram(char *szFFUFile, char *szFileName);
+  int TerminateRawProgram(char *szFileName);
+  int DumpRawProgram(char *szFFUFile, char *szRawProgram);
   int FFUDumpDisk(Protocol *proto);
-  int AddEntryToRawProgram(TCHAR *szRawProgram, TCHAR *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors);
+  int AddEntryToRawProgram(char *szRawProgram, char *szFileName, UINT64 ui64FileOffset, int64_t i64StartSector, UINT64 ui64NumSectors);
   int ReadGPT(void);
   int ParseHeaders(void);
   UINT64 GetNextStartingArea(UINT64 chunkSizeInBytes, UINT64 sizeOfArea);

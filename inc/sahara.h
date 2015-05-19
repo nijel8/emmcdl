@@ -127,7 +127,7 @@ class Sahara {
 public:
   Sahara(SerialPort *port,HANDLE hLogFile = NULL);
   int DeviceReset(void);
-  int LoadFlashProg(TCHAR *szFlashPrg);
+  int LoadFlashProg(char *szFlashPrg);
   int ConnectToDevice(bool bReadHello, int mode);
   int DumpDeviceInfo(pbl_info_t *pbl_info);
   bool CheckDevice(void);
@@ -136,10 +136,10 @@ private:
   int ModeSwitch(int mode);
   void HexToByte(const char *hex, unsigned char *bin, int len);
   void Log(char *str,...);
-  void Log(TCHAR *str,...);
+  void Log(char *str,...);
 
-  uint32_t HexRunAddress(TCHAR *filename);
-  uint32_t HexDataLength(TCHAR *filename);
+  uint32_t HexRunAddress(char *filename);
+  uint32_t HexDataLength(char *filename);
   int ReadData(int cmd, unsigned char *buf, int len);
   int PblHack(void);
 

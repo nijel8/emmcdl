@@ -223,10 +223,10 @@ int Firehose::ReadStatus(void)
   return ERROR_NOT_READY;
 }
 
-int Firehose::ProgramPatchEntry(PartitionEntry pe, TCHAR *key)
+int Firehose::ProgramPatchEntry(PartitionEntry pe, char *key)
 {
   UNREFERENCED_PARAMETER(pe);
-  TCHAR tmp_key[MAX_STRING_LEN];
+  char tmp_key[MAX_STRING_LEN];
   size_t bytesOut;
   int status = ERROR_SUCCESS;
   
@@ -406,7 +406,7 @@ int Firehose::SetActivePartition(int prtn_num)
   return status;
 }
 
-int Firehose::ProgramRawCommand(TCHAR *key)
+int Firehose::ProgramRawCommand(char *key)
 {
   uint32_t dwBytesRead;
   size_t bytesOut;
@@ -425,7 +425,7 @@ int Firehose::ProgramRawCommand(TCHAR *key)
   return status;
 }
 
-int Firehose::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, uint64 sectors, UINT8 partNum)
+int Firehose::FastCopy(HANDLE hRead, int64_t sectorRead, HANDLE hWrite, int64_t sectorWrite, __uint64_t sectors, UINT8 partNum)
 {
   uint32_t dwBytesRead = 0;
   BOOL bReadStatus = TRUE;

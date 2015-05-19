@@ -93,10 +93,10 @@ int PrintHelp()
   return -1;
 }
 
-void StringToByte(TCHAR **szSerialData, unsigned char *data, int len)
+void StringToByte(char **szSerialData, unsigned char *data, int len)
 {
   for(int i=0; i < len; i++) {
-   TCHAR *hex = szSerialData[i];
+   char *hex = szSerialData[i];
    if( wcsncmp(hex,L"0x",2) == 0 ) {
      unsigned char val1 = (unsigned char)(hex[2] - '0');
      unsigned char val2 = (unsigned char)(hex[3] - '0');
@@ -109,7 +109,7 @@ void StringToByte(TCHAR **szSerialData, unsigned char *data, int len)
   }
 }
 
-int RawSerialSend(int dnum, TCHAR **szSerialData, int len)
+int RawSerialSend(int dnum, char **szSerialData, int len)
 {
   int status = ERROR_SUCCESS;
   unsigned char data[256];
@@ -126,7 +126,7 @@ int RawSerialSend(int dnum, TCHAR **szSerialData, int len)
 }
 
 
-int LoadFlashProg(TCHAR *mprgFile)
+int LoadFlashProg(char *mprgFile)
 {
   int status = ERROR_SUCCESS;
   // This is PBL so depends on the chip type
@@ -151,7 +151,7 @@ int LoadFlashProg(TCHAR *mprgFile)
   return status;
 }
 
-int EraseDisk(uint64 start, uint64 num, int dnum, TCHAR *szPartName)
+int EraseDisk(__uint64_t start, __uint64_t num, int dnum, char *szPartName)
 {
   int status = ERROR_SUCCESS;
 
@@ -278,7 +278,7 @@ int ReadGPT(int dnum)
   return status;
 }
 
-int WriteGPT(int dnum, TCHAR *szPartName, TCHAR *szBinFile)
+int WriteGPT(int dnum, char *szPartName, char *szBinFile)
 {
   int status;
 
@@ -312,7 +312,7 @@ int ResetDevice()
   return status;
 }
 
-int FFUProgram(TCHAR *szFFUFile)
+int FFUProgram(char *szFFUFile)
 {
   FFUImage ffu;
   int status = ERROR_SUCCESS;
@@ -329,7 +329,7 @@ int FFUProgram(TCHAR *szFFUFile)
   return status;
 }
 
-int FFULoad(TCHAR *szFFUFile, TCHAR *szPartName, TCHAR *szOutputFile)
+int FFULoad(char *szFFUFile, char *szPartName, char *szOutputFile)
 {
   int status = ERROR_SUCCESS;
   wprintf(_T("Loading FFU\n"));
@@ -346,7 +346,7 @@ int FFULoad(TCHAR *szFFUFile, TCHAR *szPartName, TCHAR *szOutputFile)
   return status;
 }
 
-int FFURawProgram(TCHAR *szFFUFile, TCHAR *szOutputFile)
+int FFURawProgram(char *szFFUFile, char *szOutputFile)
 {
   int status = ERROR_SUCCESS;
   wprintf(_T("Creating rawprogram and files\n"));
@@ -362,7 +362,7 @@ int FFURawProgram(TCHAR *szFFUFile, TCHAR *szOutputFile)
 }
 
 
-int EDownloadProgram(TCHAR *szSingleImage, TCHAR **szXMLFile)
+int EDownloadProgram(char *szSingleImage, char **szXMLFile)
 {
   int status = ERROR_SUCCESS;
   Dload dl(&m_port);
@@ -387,10 +387,10 @@ int EDownloadProgram(TCHAR *szSingleImage, TCHAR **szXMLFile)
       // Download all XML files to device 
       for(int i=0; szXMLFile[i] != NULL; i++) {
         // Use new method to download XML to serial port
-        TCHAR szPatchFile[MAX_STRING_LEN];
+        char szPatchFile[MAX_STRING_LEN];
         wcsncpy_s(szPatchFile,szXMLFile[i],sizeof(szPatchFile));
         StringReplace(szPatchFile,L"rawprogram",L"patch");
-        TCHAR *sptr = wcsstr(szXMLFile[i],L".xml");
+        char *sptr = wcsstr(szXMLFile[i],L".xml");
         if( sptr == NULL ) return ERROR_INVALID_PARAMETER;
         prtn = (unsigned char)((*--sptr) - '0' + PRTN_EMMCUSER);
         wprintf(L"Opening partition %i\n",prtn);
@@ -419,12 +419,12 @@ int EDownloadProgram(TCHAR *szSingleImage, TCHAR **szXMLFile)
         status = rawprg.ProgramImage(&fh);
 
         // Only try to do patch if filename has rawprogram in it
-        TCHAR *sptr = wcsstr(szXMLFile[i], L"rawprogram");
+        char *sptr = wcsstr(szXMLFile[i], L"rawprogram");
         if (sptr != NULL && status == ERROR_SUCCESS) {
           Partition patch(0);
           int pstatus = ERROR_SUCCESS;
           // Check if patch file exist
-          TCHAR szPatchFile[MAX_STRING_LEN];
+          char szPatchFile[MAX_STRING_LEN];
           wcsncpy_s(szPatchFile, szXMLFile[i], sizeof(szPatchFile));
           StringReplace(szPatchFile, L"rawprogram", L"patch");
           pstatus = patch.PreLoadImage(szPatchFile);
@@ -443,7 +443,7 @@ int EDownloadProgram(TCHAR *szSingleImage, TCHAR **szXMLFile)
 }
 
 
-int RawDiskProgram(TCHAR **pFile, TCHAR *oFile, uint64 dnum)
+int RawDiskProgram(char **pFile, char *oFile, __uint64_t dnum)
 {
   DiskWriter dw;
   int status = ERROR_SUCCESS;
@@ -471,7 +471,7 @@ int RawDiskProgram(TCHAR **pFile, TCHAR *oFile, uint64 dnum)
   return status;
 }
 
-int RawDiskTest(int dnum, uint64 offset)
+int RawDiskTest(int dnum, __uint64_t offset)
 {
   DiskWriter dw;
   int status = ERROR_SUCCESS;
@@ -492,7 +492,7 @@ int RawDiskTest(int dnum, uint64 offset)
   return status;
 }
 
-int RawDiskDump(uint64 start, uint64 num, TCHAR *oFile, int dnum, TCHAR *szPartName)
+int RawDiskDump(__uint64_t start, __uint64_t num, char *oFile, int dnum, char *szPartName)
 {
   DiskWriter dw;
   int status = ERROR_SUCCESS;
@@ -529,23 +529,23 @@ int DiskList()
   return ERROR_SUCCESS;
 }
 
-int __cdecl _tmain(int argc, _TCHAR* argv[])
+int __cdecl _tmain(int argc, _char* argv[])
 {
   int dnum = -1;
   int status = 0;
   bool bEmergdl = FALSE;
-  TCHAR *szOutputFile = NULL;
-  TCHAR *szXMLFile[8] = {NULL};
-  TCHAR **szSerialData = {NULL};
+  char *szOutputFile = NULL;
+  char *szXMLFile[8] = {NULL};
+  char **szSerialData = {NULL};
   uint32_t dwXMLCount = 0;
-  TCHAR *szFFUImage = NULL;
-  TCHAR *szFlashProg = NULL;
-  TCHAR *szSingleImage = NULL;
-  TCHAR *szPartName = NULL;
+  char *szFFUImage = NULL;
+  char *szFlashProg = NULL;
+  char *szSingleImage = NULL;
+  char *szPartName = NULL;
   emmc_cmd_e cmd = EMMC_CMD_NONE;
-  uint64 uiStartSector = 0;
-  uint64 uiNumSectors = 0;
-  uint64 uiOffset = 0x40000000;
+  __uint64_t uiStartSector = 0;
+  __uint64_t uiNumSectors = 0;
+  __uint64_t uiOffset = 0x40000000;
   uint32_t dwGPP1=0,dwGPP2=0,dwGPP3=0,dwGPP4=0;
   bool bGppQuiet = FALSE;
 
@@ -630,7 +630,7 @@ int __cdecl _tmain(int argc, _TCHAR* argv[])
     if (_wcsicmp(argv[i], L"-t") == 0) {
       cmd = EMMC_CMD_TEST;
       if( i < argc ) {
-        uiOffset = (uint64)(_wtoi(argv[++i])) * 512;
+        uiOffset = (__uint64_t )(_wtoi(argv[++i])) * 512;
       }
     }
     if (_wcsicmp(argv[i], L"-g") == 0) {
@@ -880,6 +880,6 @@ int __cdecl _tmain(int argc, _TCHAR* argv[])
         0, NULL );
 
   // Display the error message and exit the process
-  wprintf(_T("Status: %i %s\n"),status, (TCHAR*)lpMsgBuf);
+  wprintf(_T("Status: %i %s\n"),status, (char*)lpMsgBuf);
   return status;
 }
