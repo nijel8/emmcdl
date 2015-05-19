@@ -26,22 +26,22 @@ when       who     what, where, why
 =============================================================================*/
 
 #include "diskwriter.h"
-#include "winerror.h"
-#include <winioctl.h>
 #include <string.h>
 #include <stdio.h>
-#include "tchar.h"
 #ifdef _WIN32
+#include "winerror.h"
+#include <winioctl.h>
+#include "tchar.h"
 #include "windows.h"
-#endif
-#include "sahara.h"
-
 // Only List COM port information for desktop version
 #ifndef ARM
 #include "setupapi.h"
 #define INITGUID 1    // This is needed to properly define the GUID's in devpkey.h
 #include "devpkey.h"
 #endif //ARM
+#endif
+#include "sahara.h"
+
 
 DiskWriter::DiskWriter()
 {
