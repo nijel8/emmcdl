@@ -58,7 +58,7 @@ char *StringSetValue(char *key, char *keyName, char *value)
   return key;
 }
 
-char *StringReplace(char *inp, char *find, char *rep)
+char *StringReplace(char *inp, const char *find, const char *rep)
 {
   char tmpstr[MAX_STRING_LEN];
   int max_len = MAX_STRING_LEN;
@@ -86,7 +86,7 @@ char *StringReplace(char *inp, char *find, char *rep)
   return inp;
 }
 
-int Partition::Log(char *str,...)
+int Partition::Log(const char *str,...)
 {
   // For now map the log to dump output to console
   va_list ap;
@@ -140,18 +140,19 @@ unsigned int Partition::CalcCRC32(unsigned char *buffer, int len)
    return Reflect(regs,32) ^ 0xFFFFFFFF;
 }
 
-int Partition::ParseXMLString(char *line, char *key, char *value)
+int Partition::ParseXMLString(char *line, const char *key, char *value)
 {
   char *eptr;
   char *sptr = strstr(line,key);
   if( sptr == NULL ) return ERROR_INVALID_DATA;
-  sptr = strstr(sptr, (const char*)'"');
+  sptr = strchr(sptr, '"');
   if( sptr == NULL ) return ERROR_INVALID_DATA;
   sptr++;
-  eptr = strstr(sptr, (const char*)'"');
+  eptr = strchr(sptr, '"');
   if( eptr == NULL) return ERROR_INVALID_DATA;
   // Copy the value between the quotes to output string
   strncpy(value,sptr,eptr-sptr);
+  value[eptr-sptr] = 0;
   return 0;
 }
 
@@ -160,7 +161,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
   // Parse simple expression understands -+/*, NUM_DISK_SECTORS,CRC32(offset:length)
   char disk_sectors[64];
   char *sptr, *sptr1, *sptr2;
-  sprintf(disk_sectors, "%ll", d_sectors);
+  sprintf(disk_sectors, "%lu", d_sectors);
   expr = StringReplace(expr,"NUM_DISK_SECTORS",disk_sectors);
   value = atoll(expr);
 
@@ -172,11 +173,13 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
     sptr2 = strstr(sptr1,",");
     if( sptr2 == NULL ) return EINVAL;
     strncpy(tmp,sptr1,(sptr2-sptr1));
+    tmp[sptr2-sptr1] = 0;
     ParseXMLEvaluate(tmp, pe->crc_start, pe);
     sptr1 = sptr2 + 1;
     sptr2 = strstr(sptr1,")");
     if( sptr2 == NULL ) return EINVAL;
     strncpy(tmp,sptr1,(sptr2-sptr1));
+    tmp[sptr2-sptr1] = 0;
     ParseXMLEvaluate(tmp, pe->crc_size,pe);
     // Revome the CRC part set value 0
     memset(sptr,' ',(sptr2-sptr+1)*2);
@@ -226,19 +229,25 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
   return 0;
 }
 
-int Partition::ParseXMLInt64(char *line, char *key, __uint64_t &value, PartitionEntry *pe)
+int Partition::ParseXMLInt64(char *line, const char *key, __uint64_t &value, PartitionEntry *pe)
 {
   char tmp[MAX_STRING_LEN];
   char *eptr;
   char *sptr = strstr(line,key);
+
   if( sptr == NULL ) return ERROR_INVALID_DATA;
-  sptr = strstr(sptr,(const char*)'"');
+  sptr = strchr(sptr,'"');
+
   if( sptr == NULL ) return ERROR_INVALID_DATA;
   sptr++;
-  eptr = strstr(sptr, (const char*)'"');
+  eptr = strchr(sptr, '"');
+
   if( eptr == NULL) return ERROR_INVALID_DATA;
+
   strncpy(tmp,sptr,eptr-sptr);
-  
+
+  tmp[eptr-sptr] = 0;
+
   ParseXMLEvaluate(tmp,value, pe);
 
   return 0;
@@ -406,11 +415,11 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
     }
     else
     {
-      printf("\nSparse image not detected -- loading binary\n");
+      printf("\nSparse image:%s not detected -- loading binary\n", pe.filename);
       // Open the file that we are supposed to dump
       status = 0;
-      hRead = emmcdl_creat(pe.filename,O_RDWR);
-      if (hRead == -1) {
+      hRead = emmcdl_open(pe.filename,O_RDONLY);
+      if (hRead < 0) {
         status = errno;
       }
       else {
@@ -434,10 +443,11 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
       }
     }
   }
+  printf("\nSparse image:%s not detected -- loading binary\n", pe.filename);
 
   if (status == 0 && !bSparse) {
     // Fast copy from input file to output disk
-    printf("In offset: %I64d out offset: %I64d sectors: %I64d\n", pe.offset, pe.start_sector, pe.num_sectors);
+    printf("In offset: %lu out offset: %lu sectors: %lu\n", pe.offset, pe.start_sector, pe.num_sectors);
     status = proto->FastCopy(hRead, pe.offset, proto->GetDiskHandle(),  pe.start_sector, pe.num_sectors,pe.physical_partition_number);
     emmcdl_close(hRead);
   }
@@ -452,6 +462,7 @@ int Partition::ProgramImage(Protocol *proto)
   char keyName[MAX_STRING_LEN];
   char *key;
   while (GetNextXMLKey(keyName, &key) == 0) {
+	  //memset(&pe, 0, sizeof(pe));
     // parse the XML key if we don't understand it then continue
     if (ParseXMLKey(key, &pe) != 0) {
       // If we don't understand the command just try sending it otherwise ignore command
@@ -491,10 +502,11 @@ int Partition::PreLoadImage(char *fname)
   xmlStart = NULL;
 
   // Open the XML file and read into RAM
-  hXML = emmcdl_creat( fname,O_RDWR);
+  hXML = emmcdl_open( fname,O_RDONLY);
 
+  printf("\n%s %s\n", __func__, fname);
   
-  if( hXML == -1 ) {
+  if( hXML < 0 ) {
     return errno;
   }
 
@@ -534,6 +546,7 @@ int Partition::PreLoadImage(char *fname)
   if( status == 0 ) {
 
     strncpy(xmlStart,xmlTmp,xmlSize);
+    xmlStart[xmlSize] = 0;
 
     // skip over xml header should be <?xml....?>
     for(keyStart=xmlStart;keyStart < xmlEnd;) {
@@ -551,6 +564,7 @@ int Partition::PreLoadImage(char *fname)
 
   }
 
+  //printf("%s:\n %s\n", __func__, xmlStart);
   // Copied this over to wchar buffer free temp buffer 
   if(xmlTmp != NULL) free(xmlTmp);
   
@@ -561,7 +575,8 @@ int Partition::CloseXML(void)
 {
   // Free the RAM buffer for storing the XML data
   if( xmlStart != NULL ) {
-    delete[] xmlStart;
+    free(xmlStart);
+    printf("%s\n", __func__);
     xmlStart = NULL;
     xmlEnd = NULL;
     keyStart = NULL;

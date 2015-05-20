@@ -67,7 +67,7 @@ int Dload::ConnectToFlashProg(unsigned char ver)
       break;
     }
     sport->Flush();
-    sleep(500);
+    emmcdl_sleep_ms(500);
   }
 
   // Clear out any stale data so we start on a new buffer
@@ -85,7 +85,7 @@ int Dload::ConnectToFlashProg(unsigned char ver)
       return 0;
     }
     sport->Flush();
-    sleep(500);
+    emmcdl_sleep_ms(500);
   }
 
   return EINVAL;
@@ -209,7 +209,7 @@ int Dload::FastCopySerial(int hInFile, uint32_t offset, uint32_t sectors)
         printf("Device returned error: %i\n",rsp[0]);
         if( rsp[0] == EHOST_LOG && rspSize >= 2) {
           rsp[rspSize-2] = 0;
-          printf((char *)&rsp[1]);
+          printf("%s", &rsp[1]);
         }
         status = ERROR_WRITE_FAULT;
       }
@@ -275,7 +275,7 @@ int Dload::LoadFlashProg(char *szFlashPrg)
     // Read in data till we collect 256 bytes or hit end of file
     for(bytesRead=0; bytesRead < 256;) {
       unsigned char len;
-      fgets(hexline,sizeof(hexline),fMprgFile);
+      char* unused = fgets(hexline,sizeof(hexline),fMprgFile);
       if( strlen(hexline) > 9 ) {
         HexToByte(&hexline[1],&len,1);
         HexToByte(&hexline[3],rsp,2);
@@ -321,7 +321,7 @@ int Dload::LoadFlashProg(char *szFlashPrg)
       write32[5] = (bytesRead >> 8) & 0xff;
       write32[6] = bytesRead & 0xff;
       rspSize = sizeof(rsp);
-      //printf("Program at: 0x%x length %i\n",targetAddr,bytesRead);
+      printf("Program at: 0x%x length %i\n",targetAddr,bytesRead);
       sport->SendSync(write32,bytesRead+7,rsp,&rspSize);
       if( (rspSize == 0) || (rsp[0] != CMD_ACK) ) {
         status = ERROR_WRITE_FAULT;
@@ -376,11 +376,15 @@ int Dload::IsDeviceInDload(void)
   unsigned char rsp[32] = {0};
   int bytesRead = 32;
 
+  printf("%s 0Downloading flash programmer: \n",__func__);
   sport->SendSync(nop,sizeof(nop),rsp,&bytesRead);
+  for (int i=0;i < 32;i++)
+      printf("%x: ",rsp[i]);
   if( rsp[0] == CMD_ACK ) {
     return 0;
   }
   
+  printf("\n%s 1Downloading flash programmer: \n",__func__);
   return EINVAL;
 }
 
@@ -482,7 +486,7 @@ int Dload::ProgramPartitionEntry(PartitionEntry pe)
   
   if( status == 0 ) {
     // Fast copy from input file to Serial port
-    printf("\nIn offset: %I64d out offset: %I64d sectors: %I64d\n",pe.offset, pe.start_sector,pe.num_sectors);
+    printf("\nIn offset: %lu out offset: %lu sectors: %lu\n",pe.offset, pe.start_sector,pe.num_sectors);
     status = FastCopySerial(hInFile,(uint32_t)pe.start_sector,(uint32_t)pe.num_sectors);
   }
   
@@ -518,6 +522,7 @@ int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
   char keyName[MAX_STRING_LEN];
   char *key;
   while( p->GetNextXMLKey(keyName,&key) == 0 ) {
+	  memset(&pe, 0, sizeof(pe));
     // parse the XML key if we don't understand it then continue
     if( p->ParseXMLKey(key,&pe) != 0 ) continue;
     // If there is a CRC then calculate this value before we write it out

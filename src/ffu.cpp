@@ -98,11 +98,11 @@ int FFUImage::AddEntryToRawProgram(char *szRawProgram, char *szFileName, uint64_
     SetFilePointer(hRawPrg, 0, 0, FILE_END);
     wcstombs_s(&sBytesConvert, szFile, sizeof(szFile), szFileName, sizeof(szFile));
     if (i64StartSector < 0) {
-      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"NUM_DISK_SECTORS%I64d\"/>\n",
+      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_BYTES=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"NUM_DISK_SECTORS%I64d\"/>\n",
         DISK_SECTOR_SIZE,ui64FileOffset, szFile, i64StartSector, ui64NumSectors, ui64NumSectors / 2, i64StartSector * 512, i64StartSector);
     }
     else {
-      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"%I64d\"/>\n",
+      sprintf_s(szXMLString, sizeof(szXMLString), "<program SECTOR_SIZE_IN_BYTES=\"%i\" file_sector_offset=\"%I64d\" filename=\"%s\" label=\"ffu_image_%I64d\" num_partition_sectors=\"%I64d\" physical_partition_number=\"0\" size_in_KB=\"%I64d\" sparse=\"false\" start_byte_hex=\"0x%I64x\" start_sector=\"%I64d\"/>\n",
         DISK_SECTOR_SIZE, ui64FileOffset, szFile, i64StartSector, ui64NumSectors, ui64NumSectors / 2, i64StartSector * 512, i64StartSector);
     }
     WriteFile(hRawPrg, szXMLString, strlen(szXMLString), &dwBytesWrite, NULL);

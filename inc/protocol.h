@@ -35,7 +35,7 @@ public:
   //int SetActivePartition(int prtn_num);
 
   Protocol();
-  ~Protocol();
+  virtual ~Protocol();
 
   int DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szOutFile, uint8_t partNum, char *szPartName);
   int WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szPartName);
@@ -58,7 +58,7 @@ public:
 protected:
 
   int LoadPartitionInfo(char *szPartName, PartitionEntry *pEntry);
-  void Log(char *str, ...);
+  void Log(const char *str, ...);
 
   gpt_header_t gpt_hdr;
   gpt_entry_t *gpt_entries;

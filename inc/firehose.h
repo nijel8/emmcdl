@@ -65,7 +65,6 @@ private:
 
   SerialPort *sport;
   __uint64_t diskSectors;
-  bool bSectorAddress;
   unsigned char *m_payload;
   unsigned char *m_buffer;
   unsigned char *m_buffer_ptr;

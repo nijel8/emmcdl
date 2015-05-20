@@ -88,7 +88,7 @@ typedef struct {
   char  filename[MAX_PATH];
 } PartitionEntry;
 
-char *StringReplace(char *inp, char *find, char *rep);
+char *StringReplace(char *inp, const char *find, const char *rep);
 char *StringSetValue(char *key, char *keyName, char *value);
 
 
@@ -96,8 +96,15 @@ class Partition {
 public:
   int num_entries;
 
-  Partition(__uint64_t ds=0) {num_entries = 0; cur_action = 0; d_sectors = ds;};
-  ~Partition() {};
+  Partition(__uint64_t ds=0)
+  {
+	  num_entries = 0; cur_action = 0; d_sectors = ds;
+	  xmlStart = NULL;
+	  xmlEnd = NULL;
+	  keyStart = NULL;
+	  keyEnd = NULL;
+  };
+  ~Partition() { printf("####################~Partition");};
   int PreLoadImage(char * fname);
   int ProgramImage(Protocol *proto);
   int ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *key);
@@ -119,11 +126,10 @@ private:
   int Reflect(int data, int len);
   int ParseXMLOptions();
   int ParsePathList();
-  int ParseXMLString(char *line, char *key, char *value);
-  int ParseXMLInt64(char *line, char *key, __uint64_t &value, PartitionEntry *pe);
+  int ParseXMLString(char *line, const char *key, char *value);
+  int ParseXMLInt64(char *line, const char *key, __uint64_t &value, PartitionEntry *pe);
   int ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe);
   bool CheckEmptyLine(char *str);
-  int Log(char *str,...);
+  int Log(const char *str,...);
 
-  int hLog;
 };

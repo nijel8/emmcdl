@@ -119,7 +119,8 @@ int RawSerialSend(int dnum, char **szSerialData, int len)
     return EINVAL;
   }
 
-  m_port.Open(dnum);
+  status = m_port.Open(dnum);
+  if (status < 0) return status;
   StringToByte(szSerialData,data,len);
   status = m_port.Write(data,len);
   return status;
@@ -171,7 +172,7 @@ int EraseDisk(__uint64_t start, __uint64_t num, int dnum, char *szPartName)
     status = dw.OpenDevice(dnum);
     if( status == 0 ) {
       printf("Successfully opened volume\n");
-      printf("Erase at start_sector %lld: num_sectors: %lld\n",start, num);
+      printf("Erase at start_sector %lu: num_sectors: %lu\n",start, num);
       status = dw.WipeDiskContents( start,num, szPartName );
     }
     dw.CloseDevice();
@@ -395,7 +396,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
         prtn = (unsigned char)((*--sptr) - '0' + PRTN_EMMCUSER);
         printf("Opening partition %i\n",prtn);
         dl.OpenPartition(prtn);
-        //sleep(1);
+        //emmcdl_sleep_ms(1);
         status = dl.WriteRawProgramFile(szPatchFile);
         if( status != 0 ) return status;
         status = dl.WriteRawProgramFile(szXMLFile[i]);
@@ -412,15 +413,19 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       printf("Connected to flash programmer, starting download\n");
 
       // Download all XML files to device
+      printf("#########%s\n", szXMLFile[0]);
       for (int i = 0; szXMLFile[i] != NULL; i++) {
         Partition rawprg(0);
         status = rawprg.PreLoadImage(szXMLFile[i]);
         if (status != 0) return status;
         status = rawprg.ProgramImage(&fh);
+        printf("########################%s %d\n", __func__, __LINE__);
 
         // Only try to do patch if filename has rawprogram in it
         char *sptr = strstr(szXMLFile[i], "rawprogram");
         if (sptr != NULL && status == 0) {
+            printf("########################%s %d\n", __func__, __LINE__);
+
           Partition patch(0);
           int pstatus = 0;
           // Check if patch file exist
@@ -438,6 +443,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       }
     }
   }
+  printf("########################%s %d\n", __func__, __LINE__);
 
   return status;
 }
@@ -498,7 +504,7 @@ int RawDiskDump(__uint64_t start, __uint64_t num, char *oFile, int dnum, char *s
   int status = 0;
 
   // Get extra info from the user via command line
-  printf("Dumping at start sector: %lld for sectors: %lld to file: %s\n",start, num, oFile);
+  printf("Dumping at start sector: %lu for sectors: %lu to file: %s\n",start, num, oFile);
   if( m_emergency ) {
     Firehose fh(&m_port);
     fh.SetDiskSectorSize(m_sector_size);
@@ -694,6 +700,14 @@ int main(int argc, char * argv[])
 	  break;
     }
 
+    if (strcasecmp(argv[i], "-verbose") == 0) {
+      if( (i+1) < argc ) {
+        m_verbose = true;
+      } else {
+        PrintHelp();
+      }
+    }
+
     if (strcasecmp(argv[i], "-splitffu") == 0) {
       if( (i+1) < argc ) {
         szFFUImage = argv[++i];
@@ -769,14 +783,16 @@ int main(int argc, char * argv[])
   }
   
   if( szFlashProg != NULL ) {
-     m_port.Open(dnum);
+     status = m_port.Open(dnum);
+     if (status < 0) return status;
      status = LoadFlashProg(szFlashProg);
      if (status == 0) {
        printf("Waiting for flash programmer to boot\n");
-       sleep(2000);
+       emmcdl_sleep_ms(2000);
      }
      else {
        printf("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n");
+       exit(0);
      }
      m_emergency = true;
   }
@@ -809,6 +825,7 @@ int main(int argc, char * argv[])
       return PrintHelp();
     }
     if( m_emergency ) {
+      printf("EMERGENCY Programming image\n");
       status = EDownloadProgram(szSingleImage, szXMLFile);
     } else {
       printf("Programming image\n");
@@ -859,8 +876,9 @@ int main(int argc, char * argv[])
     status = ReadGPT(dnum);
     break;
   case EMMC_CMD_INFO:
-    m_port.Open(dnum); 
-    status = DumpDeviceInfo();
+	  status = m_port.Open(dnum);
+	  if (status < 0) return status;
+	  status = DumpDeviceInfo();
     break;
   case EMMC_CMD_NONE:
     break;
@@ -869,6 +887,6 @@ int main(int argc, char * argv[])
   // Print error information
 
   // Display the error message and exit the process
-  printf("Status: %i %s\n",status, (char*)"TODO");
+  printf("Status: %i %s\n",status, (char*)strerror(status));
   return status;
 }

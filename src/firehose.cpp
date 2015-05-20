@@ -30,9 +30,15 @@ using namespace std;
 
 Firehose::~Firehose()
 {
+	printf("%s \n", __func__);
   if(m_payload != NULL ) {
     free(m_payload);
     m_payload = NULL;
+  }
+
+  if (m_buffer != NULL) {
+     free(m_buffer);
+     m_buffer = NULL;
   }
   if (program_pkt != NULL) {
 	  free(program_pkt);
@@ -43,7 +49,6 @@ Firehose::~Firehose()
 Firehose::Firehose(SerialPort *port,int hLogFile)
 {
   // Initialize the serial port
-  bSectorAddress = true;
   dwMaxPacketSize = 1024*1024;
   diskSectors = 0;
   hLog = hLogFile;
@@ -51,6 +56,7 @@ Firehose::Firehose(SerialPort *port,int hLogFile)
   m_payload = NULL;
   program_pkt = NULL;
   m_buffer_len = 0;
+  m_buffer = NULL;
   m_buffer_ptr = NULL;
 }
 
@@ -64,12 +70,12 @@ int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
     memset(pOutBuf, 0, dwBufSize);
     // First check if there is data available in our buffer
     for (int i=0; i < 3;i++){
-      for (; m_buffer_len > 0;m_buffer_len--) {
+      for (; m_buffer_len > 0 && dwBytesRead < dwBufSize;m_buffer_len--) {
         *pOutBuf++ = *m_buffer_ptr++;
         dwBytesRead++;
 
         // Check for end of XML 
-        if (strncmp(((char *)pOutBuf) - 7, "</data>", 7) == 0) {
+        if (dwBytesRead >= 7 && (strncmp(((char *)pOutBuf) - 7, "</data>", 7) == 0)) {
           m_buffer_len--;
           bFoundXML = true;
           break;
@@ -82,9 +88,10 @@ int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
         memset(m_buffer, 0, dwMaxPacketSize);
         m_buffer_len = dwMaxPacketSize;
         m_buffer_ptr = m_buffer;
-        if (sport->Read(m_buffer, &m_buffer_len) != 0) {
+        if ((status = sport->Read(m_buffer, &m_buffer_len)) <  0) {
           m_buffer_len = 0;
         }
+
       } else {
         break;
       }
@@ -127,6 +134,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   uint32_t dwBytesRead = dwMaxPacketSize;
   uint32_t retry = 0;
 
+  printf("%s\n", __func__);
   // Allocation our global buffers only once when connecting to flash programmer
   if (m_payload == NULL || program_pkt == NULL || m_buffer == NULL) {
     m_payload = (unsigned char *)malloc(dwMaxPacketSize);
@@ -139,7 +147,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
 
   // Read any pending data from the flash programmer
   memset(m_payload, 0, dwMaxPacketSize);
-  dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
+  //dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
   Log((char*)m_payload);
 
   // If this is UFS and didn't specify the disk_sector_size then update default to 4096
@@ -192,7 +200,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   }
 
   // read out any pending data 
-  dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
+  //dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
   Log((char *)m_payload);
 
   return status;
@@ -263,12 +271,12 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
   memset(program_pkt, 0, MAX_XML_LEN);
   if (writeOffset >= 0) {
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)writeBytes/DISK_SECTOR_SIZE, partNum, (int)(writeOffset/DISK_SECTOR_SIZE));
   }
   else { // If start sector is negative write to back of disk
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
+      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)writeBytes / DISK_SECTOR_SIZE, partNum, (int)(writeOffset / DISK_SECTOR_SIZE));
   }
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
@@ -331,12 +339,12 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
   memset(program_pkt, 0, MAX_XML_LEN);
   if (readOffset >= 0) {
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)readBytes/DISK_SECTOR_SIZE, partNum, (int)(readOffset/DISK_SECTOR_SIZE));
   }
   else { // If start sector is negative read from back of disk
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)readBytes / DISK_SECTOR_SIZE, partNum, (int)(readOffset / DISK_SECTOR_SIZE));
   }
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
@@ -435,7 +443,7 @@ int Firehose::ProgramRawCommand(char *key)
   int status = 0;
   memset(program_pkt, 0, MAX_XML_LEN);
   sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>");
-  strncpy(&program_pkt[strlen(program_pkt)], key, MAX_XML_LEN);
+  strncpy(&program_pkt[strlen(program_pkt)], key, MAX_XML_LEN - strlen(program_pkt));
   strcat(program_pkt, "></data>\n");
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log("Programming RAW command: %s\n",(char *)program_pkt);
@@ -456,7 +464,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   int status = 0;
 
   // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
-  if (hWrite == NULL ) {
+  if (hWrite < 0 ) {
     return EINVAL;
   }
 
@@ -473,7 +481,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
       status = emmcdl_lseek(hRead,dwReadOffset, SEEK_SET);
       if (status < 0) {
         status = errno;
-        printf("Failed to set offset 0x%I64x status: %i\n", sectorRead, status);
+        printf("Failed to set offset 0x%lx status: %i\n", sectorRead, status);
         return status;
       }
     }
@@ -484,20 +492,20 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   if (hWrite == hDisk){
     if (sectorWrite < 0){
       sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
+        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
         "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorWrite);
     }
     else
     {
       sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
         "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorWrite);
     }
   }
   else
   {
     sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
       "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorRead);
   }
 

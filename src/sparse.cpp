@@ -29,6 +29,7 @@ when       who     what, where, why
 SparseImage::SparseImage()
 {
   bSparseImage = false;
+  hSparseImage = -1;
 }
 
 // Destructor
@@ -47,11 +48,12 @@ SparseImage::~SparseImage()
 int SparseImage::PreLoadImage(char *szSparseFile)
 {
   //uint32_t_t dwBytesRead;
-  hSparseImage = emmcdl_creat(szSparseFile, O_RDONLY);
+  printf("%s %s\n", __func__, szSparseFile);
+  hSparseImage = emmcdl_open(szSparseFile, O_RDONLY);
   if (hSparseImage < 0) return -ENOENT;
 
   // Load the sparse file header and verify it is valid
-  if (emmcdl_read(hSparseImage, &SparseHeader, sizeof(SparseHeader))) {
+  if (emmcdl_read(hSparseImage, &SparseHeader, sizeof(SparseHeader)) >= 0) {
     // Check the magic number in the sparse header to see if this is a vaild sparse file
     if (SparseHeader.dwMagic != SPARSE_MAGIC) {
       emmcdl_close(hSparseImage);

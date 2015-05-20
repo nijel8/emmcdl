@@ -24,6 +24,9 @@ when       who     what, where, why
 #include "serialport.h"
 #include "sysdeps.h"
 
+#define SAHARA_VERSION 2.4
+#define SAHARA_VERSION_SUPPORTED 2
+
 #define SAHARA_HELLO_REQ      0x1
 #define SAHARA_HELLO_RSP      0x2
 #define SAHARA_READ_DATA      0x3
@@ -131,8 +134,7 @@ public:
 private:
   int ModeSwitch(int mode);
   void HexToByte(const char *hex, unsigned char *bin, int len);
-  void Log(char *str,...);
-  void Log(wchar_t *str,...);
+  void Log(const char *str,...);
 
   uint32_t HexRunAddress(char *filename);
   uint32_t HexDataLength(char *filename);
@@ -140,6 +142,5 @@ private:
   int PblHack(void);
 
   SerialPort *sport;
-  bool bSectorAddress;
   int hLog;
 };

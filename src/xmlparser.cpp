@@ -44,7 +44,7 @@ int XMLParser::LoadXML(char *fname)
   xmlStart = NULL;
 
   // Open the XML file and read into RAM
-  fdXML = emmcdl_creat(fname, O_RDONLY);
+  fdXML = emmcdl_open(fname, O_RDONLY);
   
   if( fdXML < 0) {
     return fdXML;
@@ -79,7 +79,7 @@ int XMLParser::LoadXML(char *fname)
 }
 
 // Note currently just replace in place and fill in spaces
-char *XMLParser::StringSetValue(char *key, char *keyName, char *value)
+char *XMLParser::StringSetValue(char *key, const char *keyName, char *value)
 {
   char *sptr = strstr(key, keyName);
   if( sptr == NULL) return key;
@@ -104,7 +104,7 @@ char *XMLParser::StringSetValue(char *key, char *keyName, char *value)
   return key;
 }
 
-char *XMLParser::StringReplace(char *inp, char *find, char *rep)
+char *XMLParser::StringReplace(char *inp, const char *find, const char *rep)
 {
   char tmpstr[MAX_STRING_LEN];
   int max_len = MAX_STRING_LEN;
@@ -215,7 +215,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
 }
 
 
-int XMLParser::ParseXMLString(char *line, char *key, char *value)
+int XMLParser::ParseXMLString(char *line, const char *key, char *value)
 {
   // Check to make sure none of the parameters are null
   if( line == NULL || key == NULL || value == NULL ) {
@@ -236,7 +236,7 @@ int XMLParser::ParseXMLString(char *line, char *key, char *value)
   return 0;
 }
 
-int XMLParser::ParseXMLInteger(char *line, char *key, __uint64_t *value)
+int XMLParser::ParseXMLInteger(char *line,const char *key, __uint64_t *value)
 {
   // Check to make sure none of the parameters are null
   if( line == NULL || key == NULL || value == NULL ) {

@@ -30,6 +30,7 @@ Protocol::Protocol(void)
   gpt_entries = NULL;
   bVerbose = true;
 
+  disk_size = 0;
   // Set default sector size
   DISK_SECTOR_SIZE = 512;
 
@@ -47,7 +48,7 @@ Protocol::~Protocol(void)
   if (gpt_entries) free(gpt_entries);
 }
 
-void Protocol::Log(char *str, ...)
+void Protocol::Log(const char *str, ...)
 {
   // For now map the log to dump output to console
   if (bVerbose) {
@@ -100,7 +101,7 @@ int Protocol::WriteGPT(char *szPartName, char *szBinFile)
     Partition partition;
     strcpy(partEntry.filename, szBinFile);
     partEntry.eCmd = CMD_PROGRAM;
-    sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/", DISK_SECTOR_SIZE, (int)partEntry.num_sectors, (int)partEntry.start_sector);
+    sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/", DISK_SECTOR_SIZE, (int)partEntry.num_sectors, (int)partEntry.start_sector);
     status = partition.ProgramPartitionEntry(this, partEntry, cmd_pkt);
   }
 
@@ -224,7 +225,7 @@ int Protocol::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors, 
   pe.num_sectors = num_sectors;
   pe.eCmd = CMD_ERASE;
   pe.physical_partition_number = 0;  // By default the wipe disk only works on physical sector 0
-  sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_unsigned charS=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/", DISK_SECTOR_SIZE, (int)num_sectors, (int)start_sector);
+  sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/", DISK_SECTOR_SIZE, (int)num_sectors, (int)start_sector);
   Partition partition;
   status = partition.ProgramPartitionEntry(this,pe, cmd_pkt);
 
