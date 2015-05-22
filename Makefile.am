@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 INCLUDES=-I$(top_srcdir)/inc
-AM_CXXFLAGS= -std=c++11
+AM_CXXFLAGS= -std=c++11 -fno-rtti -fno-exceptions 
 
 noinst_PROGRAMS = emmcdl
 

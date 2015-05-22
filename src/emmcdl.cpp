@@ -413,19 +413,15 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       printf("Connected to flash programmer, starting download\n");
 
       // Download all XML files to device
-      printf("#########%s\n", szXMLFile[0]);
       for (int i = 0; szXMLFile[i] != NULL; i++) {
         Partition rawprg(0);
         status = rawprg.PreLoadImage(szXMLFile[i]);
         if (status != 0) return status;
         status = rawprg.ProgramImage(&fh);
-        printf("########################%s %d\n", __func__, __LINE__);
 
         // Only try to do patch if filename has rawprogram in it
         char *sptr = strstr(szXMLFile[i], "rawprogram");
         if (sptr != NULL && status == 0) {
-            printf("########################%s %d\n", __func__, __LINE__);
-
           Partition patch(0);
           int pstatus = 0;
           // Check if patch file exist
@@ -443,7 +439,6 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       }
     }
   }
-  printf("########################%s %d\n", __func__, __LINE__);
 
   return status;
 }

@@ -109,12 +109,12 @@ AUTOMAKE = ${SHELL} /data/nishome/tdsw1/chunhua.chen/work/emmcdl/missing --run a
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = -g -O0
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2
+CXXFLAGS = -g -O0
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -194,7 +194,7 @@ top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = subdir-objects
 INCLUDES = -I$(top_srcdir)/inc
-AM_CXXFLAGS = -std=c++11
+AM_CXXFLAGS = -std=c++11 -fno-rtti -fno-exceptions 
 emmcdl_LDADD = -lrt
 emmcdl_SOURCES = src/crc.cpp src/dload.cpp src/emmcdl.cpp \
 	src/firehose.cpp src/ffu.cpp src/sahara.cpp src/partition.cpp \

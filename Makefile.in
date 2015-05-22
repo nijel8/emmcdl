@@ -194,7 +194,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 INCLUDES = -I$(top_srcdir)/inc
-AM_CXXFLAGS = -std=c++11
+AM_CXXFLAGS = -std=c++11 -fno-rtti -fno-exceptions 
 emmcdl_LDADD = -lrt
 emmcdl_SOURCES = src/crc.cpp src/dload.cpp src/emmcdl.cpp \
 	src/firehose.cpp src/ffu.cpp src/sahara.cpp src/partition.cpp \

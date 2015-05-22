@@ -408,17 +408,25 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
   else {
     // First check if the file is a sparse image then program via sparse
     SparseImage sparse;
-    status = sparse.PreLoadImage(pe.filename);
+    char imgfname[MAX_PATH];
+    const char* ptr = rindex(xmlFilename,'/');
+    if (ptr != NULL) {
+       strncpy(imgfname, xmlFilename, ptr - xmlFilename);
+       sprintf(&imgfname[ptr - xmlFilename], "/%s", pe.filename);
+    } else {
+    	strcpy(imgfname, pe.filename);
+    }
+    status = sparse.PreLoadImage(imgfname);
     if (status == 0) {
       bSparse = true;
       status = sparse.ProgramImage(proto, pe.start_sector*proto->GetDiskSectorSize());
     }
     else
     {
-      printf("\nSparse image:%s not detected -- loading binary\n", pe.filename);
+      printf("\nSparse image:%s not detected -- loading binary\n", imgfname);
       // Open the file that we are supposed to dump
       status = 0;
-      hRead = emmcdl_open(pe.filename,O_RDONLY);
+      hRead = emmcdl_open(imgfname,O_RDONLY);
       if (hRead < 0) {
         status = errno;
       }
@@ -443,7 +451,6 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
       }
     }
   }
-  printf("\nSparse image:%s not detected -- loading binary\n", pe.filename);
 
   if (status == 0 && !bSparse) {
     // Fast copy from input file to output disk
@@ -462,7 +469,6 @@ int Partition::ProgramImage(Protocol *proto)
   char keyName[MAX_STRING_LEN];
   char *key;
   while (GetNextXMLKey(keyName, &key) == 0) {
-	  //memset(&pe, 0, sizeof(pe));
     // parse the XML key if we don't understand it then continue
     if (ParseXMLKey(key, &pe) != 0) {
       // If we don't understand the command just try sending it otherwise ignore command
@@ -504,8 +510,6 @@ int Partition::PreLoadImage(char *fname)
   // Open the XML file and read into RAM
   hXML = emmcdl_open( fname,O_RDONLY);
 
-  printf("\n%s %s\n", __func__, fname);
-  
   if( hXML < 0 ) {
     return errno;
   }
@@ -541,6 +545,7 @@ int Partition::PreLoadImage(char *fname)
   }
 
   emmcdl_close(hXML);
+  xmlFilename = fname;
 
   // If successful then prep the buffer
   if( status == 0 ) {
@@ -576,7 +581,6 @@ int Partition::CloseXML(void)
   // Free the RAM buffer for storing the XML data
   if( xmlStart != NULL ) {
     free(xmlStart);
-    printf("%s\n", __func__);
     xmlStart = NULL;
     xmlEnd = NULL;
     keyStart = NULL;

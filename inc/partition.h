@@ -103,8 +103,9 @@ public:
 	  xmlEnd = NULL;
 	  keyStart = NULL;
 	  keyEnd = NULL;
+	  xmlFilename = NULL;
   };
-  ~Partition() { printf("####################~Partition");};
+  ~Partition() {};
   int PreLoadImage(char * fname);
   int ProgramImage(Protocol *proto);
   int ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *key);
@@ -119,6 +120,7 @@ private:
   char *xmlEnd;
   char *keyStart;
   char *keyEnd;
+  const char *xmlFilename;
 
   int cur_action;
   __uint64_t d_sectors;

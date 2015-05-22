@@ -48,7 +48,6 @@ SparseImage::~SparseImage()
 int SparseImage::PreLoadImage(char *szSparseFile)
 {
   //uint32_t_t dwBytesRead;
-  printf("%s %s\n", __func__, szSparseFile);
   hSparseImage = emmcdl_open(szSparseFile, O_RDONLY);
   if (hSparseImage < 0) return -ENOENT;
 

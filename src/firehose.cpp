@@ -468,7 +468,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
     return EINVAL;
   }
 
-  if (hRead == -1) {
+  if (hRead < 0) {
     printf("hRead = INVALID_HANDLE_VALUE, zeroing input buffer\n");
     memset(m_payload, 0, dwMaxPacketSize);
     dwBytesRead = dwMaxPacketSize;

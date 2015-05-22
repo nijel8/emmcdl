@@ -25,7 +25,9 @@ when       who     what, where, why
 
 Protocol::Protocol(void)
 {
-  hDisk = -1;
+  //hDisk = -1;
+  //modify for 0 is output to uart
+  hDisk = 0;
   buffer1 = buffer2 = NULL;
   gpt_entries = NULL;
   bVerbose = true;
