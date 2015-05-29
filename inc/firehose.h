@@ -51,6 +51,8 @@ public:
   int FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sectorWrite, __uint64_t sectors, uint8_t partNum);
   int ProgramPatchEntry(PartitionEntry pe, char *key);
   int ProgramRawCommand(char *key);
+  int PeekLogBuf(int64_t start, int64_t size);
+
 
   // Firehose specific operations
   int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4);
@@ -65,6 +67,8 @@ private:
 
   SerialPort *sport;
   __uint64_t diskSectors;
+  bool m_read_back_verify;
+  bool m_rawmode;
   unsigned char *m_payload;
   unsigned char *m_buffer;
   unsigned char *m_buffer_ptr;

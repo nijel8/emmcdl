@@ -43,15 +43,37 @@ SerialPort::~SerialPort() {
 
 int SerialPort::Open(int port) {
 	char tPath[32];
+	struct termios tio;
 
 	sprintf(tPath, "/dev/ttyUSB%d", port);
 	// Open handle to serial port and set proper port settings
-	hPort = emmcdl_open(tPath, O_RDWR | O_NOCTTY /*| O_NONBLOCK*/);
+	hPort = emmcdl_open(tPath, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
 	if (hPort < 0) {
 		return -1;
 	}
-	SetTimeout(to_ms);
+
+	bzero(&tio, sizeof(tio));
+	tio.c_lflag = 0; /*disable CANON, ECHO*, etc */
+	tio.c_cflag = /*B115200 |*/ CS8 | CLOCAL;
+	tio.c_iflag = IGNPAR;
+	tio.c_oflag = 0;
+
+
+	/*to_ms*10 timeout*/
+	tio.c_cc[VTIME] = to_ms * 10;
+	tio.c_cc[VMIN] = 0;
+	tio.c_cc[VSTART] = 0x11;
+	tio.c_cc[VSTOP] = 0x13;
+
+
+	tcflush(hPort, TCIFLUSH);
+
+	if (tcsetattr(hPort, TCSANOW, &tio)) {
+		printf("config serial port fail %d:%s\n", errno, strerror(errno));
+		return -1;
+	}
+
 #if 0
 	epfd=epoll_create(10);
 #endif
@@ -71,21 +93,23 @@ int SerialPort::Close() {
 }
 
 int SerialPort::Write(unsigned char *data, uint32_t length) {
-	int N = 3;
+	int N = 10;
 	ssize_t wsize = 0;
 	ssize_t csize = 0;
+	ssize_t len = length;
 
 do {
 	// Write data to serial port
-	csize = emmcdl_write(hPort, data, length);
+	csize = emmcdl_write(hPort, data + wsize, len);
 	if ( csize < 0 && errno == EAGAIN ) {
 		// Write not complete
 		emmcdl_sleep_ms(1);
 	} else if (csize > 0){
 		wsize += csize;
+		len -= csize;
 	}
-} while ( N-- && wsize < length);
-    return wsize == length ? 0 : -1;
+} while ( N-- && len);
+    return len ? -1 : 0;
 }
 #if 1
 int SerialPort::Read(unsigned char *data, uint32_t *length) {
@@ -97,7 +121,7 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 		csize = emmcdl_read(hPort, data + rsize, (*length)-rsize);
 		if (csize < 0 && errno == EAGAIN) {
 			// Read not complete
-			//emmcdl_sleep_ms(100);
+			emmcdl_sleep_ms(100);
 			continue;
 		} else if (csize > 0) {
 			rsize += csize;
@@ -223,24 +247,23 @@ int SerialPort::SendSync(unsigned char *out_buf, int out_length,
 }
 
 int SerialPort::SetTimeout(int ms) {
-#if 0
 	struct termios tio;
 
 	if (tcgetattr(hPort, &tio))
+	{
+		printf("get serial port config fail %d:%s\n", errno, strerror(errno));
 		return -1;
-	//if(tcgetattr(hPort, &tio_save)) return;
+	}
 
-	tio.c_lflag = 0; /*disable CANON, ECHO*, etc */
-	tio.c_cflag = B115200;
+	tio.c_cc[VTIME] = ms * 10;
 
-	/*no timeout but request at least one character per read*/
-	tio.c_cc[VTIME] = ms;
-	//tio.c_cc[VMIN] = 1;
+	//tcflush(hPort, TCIFLUSH);
 
-	tcsetattr(hPort, TCSANOW, &tio);
+	if (tcsetattr(hPort, TCSANOW, &tio)) {
+		printf("config serial port fail %d:%s\n", errno, strerror(errno));
+		return -1;
+	}
 
-	tcflush(hPort, TCIFLUSH);
-#endif
 	to_ms = ms;
 	return 0;
 }

@@ -44,7 +44,8 @@ enum cmdEnum {
   CMD_PATH = 5,
   CMD_READ = 6,
   CMD_ERASE = 7,
-  CMD_NOP = 8
+  CMD_NOP = 8,
+  CMD_PEEK= 9
 };
 
 typedef struct {

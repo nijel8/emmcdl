@@ -58,6 +58,7 @@ int PrintHelp()
   printf("       -disk_sector_size <int>        Dump from start sector to end sector to file\n");
   printf("       -d <start> <end>               Dump from start sector to end sector to file\n");
   printf("       -d <PartName>                  Dump entire partition based on partition name\n");
+  printf("       -d logbuf@<start> <size>       Dump size of logbuf to the console\n");
   printf("       -e <start> <num>               Erase disk from start sector for number of sectors\n");
   printf("       -e <PartName>                  Erase the entire partition specified\n");
   printf("       -s <sectors>                   Number of sectors in disk image\n");
@@ -522,6 +523,23 @@ int RawDiskDump(__uint64_t start, __uint64_t num, char *oFile, int dnum, char *s
   return status;
 }
 
+int LogDump(__uint64_t start, __uint64_t num)
+{
+	  int status = 0;
+
+	  // Get extra info from the user via command line
+	  printf("Dumping at start logbuf@0x%x for size: %lu \n",start, num);
+	  if( m_emergency ) {
+	    Firehose fh(&m_port);
+	    if(m_verbose) fh.EnableVerbose();
+	    printf("Connected to flash programmer, starting dump\n");
+	    status = fh.PeekLogBuf(start,num);
+	  } else {
+        //TODO
+	  }
+	  return status;
+}
+
 int DiskList()
 {
   DiskWriter dw;
@@ -586,6 +604,11 @@ int main(int argc, char * argv[])
       if (isdigit(argv[i+1][0])) {
         uiStartSector = atoi(argv[++i]);
         uiNumSectors = atoi(argv[++i]);
+      } else if (strncasecmp(argv[i+1], "logbuf@", 7) == 0) {
+    	  cmd = EMMC_CMD_DUMP_LOG;
+    	  m_emergency = true;
+          uiStartSector = strtoll(&argv[++i][7], NULL, 16);
+          uiNumSectors = atoi(argv[++i]);
       } else {
         szPartName = argv[++i];
       }
@@ -802,6 +825,11 @@ int main(int argc, char * argv[])
       return PrintHelp();
     }
     break;
+	case EMMC_CMD_DUMP_LOG:
+	  status = m_port.Open(dnum);
+	  if (status < 0) return status;
+	  status = LogDump(uiStartSector, uiNumSectors);
+	  break;
   case EMMC_CMD_ERASE:
     printf("Erasing Disk\n");
     status = EraseDisk(uiStartSector,uiNumSectors,dnum, szPartName);

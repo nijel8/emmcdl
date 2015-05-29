@@ -30,7 +30,6 @@ using namespace std;
 
 Firehose::~Firehose()
 {
-	printf("%s \n", __func__);
   if(m_payload != NULL ) {
     free(m_payload);
     m_payload = NULL;
@@ -209,7 +208,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
 int Firehose::DeviceReset()
 {
 	int status = 0;
-  char reset_pkt[] = "<?xml version=\"1.0\" ?><data><power value=\"reset\"/></data>";
+    char reset_pkt[] = "<?xml version=\"1.0\" ?><data><power value=\"reset\"/></data>";
 	status = sport->Write((unsigned char *)reset_pkt, sizeof(reset_pkt));
 	return status;
 }
@@ -222,6 +221,17 @@ int Firehose::ReadStatus(void)
     // Check for ACK packet
     Log((char *)m_payload);
     if (strstr((char *)m_payload, "ACK") != NULL) {
+    	char *ptr = strstr((char *)m_payload, "rawmode");
+    	if (ptr != NULL ){
+    		m_read_back_verify = false;
+    		if (strstr(ptr, "true") != NULL) {
+    		    m_rawmode = true;
+    		} else {
+    			m_rawmode = false;
+    		}
+    	} else {
+    		m_read_back_verify = true;
+    	}
       return 0;
     }
     else if (strstr((char *)m_payload, "NAK") != NULL) {
@@ -436,6 +446,27 @@ int Firehose::SetActivePartition(int prtn_num)
   return status;
 }
 
+int Firehose::PeekLogBuf(int64_t start, int64_t size)
+{
+    char peek[512];
+    int status;
+    unsigned char *logbuf = (unsigned char *)malloc(MAX_XML_LEN);
+    memset(logbuf, 0, MAX_XML_LEN);
+    printf("%s\n", __func__);
+    sprintf(peek,"<?xml version=\"1.0\" ?><data>\n"
+    		"<peek SizeInBytes=\"%ld\" address64=\"%ld\"/>"
+    		"</data>\n"
+    		, start, size);
+    status = sport->Write((unsigned char*)peek, strlen(peek));
+    Log("peek command: %s\n",(char *)peek);
+
+    // Read and log any response to command we sent
+    status = ReadData(logbuf, MAX_XML_LEN, false);
+    Log("%s\n",(char *)logbuf);
+    free(logbuf);
+    return status;
+}
+
 int Firehose::ProgramRawCommand(char *key)
 {
   uint32_t dwBytesRead;
@@ -519,8 +550,8 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   if (status == 0)
   {
     uint32_t bytesToRead;
-    for (uint32_t tmp_sectors = (uint32_t)sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
-      bytesToRead = dwMaxPacketSize;
+    for (int64_t tmp_sectors = (int64_t)sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
+      bytesToRead = dwMaxPacketSize&(~(DISK_SECTOR_SIZE - 1));
       if (tmp_sectors < dwMaxPacketSize / DISK_SECTOR_SIZE) {
         bytesToRead = tmp_sectors*DISK_SECTOR_SIZE;
       }
@@ -537,6 +568,14 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
             break;
           }
           dwWriteOffset += dwBytesRead;
+          if (m_read_back_verify ) {
+        	  if (ReadStatus() == 0) {
+        	      continue;
+        	  } else {
+            	  status = ERROR_INVALID_DATA;
+            	  break;
+        	  }
+          }
         }
         else {
           // If there is partial data read out then write out next chunk to finish this up
@@ -558,7 +597,8 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
           break;
         }
       }
-      printf("Sectors remaining %i\r", (int)tmp_sectors);
+      printf("Sectors remaining %i\n", (int)tmp_sectors);
+      emmcdl_sleep_ms(10);
     }
   }
 

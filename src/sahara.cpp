@@ -156,7 +156,7 @@ int Sahara::LoadFlashProg(char *szFlashPrg)
   uint32_t totalBytes = 0, read_data_offset = 0, read_data_len = 0;
   unsigned char dataBuf[8192];
 
-  int hFlashPrg = emmcdl_open( szFlashPrg, O_RDWR);
+  int hFlashPrg = emmcdl_open( szFlashPrg, O_RDONLY);
   if( hFlashPrg < 0 ) {
     return ENOENT;
   }

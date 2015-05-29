@@ -300,6 +300,9 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
     pe->eCmd = CMD_PATH;
   } else if (strstr(key, "read") != NULL) {
     pe->eCmd = CMD_READ;
+  } else if (strstr(key, "peek") != NULL) {
+        pe->eCmd = CMD_PEEK;
+        return 0;
   } else {
     return ERROR_INVALID_DATA;
   }
