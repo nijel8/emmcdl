@@ -25,7 +25,7 @@ when       who     what, where, why
 #include "sysdeps.h"
 #include <stdint.h>
 
-#define MAX_XML_LEN         2048
+#define MAX_XML_LEN         4096
 #define MAX_TRANSFER_SIZE   0x100000
 
 class Protocol {

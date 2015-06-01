@@ -38,12 +38,13 @@ typedef struct {
   bool ZLPAwareHost;
   int ActivePartition;
   int MaxPayloadSizeToTargetInBytes;
+  int AckRawDataEveryNumPackets;
 } fh_configure_t;
 
 class Firehose : public Protocol {
 public:
-  Firehose(SerialPort *port, int hLogFile = -1);
-  ~Firehose();
+  Firehose(SerialPort *port, uint32_t maxPacketSize = (1024*1024), int hLogFile = -1);
+  virtual ~Firehose();
   int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum);
   int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum);
 

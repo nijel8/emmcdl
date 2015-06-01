@@ -22,12 +22,11 @@
 
 #include "serialport.h"
 #include "stdlib.h"
-#include <sys/epoll.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 SerialPort::SerialPort() {
 	hPort = -1;
-	epfd = -1;
 	to_ms = 1000;  // 1 second default timeout for packets to send/rcv
 	HDLCBuf = (unsigned char *) malloc(MAX_PACKET_SIZE);
 
@@ -55,17 +54,15 @@ int SerialPort::Open(int port) {
 
 	bzero(&tio, sizeof(tio));
 	tio.c_lflag = 0; /*disable CANON, ECHO*, etc */
-	tio.c_cflag = /*B115200 |*/ CS8 | CLOCAL;
+	tio.c_cflag = /*B115200 |*/CS8 | CLOCAL | CSTOPB | CREAD;
 	tio.c_iflag = IGNPAR;
 	tio.c_oflag = 0;
-
 
 	/*to_ms*10 timeout*/
 	tio.c_cc[VTIME] = to_ms * 10;
 	tio.c_cc[VMIN] = 0;
-	tio.c_cc[VSTART] = 0x11;
-	tio.c_cc[VSTOP] = 0x13;
-
+	//tio.c_cc[VSTART] = 0x11;
+	//tio.c_cc[VSTOP] = 0x13;
 
 	tcflush(hPort, TCIFLUSH);
 
@@ -74,9 +71,6 @@ int SerialPort::Open(int port) {
 		return -1;
 	}
 
-#if 0
-	epfd=epoll_create(10);
-#endif
 	return 0;
 }
 
@@ -85,106 +79,118 @@ int SerialPort::Close() {
 		emmcdl_close(hPort);
 	}
 
-	if (epfd < 0)
-		emmcdl_close(epfd);
 	hPort = -1;
-	epfd = -1;
 	return 0;
 }
 
 int SerialPort::Write(unsigned char *data, uint32_t length) {
-	int N = 10;
+	int N = 0;
 	ssize_t wsize = 0;
 	ssize_t csize = 0;
 	ssize_t len = length;
 
-do {
-	// Write data to serial port
-	csize = emmcdl_write(hPort, data + wsize, len);
-	if ( csize < 0 && errno == EAGAIN ) {
-		// Write not complete
-		emmcdl_sleep_ms(1);
-	} else if (csize > 0){
-		wsize += csize;
-		len -= csize;
-	}
-} while ( N-- && len);
-    return len ? -1 : 0;
+	fd_set wfds;
+	struct timeval tv;
+	int retval;
+	time_t tv_sec = ((length*5)/(1024*16));
+
+	if (tv_sec < 5) tv_sec = 5;
+
+	do {
+tryagain:
+		/* Watch Serial Port to see when it has output. */
+		FD_ZERO(&wfds);
+
+		FD_SET(hPort, &wfds);
+
+		/* Wait up to five seconds. */
+		tv.tv_sec = tv_sec;
+		tv.tv_usec = 0;
+		/* Don't rely on the value of tv now! */
+		retval = TEMP_FAILURE_RETRY (select(hPort + 1, NULL, &wfds, NULL, &tv));
+		if (retval == -1)
+			perror("select()");
+		else if (retval) {
+			//printf("Serial Port Output is ready now.\n");
+			/* FD_ISSET(hPort, &rfds) will be true. */
+			// Write data to serial port
+			csize = emmcdl_write(hPort, data + wsize, len);
+			if (csize < 0 && errno == EAGAIN) {
+				// Write not complete
+				printf("%s EAGAIN\n", __func__);
+			} else if (csize > 0) {
+				wsize += csize;
+				len -= csize;
+				N = 0;
+			} else {
+				emmcdl_sleep_ms(10);
+			}
+		} else {
+			printf("Serial Port Output not ready within %ld seconds. try read again:%d\n", tv_sec, ++N);
+			goto tryagain;
+		}
+	} while (len);
+	return len ? -1 : 0;
 }
-#if 1
+
 int SerialPort::Read(unsigned char *data, uint32_t *length) {
-	int N = 3;
 	ssize_t rsize = 0;
 	ssize_t csize = 0;
+	fd_set rfds;
+	struct timeval tv;
+	int retval;
+
+
 	do {
-		// Read data in from serial port
-		csize = emmcdl_read(hPort, data + rsize, (*length)-rsize);
-		if (csize < 0 && errno == EAGAIN) {
-			// Read not complete
-			emmcdl_sleep_ms(100);
-			continue;
-		} else if (csize > 0) {
-			rsize += csize;
+		/* Watch Serial Port to see when it has input. */
+		FD_ZERO(&rfds);
+
+		FD_SET(hPort, &rfds);
+
+		/* Wait up to five seconds. */
+		tv.tv_sec = 5;
+		tv.tv_usec = 0;
+		/* Don't rely on the value of tv now! */
+		retval = TEMP_FAILURE_RETRY (select(hPort + 1, &rfds, NULL, NULL, &tv));
+
+		if (retval == -1)
+			perror("select()");
+		else if (retval) {
+//tryagain:
+			//printf("Serial port Data is available now.\n");
+			/* FD_ISSET(hPort, &rfds) will be true. */
+			// Read data in from serial port
+			csize = emmcdl_read(hPort, data + rsize, (*length) - rsize);
+			if (csize < 0 && errno == EAGAIN) {
+				// Read not complete
+				printf("%s EAGAIN\n", __func__);
+				continue;
+			} else if (csize > 0) {
+				rsize += csize;
+			}
+		} else {
+			printf("Serial Port No data within five seconds.\n");
+			//goto tryagain;
+			return -1;
 		}
+
 	} while (csize < 0 /*&& (rsize < *length)*/);
 	*length = rsize;
 
 	return 0;
 }
-#else
-int SerialPort::Read(unsigned char *data, uint32_t *length) {
-	size_t bytesleft = *length;
-	int splices = 0;
-    struct epoll_event ev;
-    struct epoll_event events[1];
 
-    ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd= hPort;
-    epoll_ctl(epfd,EPOLL_CTL_ADD, hPort,&ev);
-
-	ssize_t bytes = emmcdl_read(hPort, data, *length);
-	if (bytes < 0 && errno != EAGAIN) {
-		printf("read serial port  error is %d:%s\n", errno, strerror(errno));
-		return -errno;
-	} else if (bytes < 0 && errno == EAGAIN) {
-		printf( "read serial port  error is %d:%s\n", errno, strerror(errno));
-	} else if (bytes > 0) {
-		bytesleft -= bytes;
-		printf("read serial port  error is offset:%ld return info is %d:%s\n", bytes, errno, strerror(errno));
-	}
-
-	while (bytesleft > 0) {
-        int nfds;
-        nfds=epoll_wait(epfd,events,1,100);
-        if (nfds==-1){
-			 if(errno == EINTR)
-				 continue;
-            printf("epoll_wait %s\n", strerror(errno));
-            break;
-        }
-
-        if (events[0].data.fd == hPort){
-			splices++;
-			bytes = emmcdl_read(hPort, data, *length);
-			if (bytes < 0 && errno != EAGAIN) {
-				printf("read serial port  error is %d:%s\n", errno, strerror(errno));
-				return -errno;
-			} else if (bytes < 0 && errno == EAGAIN) {
-				printf( "read serial port  error is %d:%s\n", errno, strerror(errno));
-				continue;
-			} else if (bytes > 0) {
-				bytesleft -= bytes;
-				printf("read serial port  error is offset:%ld return info is %d:%s\n", bytes, errno, strerror(errno));
-			}
-        }
-	}
-
-	*length -= bytesleft;
-    epoll_ctl(epfd, EPOLL_CTL_DEL, hPort, &ev);
-
-	return 0;
+int64_t SerialPort::InputBufferCount(){
+    int64_t count = 0;
+    ioctl(hPort, TIOCINQ, &count);
+    return count;
 }
-#endif
+
+int64_t SerialPort::OutputBufferCount(){
+    int64_t count = 0;
+    ioctl(hPort, TIOCOUTQ, &count);
+    return count;
+}
 
 int SerialPort::Flush() {
 	unsigned char tmpBuf[1024];
@@ -247,10 +253,10 @@ int SerialPort::SendSync(unsigned char *out_buf, int out_length,
 }
 
 int SerialPort::SetTimeout(int ms) {
+#if 0
 	struct termios tio;
 
-	if (tcgetattr(hPort, &tio))
-	{
+	if (tcgetattr(hPort, &tio)) {
 		printf("get serial port config fail %d:%s\n", errno, strerror(errno));
 		return -1;
 	}
@@ -263,7 +269,7 @@ int SerialPort::SetTimeout(int ms) {
 		printf("config serial port fail %d:%s\n", errno, strerror(errno));
 		return -1;
 	}
-
+#endif
 	to_ms = ms;
 	return 0;
 }

@@ -42,7 +42,7 @@ static int m_sector_size = 512;
 static bool m_emergency = false;
 static bool m_verbose = false;
 static SerialPort m_port;
-static fh_configure_t m_cfg = { 4, "emmc", false, false, true, -1,1024*1024 };
+static fh_configure_t m_cfg = { 4, "emmc", false, false, false, -1, 1024*1024 , 4};
 
 int PrintHelp()
 {
@@ -158,7 +158,7 @@ int EraseDisk(__uint64_t start, __uint64_t num, int dnum, char *szPartName)
   int status = 0;
 
   if (m_emergency) {
-	  Firehose fh(&m_port);
+	  Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
     fh.SetDiskSectorSize(m_sector_size);
     if (m_verbose) fh.EnableVerbose();
 	  status = fh.ConnectToFlashProg(&m_cfg);
@@ -241,7 +241,7 @@ int CreateGPP(uint32_t dwGPP1, uint32_t dwGPP2, uint32_t dwGPP3, uint32_t dwGPP4
     status = dl.CreateGPP(dwGPP1,dwGPP2,dwGPP3,dwGPP4);
   
   } else if(m_protocol == FIREHOSE_PROTOCOL) {
-    Firehose fh(&m_port);
+    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
     fh.SetDiskSectorSize(m_sector_size);
     if (m_verbose) fh.EnableVerbose();
     status = fh.ConnectToFlashProg(&m_cfg);
@@ -259,7 +259,7 @@ int ReadGPT(int dnum)
   int status;
   
   if( m_emergency ) {
-    Firehose fh(&m_port);
+    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
     fh.SetDiskSectorSize(m_sector_size);
     if(m_verbose) fh.EnableVerbose();
     status = fh.ConnectToFlashProg(&m_cfg);
@@ -285,7 +285,7 @@ int WriteGPT(int dnum, char *szPartName, char *szBinFile)
   int status;
 
   if (m_emergency) {
-    Firehose fh(&m_port);
+    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
     fh.SetDiskSectorSize(m_sector_size);
     if (m_verbose) fh.EnableVerbose();
     status = fh.ConnectToFlashProg(&m_cfg);
@@ -318,7 +318,7 @@ int FFUProgram(char *szFFUFile)
 {
   FFUImage ffu;
   int status = 0;
-  Firehose fh(&m_port);
+  Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
   fh.SetDiskSectorSize(m_sector_size);
   status = fh.ConnectToFlashProg(&m_cfg);
   if (status != 0) return status;
@@ -368,7 +368,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
 {
   int status = 0;
   Dload dl(&m_port);
-  Firehose fh(&m_port);
+  Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
   unsigned char prtn=0;
 
   if( szSingleImage != NULL ) {
@@ -391,7 +391,8 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
         // Use new method to download XML to serial port
         char szPatchFile[MAX_STRING_LEN];
         strncpy(szPatchFile,szXMLFile[i],sizeof(szPatchFile));
-        StringReplace(szPatchFile,"rawprogram","patch");
+        const XMLParser xmlParser;
+        xmlParser.StringReplace(szPatchFile,"rawprogram","patch");
         char *sptr = strstr(szXMLFile[i],".xml");
         if( sptr == NULL ) return EINVAL;
         prtn = (unsigned char)((*--sptr) - '0' + PRTN_EMMCUSER);
@@ -428,7 +429,8 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
           // Check if patch file exist
           char szPatchFile[MAX_STRING_LEN];
           strncpy(szPatchFile, szXMLFile[i], sizeof(szPatchFile));
-          StringReplace(szPatchFile, "rawprogram", "patch");
+          const XMLParser xmlParser;
+          xmlParser.StringReplace(szPatchFile, "rawprogram", "patch");
           pstatus = patch.PreLoadImage(szPatchFile);
           if( pstatus == 0 ) patch.ProgramImage(&fh);
         }
@@ -502,7 +504,7 @@ int RawDiskDump(__uint64_t start, __uint64_t num, char *oFile, int dnum, char *s
   // Get extra info from the user via command line
   printf("Dumping at start sector: %lu for sectors: %lu to file: %s\n",start, num, oFile);
   if( m_emergency ) {
-    Firehose fh(&m_port);
+    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
     fh.SetDiskSectorSize(m_sector_size);
     if(m_verbose) fh.EnableVerbose();
     if( status != 0 ) return status;
@@ -528,9 +530,9 @@ int LogDump(__uint64_t start, __uint64_t num)
 	  int status = 0;
 
 	  // Get extra info from the user via command line
-	  printf("Dumping at start logbuf@0x%x for size: %lu \n",start, num);
+	  printf("Dumping at start logbuf@0x%lx for size: %lu \n",start, num);
 	  if( m_emergency ) {
-	    Firehose fh(&m_port);
+	    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
 	    if(m_verbose) fh.EnableVerbose();
 	    printf("Connected to flash programmer, starting dump\n");
 	    status = fh.PeekLogBuf(start,num);
@@ -810,7 +812,7 @@ int main(int argc, char * argv[])
      }
      else {
        printf("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n");
-       exit(0);
+       //exit(0);
      }
      m_emergency = true;
   }

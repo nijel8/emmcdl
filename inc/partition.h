@@ -89,22 +89,17 @@ typedef struct {
   char  filename[MAX_PATH];
 } PartitionEntry;
 
-char *StringReplace(char *inp, const char *find, const char *rep);
-char *StringSetValue(char *key, char *keyName, char *value);
+//char *StringReplace(char *inp, const char *find, const char *rep);
+//char *StringSetValue(char *key, char *keyName, char *value);
 
 
-class Partition {
+class Partition:public XMLParser {
 public:
   int num_entries;
 
   Partition(__uint64_t ds=0)
   {
 	  num_entries = 0; cur_action = 0; d_sectors = ds;
-	  xmlStart = NULL;
-	  xmlEnd = NULL;
-	  keyStart = NULL;
-	  keyEnd = NULL;
-	  xmlFilename = NULL;
   };
   ~Partition() {};
   int PreLoadImage(char * fname);
@@ -117,22 +112,16 @@ public:
   int ParseXMLKey(char *key, PartitionEntry *pe);
 
 private:
-  char *xmlStart;
-  char *xmlEnd;
-  char *keyStart;
-  char *keyEnd;
-  const char *xmlFilename;
-
   int cur_action;
   __uint64_t d_sectors;
 
   int Reflect(int data, int len);
   int ParseXMLOptions();
   int ParsePathList();
-  int ParseXMLString(char *line, const char *key, char *value);
-  int ParseXMLInt64(char *line, const char *key, __uint64_t &value, PartitionEntry *pe);
-  int ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe);
-  bool CheckEmptyLine(char *str);
+  //int ParseXMLString(char *line, const char *key, char *value);
+  int ParseXMLInt64(char *line, const char *key, __uint64_t &value, PartitionEntry *pe) const;
+  int ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe) const;
+  bool CheckEmptyLine(char *str) const;
   int Log(const char *str,...);
 
 };

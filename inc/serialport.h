@@ -42,12 +42,13 @@ public:
   int Flush();
   int SendSync(unsigned char *out_buf, int out_length, unsigned char *in_buf, int *in_length);
   int SetTimeout(int ms);
+  int64_t OutputBufferCount();
+  int64_t InputBufferCount();
 private:
   int HDLCEncodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   int HDLCDecodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   
   int hPort;
-  int epfd;
   unsigned char *HDLCBuf;
   int to_ms;
 

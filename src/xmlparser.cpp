@@ -30,56 +30,98 @@ XMLParser::XMLParser()
   xmlEnd = NULL;
   keyStart = NULL;
   keyEnd = NULL;
+  xmlFilename = NULL;
 }
 
 XMLParser::~XMLParser()
 {
-  if( xmlStart ) free(xmlStart);
+  if( xmlStart ) {
+	  free(xmlStart);
+	  xmlStart = NULL;
+	  xmlEnd = NULL;
+	  keyStart = NULL;
+	  keyEnd = NULL;
+	  xmlFilename = NULL;
+
+  }
 }
 
 int XMLParser::LoadXML(char *fname)
 {
-  int fdXML;
-  int status = 0;
-  xmlStart = NULL;
+	  int hXML;
+	  int status = 0;
+	  xmlStart = NULL;
 
-  // Open the XML file and read into RAM
-  fdXML = emmcdl_open(fname, O_RDONLY);
-  
-  if( fdXML < 0) {
-    return fdXML;
-  }
+	  // Open the XML file and read into RAM
+	  hXML = emmcdl_open( fname,O_RDONLY);
 
-  struct stat      my_stat;
-  int ret = fstat(fdXML, &my_stat);
-  // Make sure filesize is valid
-  if(ret)
-          return ret;
+	  if( hXML < 0 ) {
+	    return errno;
+	  }
 
-  uint32_t xmlSize = my_stat.st_size;
+	  struct stat      my_stat;
+	  int ret = fstat(hXML, &my_stat);
+	  // Make sure filesize is valid
+	  if(ret)
+	          return ret;
 
-  xmlStart = (char *)malloc(xmlSize+2);
-  xmlEnd = xmlStart + xmlSize;
-  keyStart = xmlStart;
+	  uint32_t xmlSize = my_stat.st_size;
 
-  if( xmlStart == NULL ) {
-    status = errno;
-  }
+	  // Make sure filesize is valid
+	  if( xmlSize < 0 ) {
+	    emmcdl_close(hXML);
+	    return EINVAL;
+	  }
+
+	  char *xmlTmp = (char *)malloc(xmlSize);
+	  xmlStart = (char *)malloc((xmlSize+2)*sizeof(char));
+	  xmlEnd = xmlStart + xmlSize;
+	  keyStart = xmlStart;
+
+	  if( xmlTmp == NULL || xmlStart == NULL ) {
+	    status = ENOMEM;
+	  }
 
 
-  if( status == 0 ) {
-    if(!emmcdl_read(fdXML,xmlStart,xmlSize)) {
-      status = errno;
-    }
-  }
+	  if( status == 0 ) {
+	    if((xmlSize = emmcdl_read(hXML,xmlTmp,xmlSize)) < 0 ) {
+	      status = EINVAL;
+	    }
+	  }
 
-  emmcdl_close(fdXML);
+	  emmcdl_close(hXML);
+	  xmlFilename = fname;
 
-  return status;
+	  // If successful then prep the buffer
+	  if( status == 0 ) {
+
+	    strncpy(xmlStart,xmlTmp,xmlSize);
+	    xmlStart[xmlSize] = 0;
+
+	    // skip over xml header should be <?xml....?>
+	    for(keyStart=xmlStart;keyStart < xmlEnd;) {
+	      if((*keyStart++ == '<') && (*keyStart++ == '?') ) break;
+	    }
+
+	    for(;keyStart < xmlEnd;) {
+	      if((*keyStart++ == '?') && (*keyStart++ == '>') ) break;
+	    }
+
+	    // skip the data header for now as hack until we support embedded content
+	    for(;keyStart < xmlEnd;) {
+	      if(*keyStart++ == '>' ) break;
+	    }
+
+	  }
+
+
+	  if(xmlTmp != NULL) free(xmlTmp);
+
+	  return status;
 }
 
 // Note currently just replace in place and fill in spaces
-char *XMLParser::StringSetValue(char *key, const char *keyName, char *value)
+char *XMLParser::StringSetValue(char *key, const char *keyName, char *value) const
 {
   char *sptr = strstr(key, keyName);
   if( sptr == NULL) return key;
@@ -104,7 +146,7 @@ char *XMLParser::StringSetValue(char *key, const char *keyName, char *value)
   return key;
 }
 
-char *XMLParser::StringReplace(char *inp, const char *find, const char *rep)
+char *XMLParser::StringReplace(char *inp, const char *find, const char *rep) const
 {
   char tmpstr[MAX_STRING_LEN];
   int max_len = MAX_STRING_LEN;
@@ -123,7 +165,7 @@ char *XMLParser::StringReplace(char *inp, const char *find, const char *rep)
     tptr += strlen(rep);
 
     // Copy the rest of the string
-    strncpy(tptr, (const char*)sptr,strlen(sptr));
+    strncpy(tptr, (const char*)sptr,strlen(sptr)+1);
 
     // Copy new temp string back into original
     strcpy(inp,(const char*)tmpstr);
@@ -132,7 +174,7 @@ char *XMLParser::StringReplace(char *inp, const char *find, const char *rep)
   return inp;
 }
 
-int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
+int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value) const
 {
   // Parse simple expression understands -+/*, NUM_DISK_SECTORS,CRC32(offset:length)
   char *sptr, *sptr1, *sptr2;
@@ -152,6 +194,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
       return EINVAL;
     }
     strncpy(tmp,(const char*)sptr1,(sptr2-sptr1));
+    tmp[sptr2-sptr1] = 0;
     ParseXMLEvaluate(tmp, crc);
     sptr1 = sptr2 + 1;
     sptr2 = strstr(sptr1,")");
@@ -159,9 +202,10 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
       return EINVAL;
     }
     strncpy(tmp,(const char*)sptr1,(sptr2-sptr1));
+    tmp[sptr2-sptr1] = 0;
     ParseXMLEvaluate(tmp, crc);
     // Revome the CRC part set value 0
-    memset(sptr,' ',(sptr2-sptr+1)*2);
+    memset(sptr,' ',(sptr2-sptr+1));
     value = 0;
   }
 
@@ -171,6 +215,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
     char val1[64];
     char val2[64];
     strncpy(val1, (const char*)expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,sptr+1);
     value = atoll(val1) * atoll(val2);
   }
@@ -181,6 +226,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
     char val1[64];
     char val2[64];
     strncpy(val1, (const char*)expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2, (const char*)sptr+1);
 
     // Prevent division by 0
@@ -197,6 +243,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
     char val1[32];
     char val2[32];
     strncpy(val1, (const char*)expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,(const char*)sptr+1);
     value = atoll(val1) - atoll(val2);
   }
@@ -207,6 +254,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
     char val1[32];
     char val2[32];
     strncpy(val1,(const char*)expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,(const char*)sptr+1);
     value = atoll(val1) + atoll(val2);
   }
@@ -215,7 +263,7 @@ int XMLParser::ParseXMLEvaluate(char *expr, __uint64_t &value)
 }
 
 
-int XMLParser::ParseXMLString(char *line, const char *key, char *value)
+int XMLParser::ParseXMLString(char *line, const char *key, char *value) const
 {
   // Check to make sure none of the parameters are null
   if( line == NULL || key == NULL || value == NULL ) {
@@ -232,11 +280,12 @@ int XMLParser::ParseXMLString(char *line, const char *key, char *value)
   if( eptr == NULL) return ERROR_INVALID_DATA;
   // Copy the value between the quotes to output string
   strncpy(value,(const char*)sptr,eptr-sptr);
+  value[eptr-sptr] = 0;
 
   return 0;
 }
 
-int XMLParser::ParseXMLInteger(char *line,const char *key, __uint64_t *value)
+int XMLParser::ParseXMLInteger(char *line,const char *key, __uint64_t *value) const
 {
   // Check to make sure none of the parameters are null
   if( line == NULL || key == NULL || value == NULL ) {
@@ -252,8 +301,8 @@ int XMLParser::ParseXMLInteger(char *line,const char *key, __uint64_t *value)
   eptr = strchr(sptr, '"');
   if( eptr == NULL) return ERROR_INVALID_DATA;
   // Copy the value between the quotes to output string
-  char tmpVal[MAX_STRING_LEN] = {0};
+  char tmpVal[MAX_STRING_LEN];
   strncpy(tmpVal, (const char*)sptr,MIN(MAX_STRING_LEN-1,eptr-sptr));
-
+  tmpVal[MIN(MAX_STRING_LEN-1,eptr-sptr)] = 0;
   return  ParseXMLEvaluate(tmpVal,*value);
 }

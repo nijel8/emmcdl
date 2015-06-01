@@ -31,7 +31,7 @@ when       who     what, where, why
 #include "sysdeps.h"
 #include <stdlib.h>
 #include <ctype.h>
-
+#if 0
 // Note currently just replace in place and fill in spaces
 char *StringSetValue(char *key, char *keyName, char *value)
 {
@@ -62,7 +62,7 @@ char *StringReplace(char *inp, const char *find, const char *rep)
 {
   char tmpstr[MAX_STRING_LEN];
   int max_len = MAX_STRING_LEN;
-  char *tptr = tmpstr;;
+  char *tptr = tmpstr;
   char *sptr = strstr(inp, find);
 
   if( sptr != NULL ) {
@@ -77,7 +77,7 @@ char *StringReplace(char *inp, const char *find, const char *rep)
     tptr += strlen(rep);
 
     // Copy the rest of the string
-    strncpy(tptr,sptr,strlen(sptr));
+    strncpy(tptr,sptr,strlen(sptr)+1);
 
     // Copy new temp string back into original
     strcpy(inp,tmpstr);
@@ -85,7 +85,7 @@ char *StringReplace(char *inp, const char *find, const char *rep)
 
   return inp;
 }
-
+#endif
 int Partition::Log(const char *str,...)
 {
   // For now map the log to dump output to console
@@ -139,7 +139,7 @@ unsigned int Partition::CalcCRC32(unsigned char *buffer, int len)
    regs = regs & regsMask;       // Mask off excess upper bits
    return Reflect(regs,32) ^ 0xFFFFFFFF;
 }
-
+#if 0
 int Partition::ParseXMLString(char *line, const char *key, char *value)
 {
   char *eptr;
@@ -155,8 +155,8 @@ int Partition::ParseXMLString(char *line, const char *key, char *value)
   value[eptr-sptr] = 0;
   return 0;
 }
-
-int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe)
+#endif
+int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe) const
 {
   // Parse simple expression understands -+/*, NUM_DISK_SECTORS,CRC32(offset:length)
   char disk_sectors[64];
@@ -182,7 +182,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
     tmp[sptr2-sptr1] = 0;
     ParseXMLEvaluate(tmp, pe->crc_size,pe);
     // Revome the CRC part set value 0
-    memset(sptr,' ',(sptr2-sptr+1)*2);
+    memset(sptr,' ',(sptr2-sptr+1));
     value = 0;
   }
 
@@ -192,6 +192,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
     char val1[64];
     char val2[64];
     strncpy(val1,expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,sptr+1);
     value = atoll(val1) * atoll(val2);
   }
@@ -202,6 +203,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
     char val1[64];
     char val2[64];
     strncpy(val1,expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,sptr+1);
     value = atoll(val1) / atoll(val2);
   }
@@ -212,6 +214,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
     char val1[32];
     char val2[32];
     strncpy(val1,expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,sptr+1);
     value = atoll(val1) - atoll(val2);
   }
@@ -222,6 +225,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
     char val1[32];
     char val2[32];
     strncpy(val1,expr,(sptr-expr));
+    val1[sptr-expr] = 0;
     strcpy(val2,sptr+1);
     value = atoll(val1) + atoll(val2);
   }
@@ -229,7 +233,7 @@ int Partition::ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *p
   return 0;
 }
 
-int Partition::ParseXMLInt64(char *line, const char *key, __uint64_t &value, PartitionEntry *pe)
+int Partition::ParseXMLInt64(char *line, const char *key, __uint64_t &value, PartitionEntry *pe) const
 {
   char tmp[MAX_STRING_LEN];
   char *eptr;
@@ -264,7 +268,7 @@ int Partition::ParsePathList()
   return 0;
 }
 
-bool Partition::CheckEmptyLine(char *str)
+bool Partition::CheckEmptyLine(char *str) const
 {
   int keylen = strlen(str);
   while (isspace(*str) && (keylen > 0))
@@ -306,7 +310,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
   } else {
     return ERROR_INVALID_DATA;
   }
-
+  Log("\n");
   // Set options and search path
   if( pe->eCmd == CMD_OPTION ) {
     ParseXMLOptions();
@@ -319,7 +323,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
     Log("start_sector missing in XML line:%s\n",key);
     return ERROR_INVALID_DATA;
   } else {
-    Log("start_sector: %I64d ",  pe->start_sector);
+    Log("start_sector: %d ",  pe->start_sector);
   }
 	
   __uint64_t partNum;
@@ -332,7 +336,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
   }
 
   if( ParseXMLInt64(key,"num_partition_sectors", pe->num_sectors, pe) == 0 ) {
-    Log("num_partition_sectors: %I64d ", pe->num_sectors);
+    Log("num_partition_sectors: %d ", pe->num_sectors);
     // If zero then write out all sectors for size of file
   } else {
     pe->num_sectors = (__uint64_t )-1;
@@ -354,7 +358,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
 
     // File sector offset is optional for both these otherwise use default
     if( ParseXMLInt64(key,"file_sector_offset", pe->offset, pe) == 0 ) {
-      Log("file_sector_offset: %I64d ", pe->offset);
+			Log("file_sector_offset: %d ", pe->offset);
     } else {
       pe->offset = (__uint64_t )-1;
     }
@@ -362,17 +366,19 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
     // The following entries should only be used in patching
     if( pe->eCmd == CMD_PATCH ) {
       // Get the value parameter
+	  pe->crc_start = (uint64_t) -1;
+      pe->crc_size = (uint64_t) -1;
       if( ParseXMLInt64(key,"value", pe->patch_value, pe) == 0 ) {
-	      Log("value: %I64d ", pe->patch_value);
+	      Log("value: %d ", pe->patch_value);
 	    } else {
         Log("value missing in patch command\n");
         return ERROR_INVALID_DATA;
       }
-      Log("crc_size %i\n", (int)pe->crc_size);
+      Log("crc_size: %i ", (int)pe->crc_size);
 
       // get byte offset for patch value to be written
       if( ParseXMLInt64(key,"byte_offset", pe->patch_offset, pe) == 0 ) {
-	      Log("patch_offset: %I64d ", pe->patch_offset);
+	      Log("patch_offset: %d ", pe->patch_offset);
 	    } else {
         Log("byte_offset missing in patch command\n");
         return ERROR_INVALID_DATA;
@@ -380,7 +386,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
 
       // Get the size of the patch in bytes
       if( ParseXMLInt64(key,"size_in_bytes", pe->patch_size, pe) == 0 ) {
-	     Log("patch_size: %I64d ", pe->patch_size);
+	     Log("patch_size: %d ", pe->patch_size);
 	    } else {
         Log("size_in_bytes missing in patch command\n");
         return ERROR_INVALID_DATA;
@@ -419,14 +425,17 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
     } else {
     	strcpy(imgfname, pe.filename);
     }
+
+    printf("\nSparse image:%s\n", imgfname);
     status = sparse.PreLoadImage(imgfname);
     if (status == 0) {
       bSparse = true;
+      printf("detected \n-- loading sparse...\n");
       status = sparse.ProgramImage(proto, pe.start_sector*proto->GetDiskSectorSize());
     }
     else
     {
-      printf("\nSparse image:%s not detected -- loading binary\n", imgfname);
+      printf("not detected \n-- loading binary...\n");
       // Open the file that we are supposed to dump
       status = 0;
       hRead = emmcdl_open(imgfname,O_RDONLY);
@@ -500,98 +509,14 @@ int Partition::ProgramImage(Protocol *proto)
     }
   }
 
-  CloseXML();
   return status;
 }
 
 int Partition::PreLoadImage(char *fname)
 {
-  int hXML;
-  int status = 0;
-  xmlStart = NULL;
-
-  // Open the XML file and read into RAM
-  hXML = emmcdl_open( fname,O_RDONLY);
-
-  if( hXML < 0 ) {
-    return errno;
-  }
-
-  struct stat      my_stat;
-  int ret = fstat(hXML, &my_stat);
-  // Make sure filesize is valid
-  if(ret)
-          return ret;
-
-  uint32_t xmlSize = my_stat.st_size;
-
-  // Make sure filesize is valid
-  if( xmlSize < 0 ) {
-    emmcdl_close(hXML);
-    return EINVAL;
-  }
-
-  char *xmlTmp = (char *)malloc(xmlSize);
-  xmlStart = (char *)malloc((xmlSize+2)*sizeof(char));
-  xmlEnd = xmlStart + xmlSize;
-  keyStart = xmlStart;
-
-  if( xmlTmp == NULL || xmlStart == NULL ) {
-    status = ENOMEM;
-  }
-
-
-  if( status == 0 ) {
-    if((xmlSize = emmcdl_read(hXML,xmlTmp,xmlSize)) < 0 ) {
-      status = EINVAL;
-    }
-  }
-
-  emmcdl_close(hXML);
-  xmlFilename = fname;
-
-  // If successful then prep the buffer
-  if( status == 0 ) {
-
-    strncpy(xmlStart,xmlTmp,xmlSize);
-    xmlStart[xmlSize] = 0;
-
-    // skip over xml header should be <?xml....?>
-    for(keyStart=xmlStart;keyStart < xmlEnd;) {
-      if((*keyStart++ == '<') && (*keyStart++ == '?') ) break;
-    }
-
-    for(;keyStart < xmlEnd;) {
-      if((*keyStart++ == '?') && (*keyStart++ == '>') ) break;   
-    }
-
-    // skip the data header for now as hack until we support embedded content
-    for(;keyStart < xmlEnd;) {
-      if(*keyStart++ == '>' ) break;   
-    }
-
-  }
-
-  //printf("%s:\n %s\n", __func__, xmlStart);
-  // Copied this over to wchar buffer free temp buffer 
-  if(xmlTmp != NULL) free(xmlTmp);
-  
-  return status;
+	return LoadXML(fname);
 }
 
-int Partition::CloseXML(void)
-{
-  // Free the RAM buffer for storing the XML data
-  if( xmlStart != NULL ) {
-    free(xmlStart);
-    xmlStart = NULL;
-    xmlEnd = NULL;
-    keyStart = NULL;
-    keyEnd = NULL;
-  }
-
-  return 0;
-}
 
 int Partition::GetNextXMLKey(char *keyName, char **key)
 {

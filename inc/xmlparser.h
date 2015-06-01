@@ -35,17 +35,19 @@ public:
   XMLParser();
   ~XMLParser();
   int LoadXML(char * fname);
-  int ParseXMLString(char *line, const char *key, char *value);
-  int ParseXMLInteger(char *line, const char *key, __uint64_t *value);
-  char *StringReplace(char *inp, const char *find, const char *rep);
-  char *StringSetValue(char *key, const char *keyName, char *value);
+  int ParseXMLString(char *line, const char *key, char *value) const;
+  int ParseXMLInteger(char *line, const char *key, __uint64_t *value) const;
+  char *StringReplace(char *inp, const char *find, const char *rep) const;
+  char *StringSetValue(char *key, const char *keyName, char *value) const;
 
-private:
+protected:
   char *xmlStart;
   char *xmlEnd;
   char *keyStart;
   char *keyEnd;
+  const char *xmlFilename;
 
-  int ParseXMLEvaluate(char *expr, __uint64_t &value);
+
+  int ParseXMLEvaluate(char *expr, __uint64_t &value) const;
 
 };

@@ -542,7 +542,6 @@ int Dload::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors)
     }
   }
 
-  p->CloseXML();
   delete p;
   return status;
  }
