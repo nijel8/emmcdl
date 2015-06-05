@@ -99,7 +99,7 @@ int SparseImage::ProgramImage(Protocol *pProtocol, int64_t dwOffset)
         if (emmcdl_read(hSparseImage, bpDataBuf, dwChunkSize)) {
           // Now we have the data so use whatever protocol we need to write this out
           pProtocol->WriteData(bpDataBuf, dwOffset, dwChunkSize, &dwBytesOut,0);
-          dwOffset += ChunkHeader.dwChunkSize;
+          dwOffset += dwChunkSize;
         }
         else {
           status = errno;
