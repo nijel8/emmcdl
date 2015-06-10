@@ -1,0 +1,10 @@
+*.o
+.gitignore
+.deps
+.dirstamp
+stamp-h1
+autom4te.cache
+config.log
+config.status
+emmcdl
+Makefile
