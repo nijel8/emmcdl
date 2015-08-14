@@ -221,10 +221,10 @@ int Firehose::WriteIMEI(char * imei)
     char wimei[] = "<?xml version=\"1.0\" ?><data><writeIMEI len=\"16\"/></data>";
     status = sport->Write((unsigned char *)wimei, sizeof(wimei));
     Log((char *)wimei);
-    Log((char *)imei);
     // Read response
     memcpy(m_payload, imei, 16);
     status = sport->Write((unsigned char *)m_payload, 16);
+    Log((char *)imei);
     // loop through and write the data
     status = ReadStatus();
 

@@ -49,6 +49,7 @@ int SerialPort::Open(int port) {
 	hPort = emmcdl_open(tPath, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
 	if (hPort < 0) {
+                printf("open serial port:%s fail\n", tPath);
 		return -1;
 	}
 
