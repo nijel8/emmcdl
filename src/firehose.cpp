@@ -90,6 +90,7 @@ int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
         if ((status = sport->Read(m_buffer, &m_buffer_len)) <  0) {
           m_buffer_len = 0;
         }
+        //printf("x%s\n", m_buffer);
 
       } else {
         break;
@@ -146,7 +147,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
 
   // Read any pending data from the flash programmer
   memset(m_payload, 0, dwMaxPacketSize);
-  //dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
+  dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
   Log((char*)m_payload);
 
   // If this is UFS and didn't specify the disk_sector_size then update default to 4096
@@ -199,7 +200,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   }
 
   // read out any pending data 
-  //dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
+  dwBytesRead = ReadData((unsigned char *)m_payload, dwMaxPacketSize, false);
 
   Log((char *)m_payload);
 
@@ -546,8 +547,12 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
 
-  // Wait until device returns with ACK or NAK
-  while ((status = ReadStatus()) == EBUSY);
+  if (hWrite == hDisk){
+    // Wait until device returns with ACK or NAK
+    while ((status = ReadStatus()) == EBUSY);
+  } //else {
+     //ReadData((unsigned char *)m_payload, dwMaxPacketSize, true);
+  //}
 
   if (status == 0)
   {

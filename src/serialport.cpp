@@ -169,9 +169,15 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 				rsize += csize;
 			}
 		} else {
-			printf("Serial Port No data within five seconds.\n");
 			//goto tryagain;
-			return -1;
+                        if (rsize) {
+			    printf("Serial Port No data within five seconds.\n");
+			    return -1;
+                        }
+                        else {
+	                    *length = rsize;
+			    return 0;
+                        }
 		}
 
 	} while (csize < 0 /*&& (rsize < *length)*/);
