@@ -308,7 +308,8 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
         pe->eCmd = CMD_PEEK;
         return 0;
   } else {
-    return ERROR_INVALID_DATA;
+    Log("%s\n", key);
+    //return ERROR_INVALID_DATA;
   }
   Log("\n");
   // Set options and search path

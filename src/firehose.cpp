@@ -134,7 +134,7 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   uint32_t dwBytesRead = dwMaxPacketSize;
   uint32_t retry = 0;
 
-  printf("%s\n", __func__);
+  printf("Firehose:%s\n", __func__);
   // Allocation our global buffers only once when connecting to flash programmer
   if (m_payload == NULL || program_pkt == NULL || m_buffer == NULL) {
     m_payload = (unsigned char *)malloc(dwMaxPacketSize);

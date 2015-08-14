@@ -307,10 +307,21 @@ int WriteGPT(int dnum, char *szPartName, char *szBinFile)
 
 int ResetDevice()
 {
-  Dload dl(&m_port);
   int status = 0;
-  if( status != 0 ) return status;
-  status = dl.DeviceReset();
+  if (m_emergency) {
+    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
+    fh.SetDiskSectorSize(m_sector_size);
+    if (m_verbose) fh.EnableVerbose();
+    status = fh.ConnectToFlashProg(&m_cfg);
+    if (status != 0) return status;
+    printf("Connected to flash programmer, starting reset\n");
+    status = fh.DeviceReset();
+  }
+  else {
+    Dload dl(&m_port);
+    if( status != 0 ) return status;
+    status = dl.DeviceReset();
+  }
   return status;
 }
 
@@ -375,7 +386,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
     // Wait for device to re-enumerate with flashprg
     status = dl.ConnectToFlashProg(2);
     if( status != 0 ) return status;
-    printf("Connected to flash programmer, starting download\n");
+    printf("use dload Connected to flash programmer, starting download\n");
     dl.OpenPartition(PRTN_EMMCUSER);
     status = dl.LoadImage(szSingleImage);
     dl.ClosePartition();
@@ -384,7 +395,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
     if( m_protocol == STREAMING_PROTOCOL ) {
       status = dl.ConnectToFlashProg(4);
       if( status != 0 ) return status;
-      printf("Connected to flash programmer, starting download\n");
+      printf("use STREAMING_PROTOCOL Connected to flash programmer, starting download\n");
       
       // Download all XML files to device 
       for(int i=0; szXMLFile[i] != NULL; i++) {
@@ -412,7 +423,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       if(m_verbose) fh.EnableVerbose();
       status = fh.ConnectToFlashProg(&m_cfg);
       if( status != 0 ) return status;
-      printf("Connected to flash programmer, starting download\n");
+      printf("use FIREHOSE_PROTOCOL Connected to flash programmer, starting download\n");
 
       // Download all XML files to device
       for (int i = 0; szXMLFile[i] != NULL; i++) {
@@ -827,11 +838,11 @@ int main(int argc, char * argv[])
       return PrintHelp();
     }
     break;
-	case EMMC_CMD_DUMP_LOG:
-	  status = m_port.Open(dnum);
-	  if (status < 0) return status;
-	  status = LogDump(uiStartSector, uiNumSectors);
-	  break;
+  case EMMC_CMD_DUMP_LOG:
+    status = m_port.Open(dnum);
+    if (status < 0) return status;
+    status = LogDump(uiStartSector, uiNumSectors);
+    break;
   case EMMC_CMD_ERASE:
     printf("Erasing Disk\n");
     status = EraseDisk(uiStartSector,uiNumSectors,dnum, szPartName);
@@ -892,6 +903,8 @@ int main(int argc, char * argv[])
     }
     break;
   case EMMC_CMD_RESET:
+	  status = m_port.Open(dnum);
+	  if (status < 0) return status;
 	  status = ResetDevice();
 	  break;
   case EMMC_CMD_LOAD_MRPG:
