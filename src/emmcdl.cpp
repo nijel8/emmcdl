@@ -78,6 +78,7 @@ int PrintHelp()
   printf("       -chipset <chipset>             Can be 8960 or 8974 familes\n");
   printf("       -gpt                           Dump the GPT from the connected device\n");
   printf("       -raw                           Send and receive RAW data to serial port 0x75 0x25 0x10\n");
+  printf("       -wimei <imei>                  Write IMEI <imei>\n");
   printf("       -verbose                       Enable verbose output\n");
   printf("\n\n\nExamples:");
   printf(" emmcdl -p COM8 -info\n");
@@ -321,6 +322,21 @@ int ResetDevice()
     Dload dl(&m_port);
     if( status != 0 ) return status;
     status = dl.DeviceReset();
+  }
+  return status;
+}
+
+int WriteIMEI(char *imei)
+{
+  int status = 0;
+  if (m_emergency) {
+    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
+    fh.SetDiskSectorSize(m_sector_size);
+    if (m_verbose) fh.EnableVerbose();
+    status = fh.ConnectToFlashProg(&m_cfg);
+    if (status != 0) return status;
+    printf("Connected to flash programmer, starting WriteIMEI\n");
+    status = fh.WriteIMEI(imei);
   }
   return status;
 }
@@ -731,6 +747,16 @@ int main(int argc, char * argv[])
 	  break;
     }
 
+    if (strcasecmp(argv[i], "-wimei") == 0) {
+      if( (i+1) < argc ) {
+        szSerialData = &argv[i+1];
+        cmd = EMMC_CMD_W_IMEI;
+      } else {
+        PrintHelp();
+      }
+	  break;
+    }
+
     if (strcasecmp(argv[i], "-verbose") == 0) {
       if( (i+1) < argc ) {
         m_verbose = true;
@@ -903,10 +929,15 @@ int main(int argc, char * argv[])
     }
     break;
   case EMMC_CMD_RESET:
-	  status = m_port.Open(dnum);
-	  if (status < 0) return status;
-	  status = ResetDevice();
-	  break;
+      status = m_port.Open(dnum);
+      if (status < 0) return status;
+      status = ResetDevice();
+      break;
+  case EMMC_CMD_W_IMEI:
+      status = m_port.Open(dnum);
+      if (status < 0) return status;
+      status = WriteIMEI(*szSerialData);
+      break;
   case EMMC_CMD_LOAD_MRPG:
     break;
   case EMMC_CMD_GPT:

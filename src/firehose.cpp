@@ -215,6 +215,24 @@ int Firehose::DeviceReset()
 	return status;
 }
 
+int Firehose::WriteIMEI(char * imei)
+{
+    int status = 0;
+    char wimei[] = "<?xml version=\"1.0\" ?><data><writeIMEI len=\"16\"/></data>";
+    status = sport->Write((unsigned char *)wimei, sizeof(wimei));
+    Log((char *)wimei);
+    Log((char *)imei);
+    // Read response
+    memcpy(m_payload, imei, 16);
+    status = sport->Write((unsigned char *)m_payload, 16);
+    // loop through and write the data
+    status = ReadStatus();
+
+    // Read and display any other log packets we may have
+    if (ReadData(m_payload, dwMaxPacketSize, false) > 0) Log((char*)m_payload);
+    return status;
+}
+
 int Firehose::ReadStatus(void)
 {
   // Make sure we read an ACK back

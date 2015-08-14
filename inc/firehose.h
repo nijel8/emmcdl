@@ -53,6 +53,7 @@ public:
   int ProgramPatchEntry(PartitionEntry pe, char *key);
   int ProgramRawCommand(char *key);
   int PeekLogBuf(int64_t start, int64_t size);
+  int WriteIMEI(char *imei);
 
 
   // Firehose specific operations
