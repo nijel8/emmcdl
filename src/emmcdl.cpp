@@ -138,7 +138,7 @@ int LoadFlashProg(char *mprgFile)
     if( status != 0 ) return status;
     status = sh.ConnectToDevice(true,0);
     if( status != 0 ) return status;
-    printf("Downloading flash programmer: %s\n",mprgFile);
+    printf("Sahara Downloading flash programmer: %s\n",mprgFile);
     status = sh.LoadFlashProg(mprgFile);
     if( status != 0 ) return status;
   } else {
@@ -146,7 +146,7 @@ int LoadFlashProg(char *mprgFile)
     if( status != 0 ) return status;
     status = dl.IsDeviceInDload();
     if( status != 0 ) return status;
-    printf("Downloading flash programmer: %s\n",mprgFile);
+    printf("DLOAD Downloading flash programmer: %s\n",mprgFile);
     status = dl.LoadFlashProg(mprgFile);
     if( status != 0 ) return status;
   }

@@ -184,7 +184,7 @@ int Protocol::DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, 
   }
 
   // Create the output file and dump contents at offset for num blocks
-  int hOutFile = emmcdl_creat(szOutFile,O_CREAT | O_RDWR);
+  int hOutFile = emmcdl_creat(szOutFile,O_CREAT | S_IRUSR | S_IWUSR);
 
   // Make sure we were able to successfully create file handle
   if (hOutFile < 0) {
