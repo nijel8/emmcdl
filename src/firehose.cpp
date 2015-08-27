@@ -26,6 +26,7 @@ when       who     what, where, why
 #include "xmlparser.h"
 #include "partition.h"
 #include <exception>
+#define NANO 1000000000L
 using namespace std;
 
 Firehose::~Firehose()
@@ -298,7 +299,7 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
     return EINVAL;
   }
 
-  *bytesWritten = 0;
+  //*bytesWritten = 0;
   memset(program_pkt, 0, MAX_XML_LEN);
   if (writeOffset >= 0) {
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
@@ -320,12 +321,15 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
   struct timespec ts;
   int ret;
 
-  ret = clock_gettime(CLOCK_MONOTONIC, &ts);
-  if (ret < 0) {
-      return ret;
-  }
 
-  uint64_t ticks =  ts.tv_sec * 1000;
+  static uint64_t ticks;
+  if (*bytesWritten == 0) {
+      ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+      if (ret < 0) {
+          return ret;
+      }
+      ticks =  ts.tv_sec * NANO + ts.tv_nsec;
+  }
 
   //uint64_t dwBufSize = writeBytes;
 
@@ -340,14 +344,14 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
       return status;
     }
     *bytesWritten += dwBytesRead;
-    printf("Sectors remaining %i\r", (int)(writeBytes - i));
+    printf("Sectors remaining %8i %32c\r", (int)(writeBytes - i), '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   if (ret < 0) {
       return ret;
   }
-  printf("\nDownloaded raw image size %i at speed %i KB/s\n", (int)writeBytes, (int)(((writeBytes / 1024) * 1000) / (ts.tv_sec*1000 - ticks + 1)));
+  printf("Downloaded raw image at speed %8.4f MB/s\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
 
   // Get the response after read is done
   status = ReadStatus();
@@ -392,7 +396,7 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
   if (ret < 0) {
       return ret;
   }
-  uint64_t ticks = ts.tv_sec * 1000;
+  uint64_t ticks = ts.tv_sec * NANO + ts.tv_nsec;
   uint32_t bytesToRead = dwMaxPacketSize;
 
   for (uint32_t tmp_sectors = (uint32_t)readBytes/DISK_SECTOR_SIZE; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
@@ -412,14 +416,14 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
     // Now either write the data to the buffer or handle given
     readBuffer += bytesToRead;
     *bytesRead += bytesToRead;
-    printf("Sectors remaining %i\r", (int)tmp_sectors);
+    printf("Sectors remaining %8i %15c\r", (int)tmp_sectors, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   if (ret < 0) {
       return ret;
   }
-  printf("\nDownloaded raw image at speed %i KB/s\n", (int)(((readBytes*1000)/1024) / (ts.tv_sec*1000 - ticks + 1)));
+  printf("Downloaded raw image at speed %8.4f MB/s\r", ((((double)readBytes*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
 
   // Get the response after read is done first response should be finished command
   status = ReadStatus();
@@ -574,6 +578,14 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
 
   if (status == 0)
   {
+    struct timespec ts;
+    int ret;
+
+    ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (ret < 0) {
+        return ret;
+    }
+    uint64_t ticks = ts.tv_sec * NANO + ts.tv_nsec;
     uint32_t bytesToRead;
     for (int64_t tmp_sectors = (int64_t)sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
       bytesToRead = dwMaxPacketSize&(~(DISK_SECTOR_SIZE - 1));
@@ -635,9 +647,14 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
           break;
         }
       }
-      printf("Sectors remaining %8i\r", (int)(tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)));
+      printf("Sectors remaining %8i %32c\r", (int)(tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), '\0');
       //emmcdl_sleep_ms(10);
     }
+    ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (ret < 0) {
+        return ret;
+    }
+    printf("Downloaded raw image at speed %8.4f MB/s\r", ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
   }
 
   // Get the response after raw transfer is completed

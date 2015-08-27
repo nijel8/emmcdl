@@ -100,6 +100,7 @@ public:
   Partition(__uint64_t ds=0)
   {
 	  num_entries = 0; cur_action = 0; d_sectors = ds;
+          bVerbose = false;
   };
   ~Partition() {};
   int PreLoadImage(char * fname, const char * imgdir = NULL);
@@ -110,6 +111,7 @@ public:
   int GetNextXMLKey(char *keyName, char **key);
   unsigned int CalcCRC32(unsigned char *buffer, int len);
   int ParseXMLKey(char *key, PartitionEntry *pe);
+  void EnableVerbose(void);
 
 private:
   int cur_action;
@@ -123,5 +125,5 @@ private:
   int ParseXMLEvaluate(char *expr, __uint64_t &value, PartitionEntry *pe) const;
   bool CheckEmptyLine(char *str) const;
   int Log(const char *str,...);
-
+  bool bVerbose;
 };

@@ -30,7 +30,7 @@ Protocol::Protocol(void)
   hDisk = 0;
   buffer1 = buffer2 = NULL;
   gpt_entries = NULL;
-  bVerbose = true;
+  bVerbose = false;
 
   disk_size = 0;
   // Set default sector size

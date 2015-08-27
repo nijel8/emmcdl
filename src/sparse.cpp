@@ -74,7 +74,7 @@ int SparseImage::ProgramImage(Protocol *pProtocol, int64_t dwOffset)
   CHUNK_HEADER ChunkHeader;
   unsigned char *bpDataBuf;
   uint32_t dwBytesRead;
-  uint32_t dwBytesOut;
+  uint32_t dwBytesOut = 0;
   int status = 0;
 
   // Make sure we have first successfully found a sparse file and headers are loaded okay

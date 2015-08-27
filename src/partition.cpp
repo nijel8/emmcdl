@@ -89,11 +89,18 @@ char *StringReplace(char *inp, const char *find, const char *rep)
 int Partition::Log(const char *str,...)
 {
   // For now map the log to dump output to console
-  va_list ap;
-  va_start(ap,str);
-  vprintf(str,ap);
-  va_end(ap);
+  if (bVerbose) {
+      va_list ap;
+      va_start(ap,str);
+      vprintf(str,ap);
+      va_end(ap);
+  }
   return 0;
+}
+
+void Partition::EnableVerbose()
+{
+  bVerbose = true;
 }
 
 
@@ -475,7 +482,7 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
 
   if (status == 0 && !bSparse) {
     // Fast copy from input file to output disk
-    printf("In offset: %lu out offset: %lu sectors: %lu\n", pe.offset, pe.start_sector, pe.num_sectors);
+    Log("In offset: %lu out offset: %lu sectors: %lu\n", pe.offset, pe.start_sector, pe.num_sectors);
     status = proto->FastCopy(hRead, pe.offset, proto->GetDiskHandle(),  pe.start_sector, pe.num_sectors,pe.physical_partition_number);
     emmcdl_close(hRead);
   }

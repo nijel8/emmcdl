@@ -450,6 +450,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile, char **szimgDir)
       // Download all XML files to device
       for (int i = 0; szXMLFile[i] != NULL; i++) {
         Partition rawprg(0);
+        if (m_verbose) rawprg.EnableVerbose();
         status = rawprg.PreLoadImage(szXMLFile[i], szimgDir[i]);
         if (status != 0) return status;
         status = rawprg.ProgramImage(&fh);
@@ -458,6 +459,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile, char **szimgDir)
         char *sptr = strstr(szXMLFile[i], "rawprogram");
         if (sptr != NULL && status == 0) {
           Partition patch(0);
+        if (m_verbose) patch.EnableVerbose();
           int pstatus = 0;
           // Check if patch file exist
           char szPatchFile[MAX_STRING_LEN];
