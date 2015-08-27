@@ -31,6 +31,7 @@ XMLParser::XMLParser()
   keyStart = NULL;
   keyEnd = NULL;
   xmlFilename = NULL;
+  imgDir = NULL;
 }
 
 XMLParser::~XMLParser()
@@ -42,11 +43,11 @@ XMLParser::~XMLParser()
 	  keyStart = NULL;
 	  keyEnd = NULL;
 	  xmlFilename = NULL;
-
+          imgDir = NULL;
   }
 }
 
-int XMLParser::LoadXML(char *fname)
+int XMLParser::LoadXML(char *fname, const char *imgdir)
 {
 	  int hXML;
 	  int status = 0;
@@ -91,6 +92,7 @@ int XMLParser::LoadXML(char *fname)
 
 	  emmcdl_close(hXML);
 	  xmlFilename = fname;
+          imgDir = imgdir;
 
 	  // If successful then prep the buffer
 	  if( status == 0 ) {

@@ -64,7 +64,7 @@ int PrintHelp()
   printf("       -s <sectors>                   Number of sectors in disk image\n");
   printf("       -p <port or disk>              Port or disk to program to (eg COM8, for PhysicalDrive1 use 1)\n");
   printf("       -o <filename>                  Output filename\n");
-  printf("       -x <*.xml>                     Program XML file to output type -o (output) -p (port or disk)\n");
+  printf("       -x <*.xml>  [-xd imagedir]         Program XML file to output type -o (output) -p (port or disk)\n");
   printf("       -f <flash programmer>          Flash programmer to load to IMEM eg MPRG8960.hex\n");
   printf("       -i <singleimage>               Single image to load at offset 0 eg 8960_msimage.mbn\n");
   printf("       -t                             Run performance tests\n");
@@ -81,17 +81,18 @@ int PrintHelp()
   printf("       -wimei <imei>                  Write IMEI <imei>\n");
   printf("       -verbose                       Enable verbose output\n");
   printf("\n\n\nExamples:");
-  printf(" emmcdl -p COM8 -info\n");
-  printf(" emmcdl -p COM8 -gpt\n");
-  printf(" emmcdl -p COM8 -SkipWrite -SkipStorageInit -MemoryName ufs -f prog_emmc_firehose_8994_lite.mbn -x memory_configure.xml\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml -SetActivePartition 0\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -ffu wp8.ffu\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -d 0 1000 -o dump_1_1000.bin\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -d SVRawDump -o svrawdump.bin\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -b SBL1 c:\\temp\\sbl1.mbn\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -e 0 100\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -e MODEM_FSG\n");
-  printf(" emmcdl -p COM8 -f prog_emmc_firehose_8994_lite.mbn -raw 0x75 0x25 0x10\n");
+  printf(" emmcdl -p ttyUSB0 -info\n");
+  printf(" emmcdl -p ttyUSB0 -gpt\n");
+  printf(" emmcdl -p ttyUSB0 -SkipWrite -SkipStorageInit -MemoryName ufs -f prog_emmc_firehose_8994_lite.mbn -x memory_configure.xml\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml  -SetActivePartition 0\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml -xd imagedir  -SetActivePartition 0\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -ffu wp8.ffu\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -d 0 1000 -o dump_1_1000.bin\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -d SVRawDump -o svrawdump.bin\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -b SBL1 c:\\temp\\sbl1.mbn\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -e 0 100\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -e MODEM_FSG\n");
+  printf(" emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -raw 0x75 0x25 0x10\n");
   return -1;
 }
 
@@ -322,6 +323,11 @@ int ResetDevice()
     Dload dl(&m_port);
     if( status != 0 ) return status;
     status = dl.DeviceReset();
+    if (status != 0 ) {
+      Sahara sa(&m_port);
+      if( status != 0 ) return status;
+      status = sa.DeviceReset();
+    }
   }
   return status;
 }
@@ -391,7 +397,7 @@ int FFURawProgram(char *szFFUFile, char *szOutputFile)
 }
 
 
-int EDownloadProgram(char *szSingleImage, char **szXMLFile)
+int EDownloadProgram(char *szSingleImage, char **szXMLFile, char **szimgDir)
 {
   int status = 0;
   Dload dl(&m_port);
@@ -444,7 +450,7 @@ int EDownloadProgram(char *szSingleImage, char **szXMLFile)
       // Download all XML files to device
       for (int i = 0; szXMLFile[i] != NULL; i++) {
         Partition rawprg(0);
-        status = rawprg.PreLoadImage(szXMLFile[i]);
+        status = rawprg.PreLoadImage(szXMLFile[i], szimgDir[i]);
         if (status != 0) return status;
         status = rawprg.ProgramImage(&fh);
 
@@ -584,6 +590,7 @@ int main(int argc, char * argv[])
   bool bEmergdl = false;
   char *szOutputFile = NULL;
   char *szXMLFile[8] = {NULL};
+  char *szimgDir[8] = {NULL};
   char **szSerialData = {NULL};
   uint32_t dwXMLCount = 0;
   char *szFFUImage = NULL;
@@ -658,7 +665,12 @@ int main(int argc, char * argv[])
     }
     if (strcasecmp(argv[i], "-x") == 0) {
       cmd = EMMC_CMD_WRITE;
-      szXMLFile[dwXMLCount++] = argv[++i];
+      szXMLFile[dwXMLCount] = argv[++i];
+      if ((i+1) < argc && strcasecmp(argv[i+1], "-xd") == 0) {
+        i++;
+        szimgDir[dwXMLCount] = argv[++i];
+      }
+      dwXMLCount++;
     }
     if (strcasecmp(argv[i], "-p") == 0) {
       // Everyone wants to use format COM8 so detect this and accept this as well
@@ -888,7 +900,7 @@ int main(int argc, char * argv[])
     }
     if( m_emergency ) {
       printf("EMERGENCY Programming image\n");
-      status = EDownloadProgram(szSingleImage, szXMLFile);
+      status = EDownloadProgram(szSingleImage, szXMLFile, szimgDir);
     } else {
       printf("Programming image\n");
       status = RawDiskProgram(szXMLFile, szOutputFile, dnum);

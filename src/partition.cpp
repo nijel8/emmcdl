@@ -421,10 +421,18 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
     char imgfname[MAX_PATH];
     const char* ptr = rindex(xmlFilename,'/');
     if (ptr != NULL) {
-       strncpy(imgfname, xmlFilename, ptr - xmlFilename);
-       sprintf(&imgfname[ptr - xmlFilename], "/%s", pe.filename);
+       if (imgDir != NULL) {
+           sprintf(imgfname, "%s/%s", imgDir, pe.filename);
+       } else {
+           strncpy(imgfname, xmlFilename, ptr - xmlFilename);
+           sprintf(&imgfname[ptr - xmlFilename], "/%s", pe.filename);
+       }
     } else {
-    	strcpy(imgfname, pe.filename);
+       if (imgDir != NULL) {
+           sprintf(imgfname, "%s/%s", imgDir, pe.filename);
+       } else {
+           strcpy(imgfname, pe.filename);
+       }
     }
 
     printf("\nSparse image:%s\n", imgfname);
@@ -513,9 +521,9 @@ int Partition::ProgramImage(Protocol *proto)
   return status;
 }
 
-int Partition::PreLoadImage(char *fname)
+int Partition::PreLoadImage(char *fname, const char *imgdir)
 {
-	return LoadXML(fname);
+	return LoadXML(fname, imgdir);
 }
 
 

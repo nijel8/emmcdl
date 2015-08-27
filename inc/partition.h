@@ -102,7 +102,7 @@ public:
 	  num_entries = 0; cur_action = 0; d_sectors = ds;
   };
   ~Partition() {};
-  int PreLoadImage(char * fname);
+  int PreLoadImage(char * fname, const char * imgdir = NULL);
   int ProgramImage(Protocol *proto);
   int ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *key);
 
