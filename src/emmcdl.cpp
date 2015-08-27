@@ -35,9 +35,11 @@ when       who     what, where, why
 #include <ctype.h>
 
 using namespace std;
+#define CLASS_DLOAD  0
+#define CLASS_SAHARA 1
 
 static int m_protocol = FIREHOSE_PROTOCOL;
-static int m_chipset = 8974;
+static int m_class = CLASS_SAHARA;
 static int m_sector_size = 512;
 static bool m_emergency = false;
 static bool m_verbose = false;
@@ -65,7 +67,7 @@ int PrintHelp()
   printf("       -p <port or disk>                Port or disk to program to (eg COM8, for PhysicalDrive1 use 1)\n");
   printf("       -o <filename>                    Output filename\n");
   printf("       [<-x <*.xml> [-xd <imgdir>]>...] Program XML file to output type -o (output) -p (port or disk)\n");
-  printf("       -f <flash programmer>            Flash programmer to load to IMEM eg MPRG8960.hex\n");
+  printf("       -f <flash programmer> [-c <d|s>] Flash programmer to load to IMEM eg MPRG8960.hex with <d>(dload), default is <s>(sahara) class\n");
   printf("       -i <singleimage>                 Single image to load at offset 0 eg 8960_msimage.mbn\n");
   printf("       -t                               Run performance tests\n");
   printf("       -b <prtname> <binfile>           Write <binfile> to GPT <prtname>\n");
@@ -74,8 +76,7 @@ int PrintHelp()
   printf("       -r                               Reset device\n");
   printf("       -ffu <*.ffu>                     Download FFU image to device in emergency download need -o and -p\n");
   printf("       -splitffu <*.ffu> -o <xmlfile>   Split FFU into binary chunks and create rawprogram0.xml to output location\n");
-  printf("       -protocol <protocol>             Can be FIREHOSE, STREAMING default is FIREHOSE\n");
-  printf("       -chipset <chipset>               Can be 8960 or 8974 familes\n");
+  printf("       -protocol <s|f>                  Can be <s>(STREAMING),  default is <f>(FIREHOSE)\n");
   printf("       -gpt                             Dump the GPT from the connected device\n");
   printf("       -raw                             Send and receive RAW data to serial port 0x75 0x25 0x10\n");
   printf("       -wimei <imei>                    Write IMEI <imei>\n");
@@ -135,7 +136,7 @@ int LoadFlashProg(char *mprgFile)
   int status = 0;
   // This is PBL so depends on the chip type
 
-  if( m_chipset == 8974 ) {
+  if( m_class == CLASS_SAHARA) {
     Sahara sh(&m_port);
     if( status != 0 ) return status;
     status = sh.ConnectToDevice(true,0);
@@ -688,6 +689,16 @@ int main(int argc, char * argv[])
     if (strcasecmp(argv[i], "-f") == 0) {
       szFlashProg = argv[++i];
       bEmergdl = true;
+      if (strcasecmp(argv[i+1], "-c") == 0) {
+        i++;
+        if( (i+1) < argc ) {
+          if (strcasecmp(argv[++i], "d") == 0) {
+            m_class = CLASS_DLOAD;
+          }
+        } else {
+          PrintHelp();
+        }
+      }
     }
     if (strcasecmp(argv[i], "-i") == 0) {
       cmd = EMMC_CMD_WRITE;
@@ -790,9 +801,9 @@ int main(int argc, char * argv[])
 
     if (strcasecmp(argv[i], "-protocol") == 0) {
       if( (i+1) < argc ) {
-        if( strcmp(argv[i+1], "STREAMING") == 0 ) {
+        if( strcmp(argv[++i], "s") == 0 ) {
           m_protocol = STREAMING_PROTOCOL;
-        } else if( strcmp(argv[i+1], "FIREHOSE") == 0 ) {
+        } else if( strcmp(argv[++i], "f") == 0 ) {
           m_protocol = FIREHOSE_PROTOCOL;
         }
       } else {
@@ -800,17 +811,6 @@ int main(int argc, char * argv[])
       }
     }
 
-    if (strcasecmp(argv[i], "-chipset") == 0) {
-      if( (i+1) < argc ) {
-        if (strcasecmp(argv[i + 1], "8960") == 0) {
-          m_chipset = 8960;
-        } else if( strcasecmp(argv[i+1], "8974") == 0 ) {
-          m_chipset = 8974;
-        }
-      } else {
-        PrintHelp();
-      }
-    }
 
     if (strcasecmp(argv[i], "-MaxPayloadSizeToTargetInBytes") == 0) {
       if ((i + 1) < argc) {
