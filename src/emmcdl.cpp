@@ -79,7 +79,7 @@ int PrintHelp()
   printf("       -gpt                           Dump the GPT from the connected device\n");
   printf("       -raw                           Send and receive RAW data to serial port 0x75 0x25 0x10\n");
   printf("       -wimei <imei>                  Write IMEI <imei>\n");
-  printf("       -verbose                       Enable verbose output\n");
+  printf("       -v                             Enable verbose output\n");
   printf("\n\n\nExamples:");
   printf(" emmcdl -p ttyUSB0 -info\n");
   printf(" emmcdl -p ttyUSB0 -gpt\n");
@@ -771,7 +771,7 @@ int main(int argc, char * argv[])
 	  break;
     }
 
-    if (strcasecmp(argv[i], "-verbose") == 0) {
+    if (strcasecmp(argv[i], "-v") == 0) {
       if( (i+1) < argc ) {
         m_verbose = true;
       } else {
