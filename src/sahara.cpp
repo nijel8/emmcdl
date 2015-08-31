@@ -87,7 +87,7 @@ int Sahara::DumpDeviceInfo(pbl_info_t *pbl_info)
   int status = 0;
 
   // Connect to the device in command mode
-  status = ConnectToDevice(true, 3);
+  status = ConnectToDevice(true, SAHARA_MODE_COMMAND);
   if( status != 0) {
     return status;
   }
@@ -123,11 +123,11 @@ int Sahara::DumpDeviceInfo(pbl_info_t *pbl_info)
     pbl_info->pbl_sw = dataBuf[0];
   }
   
-  ModeSwitch(0);
+  ModeSwitch(SAHARA_MODE_COMMAND, false);
   return 0;
 }
 
-int Sahara::ModeSwitch(int mode)
+int Sahara::ModeSwitch(int mode, bool rsp)
 {
   // Finally at the end send switch mode to put us back in original EDL state
   int status = 0;
@@ -141,7 +141,10 @@ int Sahara::ModeSwitch(int mode)
   status = sport->Write((unsigned char*)&cmd_switch_mode, sizeof(cmd_switch_mode));
   
   // Read the response to switch mode if the device responds
-  status = sport->Read((unsigned char *)&read_data_req, &bytesRead);
+  if (rsp) {
+      status = sport->Read((unsigned char *)&read_data_req, &bytesRead);
+  }
+  //sport->UnRead((unsigned char *)&read_data_req, &bytesRead);
   return status;
 }
 
@@ -256,10 +259,20 @@ bool Sahara::CheckDevice(void)
   hello_req_t hello_req = {0};
   int status = 0;
   uint32_t bytesRead = sizeof(hello_req);
-  sport->SetTimeout(1);
-  status = sport->Read((unsigned char *)&hello_req,&bytesRead);
-  sport->SetTimeout(1000);
-  return ( hello_req.cmd == SAHARA_HELLO_REQ );
+  if (sport->InputBufferCount()) {
+      status = sport->Read((unsigned char *)&hello_req,&bytesRead);
+      //sport->UnRead((unsigned char *)&hello_req, &bytesRead);
+      if (hello_req.cmd == SAHARA_HELLO_REQ ) {
+          ModeSwitch(SAHARA_MODE_COMMAND, false);
+          return true;
+      }
+  } else {
+      if (!ConnectToDevice(false, SAHARA_MODE_COMMAND)) {
+          ModeSwitch(SAHARA_MODE_COMMAND, false);
+          return true;
+      }
+  }
+  return false;
 }
 
 int Sahara::ConnectToDevice(bool bReadHello, int mode)
@@ -271,13 +284,13 @@ int Sahara::ConnectToDevice(bool bReadHello, int mode)
   if (bReadHello) {
     sport->SetTimeout(10);
     status = sport->Read((unsigned char *)&hello_req, &bytesRead);
-    if (status < 0) return 1;
+    if (status < 0) return -1;
     if (hello_req.cmd != SAHARA_HELLO_REQ) {
       // If no hello packet is waiting then try PBL hack to bring device to good state
       if (PblHack() != 0) {
         // If we fail to connect try to do a mode switch command to get hello packet and try again
         Log("Did not receive Sahara hello packet from device\n");
-        return 1;
+        return -1;
       }
     }
     sport->SetTimeout(2000);
@@ -298,7 +311,7 @@ int Sahara::ConnectToDevice(bool bReadHello, int mode)
 
   if (status != 0) {
     Log("Failed to write hello response back to device\n");
-    return 1;
+    return -1;
  }
 
   return 0;
@@ -310,7 +323,7 @@ int Sahara::PblHack(void)
   int status = 0;
 
   // Assume that we already got the hello req so send hello response
-  status = ConnectToDevice(false, 3);
+  status = ConnectToDevice(false, SAHARA_MODE_COMMAND);
   if (status != 0) {
     return status;
   }
@@ -323,12 +336,12 @@ int Sahara::PblHack(void)
   status = sport->Read((unsigned char *)&cmd_rdy, &bytesRead);
   if (status != 0 || bytesRead == 0) {
     // Assume there was a data toggle issue and send the mode switch command
-    return ModeSwitch(0);
+    return ModeSwitch(SAHARA_MODE_IMAGE_TX_PENDING);
   } else if (cmd_rdy.cmd != SAHARA_CMD_READY) {
     Log("PblHack: Error - %i\n", cmd_rdy.cmd);
     return ERROR_INVALID_DATA;
   }
 
   // Successfully got the CMD_READY so now switch back to normal mode
-  return ModeSwitch(0);
+  return ModeSwitch(SAHARA_MODE_IMAGE_TX_PENDING);
 }

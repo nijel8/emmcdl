@@ -617,7 +617,7 @@ int DiskWriter::OpenDevice(int dn)
 
   disk_num = dn;
   disk_size = disks[dn].disksize;*/
-  return 0;
+  return EINVAL;
 }
 
 void DiskWriter::CloseDevice()

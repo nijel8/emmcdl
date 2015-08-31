@@ -376,7 +376,6 @@ int Dload::IsDeviceInDload(void)
   unsigned char rsp[32] = {0};
   int bytesRead = 32;
 
-  printf("%s 0Downloading flash programmer: \n",__func__);
   sport->SendSync(nop,sizeof(nop),rsp,&bytesRead);
   for (int i=0;i < 32;i++)
       printf("%x: ",rsp[i]);
@@ -384,7 +383,6 @@ int Dload::IsDeviceInDload(void)
     return 0;
   }
   
-  printf("\n%s 1Downloading flash programmer: \n",__func__);
   return EINVAL;
 }
 

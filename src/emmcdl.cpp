@@ -123,32 +123,45 @@ int RawSerialSend(int dnum, char **szSerialData, int len)
     return EINVAL;
   }
 
-  status = m_port.Open(dnum);
-  if (status < 0) return status;
   StringToByte(szSerialData,data,len);
   status = m_port.Write(data,len);
+  return status;
+}
+
+int DetectDeviceClass()
+{
+  int status = -1;
+  // This is PBL so depends on the chip type
+  Sahara sh(&m_port);
+  if (sh.CheckDevice()) {
+    status = 0;
+    m_class = CLASS_SAHARA;
+    m_protocol = FIREHOSE_PROTOCOL;
+  } else {
+    Dload dl(&m_port);
+    status = dl.IsDeviceInDload();
+    if( status != 0 ) return status;
+    m_class = CLASS_DLOAD;
+    m_protocol = STREAMING_PROTOCOL;
+  }
   return status;
 }
 
 
 int LoadFlashProg(char *mprgFile)
 {
-  int status = 0;
+  int status = -1;
   // This is PBL so depends on the chip type
-
-  if( m_class == CLASS_SAHARA) {
+  if (m_class == CLASS_SAHARA) {
     Sahara sh(&m_port);
-    if( status != 0 ) return status;
-    status = sh.ConnectToDevice(true,0);
+    printf("Sahara Connectting To Device\n");
+    status = sh.ConnectToDevice(true,SAHARA_MODE_IMAGE_TX_PENDING);
     if( status != 0 ) return status;
     printf("Sahara Downloading flash programmer: %s\n",mprgFile);
     status = sh.LoadFlashProg(mprgFile);
     if( status != 0 ) return status;
-  } else {
+  } else if (m_class == CLASS_DLOAD) {
     Dload dl(&m_port);
-    if( status != 0 ) return status;
-    status = dl.IsDeviceInDload();
-    if( status != 0 ) return status;
     printf("DLOAD Downloading flash programmer: %s\n",mprgFile);
     status = dl.LoadFlashProg(mprgFile);
     if( status != 0 ) return status;
@@ -852,10 +865,15 @@ int main(int argc, char * argv[])
       }
     }
   }
-  
-  if( szFlashProg != NULL ) {
-     status = m_port.Open(dnum);
-     if (status < 0) return status;
+
+  status = m_port.Open(dnum);
+  if (status < 0) goto end;
+  status = DetectDeviceClass();
+  if (status) {
+     m_emergency = true;
+     m_class = CLASS_SAHARA;
+     m_protocol = FIREHOSE_PROTOCOL;
+  } else if ( szFlashProg != NULL ) {
      status = LoadFlashProg(szFlashProg);
      if (status == 0) {
        printf("Waiting for flash programmer to boot\n");
@@ -863,11 +881,13 @@ int main(int argc, char * argv[])
      }
      else {
        printf("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n");
-       //exit(0);
+       goto end;
      }
      m_emergency = true;
   }
 
+  printf("\n===============Device Class:%s Protocol:%s================\n", 
+                   m_class == CLASS_SAHARA? "sahara":"dload", m_protocol == FIREHOSE_PROTOCOL?"firehose":"streaming");
   // If there is a special command execute it
   switch(cmd) {
   case EMMC_CMD_DUMP:
@@ -879,8 +899,6 @@ int main(int argc, char * argv[])
     }
     break;
   case EMMC_CMD_DUMP_LOG:
-    status = m_port.Open(dnum);
-    if (status < 0) return status;
     status = LogDump(uiStartSector, uiNumSectors);
     break;
   case EMMC_CMD_ERASE:
@@ -943,13 +961,9 @@ int main(int argc, char * argv[])
     }
     break;
   case EMMC_CMD_RESET:
-      status = m_port.Open(dnum);
-      if (status < 0) return status;
       status = ResetDevice();
       break;
   case EMMC_CMD_W_IMEI:
-      status = m_port.Open(dnum);
-      if (status < 0) return status;
       status = WriteIMEI(*szSerialData);
       break;
   case EMMC_CMD_LOAD_MRPG:
@@ -959,9 +973,7 @@ int main(int argc, char * argv[])
     status = ReadGPT(dnum);
     break;
   case EMMC_CMD_INFO:
-	  status = m_port.Open(dnum);
-	  if (status < 0) return status;
-	  status = DumpDeviceInfo();
+    status = DumpDeviceInfo();
     break;
   case EMMC_CMD_NONE:
     break;
@@ -969,6 +981,7 @@ int main(int argc, char * argv[])
  
   // Print error information
 
+end:
   // Display the error message and exit the process
   printf("Status: %i %s\n",status, (char*)strerror(status));
   return status;
