@@ -379,6 +379,7 @@ int Dload::IsDeviceInDload(void)
   sport->SendSync(nop,sizeof(nop),rsp,&bytesRead);
   for (int i=0;i < 32;i++)
       printf("%x: ",rsp[i]);
+  printf("\n");
   if( rsp[0] == CMD_ACK ) {
     return 0;
   }
