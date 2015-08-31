@@ -133,7 +133,7 @@ int DetectDeviceClass()
   int status = -1;
   // This is PBL so depends on the chip type
   Sahara sh(&m_port);
-  if (sh.CheckDevice()) {
+  if (!sh.CheckDevice()) {
     status = 0;
     m_class = CLASS_SAHARA;
     m_protocol = FIREHOSE_PROTOCOL;
@@ -869,11 +869,14 @@ int main(int argc, char * argv[])
   if (status < 0) goto end;
   status = DetectDeviceClass();
   if (status) {
-     Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
-     if (m_verbose) fh.EnableVerbose();
-     m_emergency = !fh.DeviceNop();
      m_class = CLASS_SAHARA;
      m_protocol = FIREHOSE_PROTOCOL;
+     Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
+     fh.SetDiskSectorSize(m_sector_size);
+     if (m_verbose) fh.EnableVerbose();
+     status = fh.ConnectToFlashProg(&m_cfg);
+     if (status != 0) return status;
+     m_emergency = !fh.DeviceNop();
   } else if ( szFlashProg != NULL ) {
      status = LoadFlashProg(szFlashProg);
      if (status == 0) {

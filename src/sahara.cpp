@@ -254,7 +254,7 @@ int Sahara::LoadFlashProg(char *szFlashPrg)
   return 0;
 }
 
-bool Sahara::CheckDevice(void)
+int Sahara::CheckDevice(void)
 {
   hello_req_t hello_req = {0};
   int status = 0;
@@ -263,16 +263,32 @@ bool Sahara::CheckDevice(void)
       status = sport->Read((unsigned char *)&hello_req,&bytesRead);
       //sport->UnRead((unsigned char *)&hello_req, &bytesRead);
       if (hello_req.cmd == SAHARA_HELLO_REQ ) {
-          ModeSwitch(SAHARA_MODE_COMMAND, false);
-          return true;
+          status = ModeSwitch(SAHARA_MODE_COMMAND, false);
       }
   } else {
-      if (!ConnectToDevice(false, SAHARA_MODE_COMMAND)) {
-          ModeSwitch(SAHARA_MODE_COMMAND, false);
-          return true;
+
+      // Assume that we already got the hello req so send hello response
+      status = ConnectToDevice(false, SAHARA_MODE_COMMAND);
+      if (status != 0) {
+        return status;
       }
+
+      // Make sure we get command ready back
+      execute_rsp_t cmd_rdy;
+      uint32_t bytesRead = sizeof(cmd_rdy);
+
+      sport->SetTimeout(10);
+      status = sport->Read((unsigned char *)&cmd_rdy, &bytesRead);
+      if (status != 0 || bytesRead == 0 || (cmd_rdy.cmd == SAHARA_END_TRANSFER && cmd_rdy.data_len == SAHARA_NAK_INVALID_CMD)) {
+        // Assume there was a data toggle issue and send the mode switch command
+        //return ModeSwitch(SAHARA_MODE_COMMAND, false);
+      } else if (cmd_rdy.cmd != SAHARA_CMD_READY) {
+        Log("PblHack: Error - %i\n", cmd_rdy.cmd);
+        return ERROR_INVALID_DATA;
+      }
+      ModeSwitch(SAHARA_MODE_COMMAND, false);
   }
-  return false;
+  return status;
 }
 
 int Sahara::ConnectToDevice(bool bReadHello, int mode)
@@ -293,13 +309,13 @@ int Sahara::ConnectToDevice(bool bReadHello, int mode)
         return -1;
       }
     }
+    Log((char *)"Sahara version %d--%d \nmode %d.\n", hello_req.version_min, hello_req.version, hello_req.mode);
     sport->SetTimeout(2000);
   } else {
     // Read any pending data
     sport->Flush();
   }
 
-  Log((char *)"Sahara version %d--%d \nmode %d.\n", hello_req.version_min, hello_req.version, hello_req.mode);
   hello_req.cmd = SAHARA_HELLO_RSP;
   hello_req.len = 0x30;
   hello_req.version = SAHARA_VERSION;

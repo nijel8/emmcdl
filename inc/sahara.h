@@ -260,7 +260,7 @@ public:
   int LoadFlashProg(char *szFlashPrg);
   int ConnectToDevice(bool bReadHello, int mode);
   int DumpDeviceInfo(pbl_info_t *pbl_info);
-  bool CheckDevice(void);
+  int CheckDevice(void);
 
 private:
   int ModeSwitch(int mode, bool rsp = true);
