@@ -49,6 +49,7 @@ public:
   int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum);
 
   int DeviceReset(void);
+  int DeviceNop();
   int FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sectorWrite, __uint64_t sectors, uint8_t partNum);
   int ProgramPatchEntry(PartitionEntry pe, char *key);
   int ProgramRawCommand(char *key);

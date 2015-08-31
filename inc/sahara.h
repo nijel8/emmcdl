@@ -24,7 +24,7 @@ when       who     what, where, why
 #include "serialport.h"
 #include "sysdeps.h"
 
-#define SAHARA_VERSION 2.4
+#define SAHARA_VERSION 2
 #define SAHARA_VERSION_SUPPORTED 2
 
 #define SAHARA_HELLO_REQ      0x1

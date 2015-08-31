@@ -216,6 +216,14 @@ int Firehose::DeviceReset()
 	return status;
 }
 
+int Firehose::DeviceNop(){
+    int status = 0;
+    char nop_pkt[] = "<?xml version=\"1.0\" ?><data><nop /></data>";
+    status = sport->Write((unsigned char *)nop_pkt, sizeof(nop_pkt));
+    status =  ReadStatus();
+    return status;
+}
+
 int Firehose::WriteIMEI(char * imei)
 {
     int status = 0;

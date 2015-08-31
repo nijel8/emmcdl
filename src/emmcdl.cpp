@@ -335,12 +335,11 @@ int ResetDevice()
   }
   else {
     Dload dl(&m_port);
-    if( status != 0 ) return status;
-    status = dl.DeviceReset();
-    if (status != 0 ) {
-      Sahara sa(&m_port);
-      if( status != 0 ) return status;
-      status = sa.DeviceReset();
+    Sahara sa(&m_port);
+    if (m_class == CLASS_DLOAD) {
+        status = dl.DeviceReset();
+    } else {
+        status = sa.DeviceReset();
     }
   }
   return status;
@@ -870,7 +869,9 @@ int main(int argc, char * argv[])
   if (status < 0) goto end;
   status = DetectDeviceClass();
   if (status) {
-     m_emergency = true;
+     Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
+     if (m_verbose) fh.EnableVerbose();
+     m_emergency = !fh.DeviceNop();
      m_class = CLASS_SAHARA;
      m_protocol = FIREHOSE_PROTOCOL;
   } else if ( szFlashProg != NULL ) {
@@ -881,13 +882,15 @@ int main(int argc, char * argv[])
      }
      else {
        printf("\n!!!!!!!! WARNING: Flash programmer failed to load trying to continue !!!!!!!!!\n\n");
-       goto end;
+       //goto end;
      }
      m_emergency = true;
   }
 
-  printf("\n===============Device Class:%s Protocol:%s================\n", 
-                   m_class == CLASS_SAHARA? "sahara":"dload", m_protocol == FIREHOSE_PROTOCOL?"firehose":"streaming");
+  printf("\n===============Device Class:%s Protocol:%s Emergency:%s================\n",
+                   m_class == CLASS_SAHARA? "sahara":"dload",
+                   m_protocol == FIREHOSE_PROTOCOL?"firehose":"streaming",
+                   m_emergency?"true" : "false");
   // If there is a special command execute it
   switch(cmd) {
   case EMMC_CMD_DUMP:
