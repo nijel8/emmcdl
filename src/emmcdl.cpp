@@ -67,7 +67,7 @@ int PrintHelp()
   printf("       -p <port or disk>                Port or disk to program to (eg COM8, for PhysicalDrive1 use 1)\n");
   printf("       -o <filename>                    Output filename\n");
   printf("       [<-x <*.xml> [-xd <imgdir>]>...] Program XML file to output type -o (output) -p (port or disk)\n");
-  printf("       -f <flash programmer> [-c <d|s>] Flash programmer to load to IMEM eg MPRG8960.hex with <d>(dload), default is <s>(sahara) class\n");
+  printf("       -f <flash programmer>            Flash programmer to load to IMEM eg MPRG8960.hex\n");
   printf("       -i <singleimage>                 Single image to load at offset 0 eg 8960_msimage.mbn\n");
   printf("       -t                               Run performance tests\n");
   printf("       -b <prtname> <binfile>           Write <binfile> to GPT <prtname>\n");
@@ -701,16 +701,6 @@ int main(int argc, char * argv[])
     if (strcasecmp(argv[i], "-f") == 0) {
       szFlashProg = argv[++i];
       bEmergdl = true;
-      if (strcasecmp(argv[i+1], "-c") == 0) {
-        i++;
-        if( (i+1) < argc ) {
-          if (strcasecmp(argv[++i], "d") == 0) {
-            m_class = CLASS_DLOAD;
-          }
-        } else {
-          PrintHelp();
-        }
-      }
     }
     if (strcasecmp(argv[i], "-i") == 0) {
       cmd = EMMC_CMD_WRITE;
