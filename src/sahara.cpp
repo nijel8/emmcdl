@@ -283,7 +283,7 @@ int Sahara::CheckDevice(void)
         // Assume there was a data toggle issue and send the mode switch command
         //return ModeSwitch(SAHARA_MODE_COMMAND, false);
       } else if (cmd_rdy.cmd != SAHARA_CMD_READY) {
-        Log("PblHack: Error - %i\n", cmd_rdy.cmd);
+        Log("PblHack: Error - cmd:%i, status:%i\n", cmd_rdy.cmd, cmd_rdy.data_len);
         return ERROR_INVALID_DATA;
       }
       ModeSwitch(SAHARA_MODE_COMMAND, false);
@@ -354,7 +354,7 @@ int Sahara::PblHack(void)
     // Assume there was a data toggle issue and send the mode switch command
     return ModeSwitch(SAHARA_MODE_IMAGE_TX_PENDING);
   } else if (cmd_rdy.cmd != SAHARA_CMD_READY) {
-    Log("PblHack: Error - %i\n", cmd_rdy.cmd);
+    Log("PblHack: Error - cmd:%i, status:%i\n", cmd_rdy.cmd, cmd_rdy.data_len);
     return ERROR_INVALID_DATA;
   }
 
