@@ -481,15 +481,11 @@ int Firehose::SetActivePartition(int prtn_num)
 
 int Firehose::PeekLogBuf(int64_t start, int64_t size)
 {
-    char peek[512];
+    char peek[512]={0};
     int status;
     unsigned char *logbuf = (unsigned char *)malloc(MAX_XML_LEN);
     memset(logbuf, 0, MAX_XML_LEN);
-    printf("%s\n", __func__);
-    sprintf(peek,"<?xml version=\"1.0\" ?><data>"
-    		"<peek SizeInBytes=\"%ld\" address64=\"%ld\"/>"
-    		"</data>\n"
-    		, start, size);
+    sprintf(peek,"<?xml version=\"1.0\" ?><data><peek address64=\"%li\" SizeInBytes=\"%li\" /></data>\n" , start, size);
     status = sport->Write((unsigned char*)peek, strlen(peek));
     Log("peek command: %s\n",(char *)peek);
 

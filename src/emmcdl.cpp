@@ -583,6 +583,7 @@ int LogDump(__uint64_t start, __uint64_t num)
 	    Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
 	    if(m_verbose) fh.EnableVerbose();
 	    printf("Connected to flash programmer, starting dump\n");
+            //fh.ConnectToFlashProg(&m_cfg);
 	    status = fh.PeekLogBuf(start,num);
 	  } else {
         //TODO
