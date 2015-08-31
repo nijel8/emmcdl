@@ -257,7 +257,7 @@ int Sahara::LoadFlashProg(char *szFlashPrg)
 int Sahara::CheckDevice(void)
 {
   hello_req_t hello_req = {0};
-  int status = 0;
+  int status = -1;
   uint32_t bytesRead = sizeof(hello_req);
   if (sport->InputBufferCount()) {
       status = sport->Read((unsigned char *)&hello_req,&bytesRead);
@@ -287,6 +287,7 @@ int Sahara::CheckDevice(void)
         return ERROR_INVALID_DATA;
       }
       ModeSwitch(SAHARA_MODE_COMMAND, false);
+      status = 0;
   }
   return status;
 }
