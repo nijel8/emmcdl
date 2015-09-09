@@ -567,7 +567,8 @@ int Partition::SimlockPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
   status = 0;
   hRead = emmcdl_open(imgfname,O_RDONLY);
   if (hRead < 0) {
-    status = errno;
+    printf("-- skip flash simlock\n");
+    return 0;//status = errno;
   }
   else {
     // Update the number of sectors based on real file size, rounded to next sector offset
