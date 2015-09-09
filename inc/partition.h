@@ -73,7 +73,7 @@ typedef struct {
   __uint64_t first_lba;
   __uint64_t last_lba;
   __uint64_t attributes;
-  char   part_name[36];
+  char part_name[72];
 } gpt_entry_t;
 
 typedef struct {

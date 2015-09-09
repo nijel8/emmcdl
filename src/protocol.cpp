@@ -22,6 +22,9 @@ when       who     what, where, why
 
 #include "protocol.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <iconv.h>
+#include <wchar.h>
 
 Protocol::Protocol(void)
 {
@@ -77,14 +80,22 @@ int Protocol::LoadPartitionInfo(char *szPartName, PartitionEntry *pEntry)
     // Check to make sure partition name is found
     status = ENOENT;
     memset(pEntry, 0, sizeof(PartitionEntry));
+    iconv_t conv = iconv_open("UTF-8", "UTF-16");
     for (int i = 0; i < 128; i++) {
-      if (strcmp(szPartName, gpt_entries[i].part_name) == 0) {
+      char part_name[36];
+      char* src = gpt_entries[i].part_name;
+      size_t srclen = 72;
+      char* dst = part_name;
+      size_t dstlen = 36;
+      iconv(conv, &src, &srclen, &dst, &dstlen);
+      if (strcmp(szPartName, part_name) == 0) {
         pEntry->start_sector = gpt_entries[i].first_lba;
         pEntry->num_sectors = gpt_entries[i].last_lba - gpt_entries[i].first_lba + 1;
         pEntry->physical_partition_number = 0;
         return 0;
       }
     }
+    iconv_close(conv);
   }
   return status;
 }
@@ -129,10 +140,20 @@ int Protocol::ReadGPT(bool debug)
     if (debug) printf("\nSuccessfully found GPT partition\n");
     status = ReadData((unsigned char *)gpt_entries, 2*DISK_SECTOR_SIZE, 32*DISK_SECTOR_SIZE, &bytesRead,0);
     if ((status == 0) && debug) {
+      iconv_t conv = iconv_open("UTF-8", "UTF-16");
       for (int i = 0; (i < gpt_hdr.num_entries) && (i < 128); i++) {
-        if (gpt_entries[i].first_lba > 0)
-          Log("%i. Partition Name: %s Start LBA: %I64d Size in LBA: %I64d", i + 1, gpt_entries[i].part_name, gpt_entries[i].first_lba, gpt_entries[i].last_lba - gpt_entries[i].first_lba + 1);
+        if (gpt_entries[i].first_lba > 0) {
+          char part_name[36];
+          char* src = gpt_entries[i].part_name;
+	  size_t srclen = 72;
+          char* dst = part_name;
+	  size_t dstlen = 36;
+	  iconv(conv, &src, &srclen, &dst, &dstlen);
+          Log("%2i. Partition Name: %-36s Start LBA: 0x%.8x Size in LBA: 0x%.8x",
+               i + 1, part_name, gpt_entries[i].first_lba, gpt_entries[i].last_lba - gpt_entries[i].first_lba + 1);
+        }
       }
+      iconv_close(conv);
     }
   }
   else {
@@ -141,6 +162,7 @@ int Protocol::ReadGPT(bool debug)
     gpt_entries = NULL;
     status = ERROR_INVALID_DATA;
   }
+
   return status;
 }
 
