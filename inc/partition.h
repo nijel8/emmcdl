@@ -45,7 +45,8 @@ enum cmdEnum {
   CMD_READ = 6,
   CMD_ERASE = 7,
   CMD_NOP = 8,
-  CMD_PEEK= 9
+  CMD_PEEK= 9,
+  CMD_SIMLOCK = 10
 };
 
 typedef struct {
@@ -87,6 +88,7 @@ typedef struct {
   __uint64_t crc_start;
   __uint64_t crc_size;
   char  filename[MAX_PATH];
+  char  label[MAX_PATH];
 } PartitionEntry;
 
 //char *StringReplace(char *inp, const char *find, const char *rep);
@@ -106,6 +108,7 @@ public:
   int PreLoadImage(char * fname, const char * imgdir = NULL);
   int ProgramImage(Protocol *proto);
   int ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *key);
+  int SimlockPartitionEntry(Protocol *proto, PartitionEntry pe, char *key);
 
   int CloseXML();
   int GetNextXMLKey(char *keyName, char **key);

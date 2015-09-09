@@ -301,6 +301,8 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
     || strstr(key, "</patches>") != NULL || strstr(key, "</data>") != NULL) {
     pe->eCmd = CMD_NOP;
     return 0;
+  } else if (strstr(key, "simlock") != NULL) {
+    pe->eCmd = CMD_SIMLOCK;
   } else if (strstr(key, "program") != NULL) {
     pe->eCmd = CMD_PROGRAM;
   } else if( strstr(key,"patch") != NULL ) {
@@ -350,7 +352,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
     pe->num_sectors = (__uint64_t )-1;
   }
 
-  if( pe->eCmd == CMD_PATCH || pe->eCmd == CMD_PROGRAM || pe->eCmd == CMD_READ) {
+  if( pe->eCmd == CMD_PATCH || pe->eCmd == CMD_PROGRAM || pe->eCmd == CMD_READ || pe->eCmd == CMD_SIMLOCK) {
     // Both program and patch need a filename to be valid
     if( ParseXMLString(key,"filename", pe->filename) != 0 ) {
       Log("filename missing in XML line\n");
@@ -363,6 +365,7 @@ int Partition::ParseXMLKey(char *key, PartitionEntry *pe)
       }
       Log("filename: %s ", pe->filename);
     }
+
 
     // File sector offset is optional for both these otherwise use default
     if( ParseXMLInt64(key,"file_sector_offset", pe->offset, pe) == 0 ) {
@@ -507,6 +510,9 @@ int Partition::ProgramImage(Protocol *proto)
     else if (pe.eCmd == CMD_PROGRAM) {
       status = ProgramPartitionEntry(proto, pe, key);
     }
+    else if (pe.eCmd == CMD_SIMLOCK) {
+      status = SimlockPartitionEntry(proto, pe, key);
+    }
     else if (pe.eCmd == CMD_PATCH) {
       // Only patch disk entries
       if (strcmp(pe.filename, "DISK") == 0) {
@@ -525,6 +531,74 @@ int Partition::ProgramImage(Protocol *proto)
     }
   }
 
+  return status;
+}
+
+int Partition::SimlockPartitionEntry(Protocol *proto, PartitionEntry pe, char *key)
+{
+  int hRead = -1;
+  int status = 0;
+
+  if (proto == NULL) {
+    printf("Can't write to disk no protocol passed in.\n");
+    return EINVAL;
+  }
+
+  char imgfname[MAX_PATH];
+  const char* ptr = rindex(xmlFilename,'/');
+  if (ptr != NULL) {
+    if (imgDir != NULL) {
+      sprintf(imgfname, "%s/%s", imgDir, pe.filename);
+    } else {
+      strncpy(imgfname, xmlFilename, ptr - xmlFilename);
+      sprintf(&imgfname[ptr - xmlFilename], "/%s", pe.filename);
+    }
+  } else {
+    if (imgDir != NULL) {
+      sprintf(imgfname, "%s/%s", imgDir, pe.filename);
+    } else {
+      strcpy(imgfname, pe.filename);
+    }
+  }
+
+  printf("\n-- loading binary...%s\n", imgfname);
+  // Open the file that we are supposed to dump
+  struct stat      my_stat;
+  status = 0;
+  hRead = emmcdl_open(imgfname,O_RDONLY);
+  if (hRead < 0) {
+    status = errno;
+  }
+  else {
+    // Update the number of sectors based on real file size, rounded to next sector offset
+
+    int ret = fstat(hRead, &my_stat);
+    // Make sure filesize is valid
+    if(ret)
+      return ret;
+    int64_t dwTotalSize = my_stat.st_size;
+    dwTotalSize = (dwTotalSize + proto->GetDiskSectorSize() - 1) & (int64_t)~(proto->GetDiskSectorSize() - 1);
+    dwTotalSize = dwTotalSize / proto->GetDiskSectorSize();
+    if (dwTotalSize <= (int64_t)pe.num_sectors) {
+      pe.num_sectors = dwTotalSize;
+    }
+    else {
+      printf("\nFileSize is > partition size, truncating file\n");
+    }
+    status = 0;
+  }
+
+  if (status == 0 ) {
+    // Fast copy from input file to output disk
+    Log("In offset: %lu out offset: %lu sectors: %lu\n", pe.offset, pe.start_sector, pe.num_sectors);
+    unsigned char *bpDataBuf = (unsigned char *)malloc(my_stat.st_size);
+    if (!bpDataBuf) return errno;
+    status = emmcdl_read(hRead, bpDataBuf, my_stat.st_size);
+    uint32_t dwBytesOut = pe.num_sectors;
+    status = proto->WriteSimlockData(bpDataBuf, pe.start_sector, my_stat.st_size, &dwBytesOut,pe.physical_partition_number);
+    emmcdl_close(hRead);
+    free(bpDataBuf);
+  }
   return status;
 }
 

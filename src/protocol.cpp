@@ -166,6 +166,10 @@ int Protocol::GetDiskHandle(void)
   return hDisk;
 }
 
+int Protocol::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum) {
+  return -1;
+}
+
 int Protocol::DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, char *szOutFile, uint8_t partNum, char *szPartName)
 {
   int status = 0;

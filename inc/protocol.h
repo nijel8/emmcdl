@@ -47,6 +47,7 @@ public:
   void SetDiskSectorSize(int size);
   __uint64_t GetNumDiskSectors(void);
   int GetDiskHandle(void);
+  virtual int WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum);
 
   virtual int DeviceReset(void) = 0;
   virtual int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum) = 0;

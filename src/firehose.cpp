@@ -369,6 +369,75 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
   return status;
 }
 
+int Firehose::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum)
+{
+  uint32_t dwBytesRead;
+  int status = 0;
+
+  // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
+  if (writeBuffer == NULL || bytesWritten == NULL) {
+    return EINVAL;
+  }
+
+  memset(program_pkt, 0, MAX_XML_LEN);
+  if (writeOffset >= 0) {
+    sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
+      "<simlock SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\" len=\"%i\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, (int)4*DISK_SECTOR_SIZE, partNum, (int)(writeOffset), (int)(writeBytes));
+  }
+  else { // If start sector is negative write to back of disk
+    sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
+      "<simlock SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\" len=\"%i\" />"
+      "\n</data>", DISK_SECTOR_SIZE, (int)4*DISK_SECTOR_SIZE, partNum, (int)(writeOffset), (int)(writeBytes));
+  }
+  status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
+  Log((char *)program_pkt);
+
+  // This should have log information from device
+  // Get the response after read is done
+  if (ReadStatus() != 0) return status;
+
+  struct timespec ts;
+  int ret;
+
+
+  static uint64_t ticks;
+  ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+  if (ret < 0) {
+      return ret;
+  }
+  ticks =  ts.tv_sec * NANO + ts.tv_nsec;
+
+  //uint64_t dwBufSize = writeBytes;
+
+  // loop through and write the data
+  *bytesWritten = 0;
+  dwBytesRead = dwMaxPacketSize;
+  for (uint32_t i = 0; i < writeBytes; i += dwMaxPacketSize) {
+    if ((writeBytes - i)  < dwMaxPacketSize) {
+      dwBytesRead = (int)(writeBytes - i);
+    }
+    status = sport->Write(&writeBuffer[i], dwBytesRead);
+    if (status != 0) {
+      return status;
+    }
+    *bytesWritten += dwBytesRead;
+    printf("Sectors remaining %8i %32c\r", (int)(writeBytes - i), '\0');
+  }
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+  if (ret < 0) {
+      return ret;
+  }
+  printf("Downloaded raw image at speed %8.4f MB/s\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
+
+  // Get the response after read is done
+  status = ReadStatus();
+
+  // Read and display any other log packets we may have
+
+  return status;
+}
 int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum)
 {
   uint32_t dwBytesRead;
@@ -490,8 +559,8 @@ int Firehose::PeekLogBuf(int64_t start, int64_t size)
     Log("peek command: %s\n",(char *)peek);
 
     // Read and log any response to command we sent
-    status = ReadData(logbuf, MAX_XML_LEN, false);
-    Log("%s\n",(char *)logbuf);
+    status =  ReadData(m_payload, dwMaxPacketSize, false);
+    Log("%s\n",(char *)m_payload);
     free(logbuf);
     return status;
 }

@@ -46,6 +46,7 @@ public:
   Firehose(SerialPort *port, uint32_t maxPacketSize = (1024*1024), int hLogFile = -1);
   virtual ~Firehose();
   int WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum);
+  int WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, uint32_t writeBytes, uint32_t *bytesWritten, uint8_t partNum);
   int ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum);
 
   int DeviceReset(void);
