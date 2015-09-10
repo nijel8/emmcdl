@@ -550,7 +550,6 @@ int RawDiskDump(__uint64_t start, __uint64_t num, char *oFile, int dnum, char *s
   int status = 0;
 
   // Get extra info from the user via command line
-  printf("Dumping at start sector: %lu for sectors: %lu to file: %s\n",start, num, oFile);
   if( m_emergency ) {
     Firehose fh(&m_port, m_cfg.MaxPayloadSizeToTargetInBytes);
     fh.SetDiskSectorSize(m_sector_size);

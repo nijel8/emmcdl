@@ -218,6 +218,7 @@ int Protocol::DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, 
     return errno;
   }
 
+  printf("Dumping at start sector: %lu for sectors: %lu to file: %s\n", start_sector, num_sectors, szOutFile);
   status = FastCopy(hDisk, start_sector, hOutFile, 0, num_sectors, partNum);
   emmcdl_close(hOutFile);
 
