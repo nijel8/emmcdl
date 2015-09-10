@@ -603,7 +603,6 @@ int main(int argc, char * argv[])
 {
   int dnum = -1;
   int status = 0;
-  bool bEmergdl = false;
   char *szOutputFile = NULL;
   char *szXMLFile[8] = {NULL};
   char *szimgDir[8] = {NULL};
@@ -701,12 +700,10 @@ int main(int argc, char * argv[])
     }
     if (strcasecmp(argv[i], "-f") == 0) {
       szFlashProg = argv[++i];
-      bEmergdl = true;
     }
     if (strcasecmp(argv[i], "-i") == 0) {
       cmd = EMMC_CMD_WRITE;
       szSingleImage = argv[++i];
-      bEmergdl = true;
     }
     if (strcasecmp(argv[i], "-t") == 0) {
       cmd = EMMC_CMD_TEST;

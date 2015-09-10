@@ -629,14 +629,16 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   }
   else {
     // Move file pointer to the give location if value specified is > 0
-    if (sectorRead > 0) {
-      //int64_t sectorReadHigh = dwReadOffset >> 32;
-      //status = SetFilePointer(hRead, (LONG)dwReadOffset, &sectorReadHigh, FILE_BEGIN);
-      status = emmcdl_lseek(hRead,dwReadOffset, SEEK_SET);
-      if (status < 0) {
-        status = errno;
-        printf("Failed to set offset 0x%lx status: %i\n", sectorRead, status);
-        return status;
+    if (hRead != hDisk){
+      if (sectorRead > 0) {
+        //int64_t sectorReadHigh = dwReadOffset >> 32;
+        //status = SetFilePointer(hRead, (LONG)dwReadOffset, &sectorReadHigh, FILE_BEGIN);
+        status = emmcdl_lseek(hRead,dwReadOffset, SEEK_SET);
+        if (status < 0) {
+          status = errno;
+          printf("Failed to set offset 0x%lx status: %i\n", sectorRead, status);
+          return status;
+        }
       }
     }
   }
