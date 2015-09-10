@@ -317,13 +317,13 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
   memset(program_pkt, 0, MAX_XML_LEN);
   if (writeOffset >= 0) {
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, (int)writeBytes/DISK_SECTOR_SIZE, partNum, (int)(writeOffset/DISK_SECTOR_SIZE));
+      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%u\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, writeBytes/DISK_SECTOR_SIZE, partNum, (writeOffset/DISK_SECTOR_SIZE));
   }
   else { // If start sector is negative write to back of disk
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, (int)writeBytes / DISK_SECTOR_SIZE, partNum, (int)(writeOffset / DISK_SECTOR_SIZE));
+      "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%u\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, writeBytes / DISK_SECTOR_SIZE, partNum, (writeOffset / DISK_SECTOR_SIZE));
   }
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
@@ -349,16 +349,16 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
 
   // loop through and write the data
   dwBytesRead = dwMaxPacketSize;
-  for (uint32_t i = 0; i < writeBytes; i += dwMaxPacketSize) {
+  for (uint32_t i = 0; i < writeBytes; i += dwBytesRead) {
     if ((writeBytes - i)  < dwMaxPacketSize) {
-      dwBytesRead = (int)(writeBytes - i);
+      dwBytesRead = (writeBytes - i);
     }
     status = sport->Write(&writeBuffer[i], dwBytesRead);
     if (status != 0) {
       return status;
     }
     *bytesWritten += dwBytesRead;
-    printf("Sectors remaining %8i%-*c\r", (int)(writeBytes - i), speedWidth, '\0');
+    printf("Sectors remaining %8u%-*c\r", (writeBytes - i), speedWidth, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -394,13 +394,13 @@ int Firehose::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, 
   memset(program_pkt, 0, MAX_XML_LEN);
   if (writeOffset >= 0) {
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<simlock SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\" len=\"%i\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, (int)4*DISK_SECTOR_SIZE, partNum, (int)(writeOffset), (int)(writeBytes));
+      "<simlock SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%u\" physical_partition_number=\"%i\" start_sector=\"%li\" len=\"%u\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, *bytesWritten, partNum, (writeOffset), (writeBytes));
   }
   else { // If start sector is negative write to back of disk
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<simlock SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\" len=\"%i\" />"
-      "\n</data>", DISK_SECTOR_SIZE, (int)4*DISK_SECTOR_SIZE, partNum, (int)(writeOffset), (int)(writeBytes));
+      "<simlock SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%u\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\" len=\"%u\" />"
+      "\n</data>", DISK_SECTOR_SIZE, *bytesWritten, partNum, (writeOffset), (writeBytes));
   }
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
@@ -425,16 +425,16 @@ int Firehose::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, 
   // loop through and write the data
   *bytesWritten = 0;
   dwBytesRead = dwMaxPacketSize;
-  for (uint32_t i = 0; i < writeBytes; i += dwMaxPacketSize) {
+  for (uint32_t i = 0; i < writeBytes; i += dwBytesRead) {
     if ((writeBytes - i)  < dwMaxPacketSize) {
-      dwBytesRead = (int)(writeBytes - i);
+      dwBytesRead = (writeBytes - i);
     }
     status = sport->Write(&writeBuffer[i], dwBytesRead);
     if (status != 0) {
       return status;
     }
     *bytesWritten += dwBytesRead;
-    printf("Sectors remaining %8i%-*c\r", (int)(writeBytes - i), speedWidth, '\0');
+    printf("Sectors remaining %8u%-*c\r", (writeBytes - i), speedWidth, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -458,7 +458,7 @@ int Firehose::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, 
 }
 int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t readBytes, uint32_t *bytesRead, uint8_t partNum)
 {
-  uint32_t dwBytesRead;
+  int32_t dwBytesRead;
   int status = 0;
 
   // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
@@ -469,13 +469,13 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
   memset(program_pkt, 0, MAX_XML_LEN);
   if (readOffset >= 0) {
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, (int)readBytes/DISK_SECTOR_SIZE, partNum, (int)(readOffset/DISK_SECTOR_SIZE));
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, (int)readBytes/DISK_SECTOR_SIZE, partNum, (readOffset/DISK_SECTOR_SIZE));
   }
   else { // If start sector is negative read from back of disk
     sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, (int)readBytes / DISK_SECTOR_SIZE, partNum, (int)(readOffset / DISK_SECTOR_SIZE));
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, (int)readBytes / DISK_SECTOR_SIZE, partNum, (readOffset / DISK_SECTOR_SIZE));
   }
   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
   Log((char *)program_pkt);
@@ -496,24 +496,23 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
   uint64_t ticks = ts.tv_sec * NANO + ts.tv_nsec;
   uint32_t bytesToRead = dwMaxPacketSize;
 
-  for (uint32_t tmp_sectors = (uint32_t)readBytes/DISK_SECTOR_SIZE; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
+  for (uint32_t tmp_sectors = readBytes/DISK_SECTOR_SIZE; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
     if (tmp_sectors < dwMaxPacketSize / DISK_SECTOR_SIZE) {
       bytesToRead = tmp_sectors*DISK_SECTOR_SIZE;
-    }
-    else {
-      bytesToRead = dwMaxPacketSize;
     }
 
     uint32_t offset = 0;
     while (offset < bytesToRead) {
       dwBytesRead = ReadData(&readBuffer[offset], bytesToRead - offset, false);
-      offset += dwBytesRead;
+      if (dwBytesRead > 0 ) {
+        offset += dwBytesRead;
+      }
     }
 
     // Now either write the data to the buffer or handle given
     readBuffer += bytesToRead;
     *bytesRead += bytesToRead;
-    printf("Sectors remaining %8i%-*c\r", (int)tmp_sectors, speedWidth, '\0');
+    printf("Sectors remaining %8u%-*c\r", tmp_sectors, speedWidth, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -648,21 +647,28 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   if (hWrite == hDisk){
     if (sectorWrite < 0){
       sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%i\"/>"
-        "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorWrite);
+        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
+        "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorWrite);
     }
     else
     {
       sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
-        "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorWrite);
+        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
+        "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorWrite);
     }
   }
   else
   {
-    sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"%i\" start_sector=\"%i\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, (int)sectors, partNum, (int)sectorRead);
+    if (sectorRead < 0) {
+      sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorRead);
+    } else {
+      sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
+      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
+      "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorRead);
+
+    }
   }
 
   // Write out the command and wait for ACK/NAK coming back
@@ -686,9 +692,8 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
         return ret;
     }
     uint64_t ticks = ts.tv_sec * NANO + ts.tv_nsec;
-    uint32_t bytesToRead;
-    for (int64_t tmp_sectors = (int64_t)sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
-      bytesToRead = dwMaxPacketSize&(~(DISK_SECTOR_SIZE - 1));
+    uint32_t bytesToRead = dwMaxPacketSize&(~(DISK_SECTOR_SIZE - 1));
+    for (uint64_t tmp_sectors = sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
       if (tmp_sectors < dwMaxPacketSize / DISK_SECTOR_SIZE) {
         bytesToRead = tmp_sectors*DISK_SECTOR_SIZE;
       }
@@ -738,7 +743,9 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
         uint32_t offset = 0;
         while (offset < bytesToRead) {
           dwBytesRead = ReadData(&m_payload[offset], bytesToRead - offset, false);
-          offset += dwBytesRead;
+          if (dwBytesRead > 0) {
+            offset += dwBytesRead;
+          }
         }
         // Now either write the data to the buffer or handle given
         if (!emmcdl_write(hWrite, m_payload, bytesToRead))  {
@@ -747,7 +754,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
           break;
         }
       }
-      printf("Sectors remaining %8i%-*c\r", (int)(tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), speedWidth, '\0');
+      printf("Sectors remaining %8lu%-*c\r", (tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), speedWidth, '\0');
       //emmcdl_sleep_ms(10);
     }
     ret = clock_gettime(CLOCK_MONOTONIC, &ts);

@@ -75,7 +75,7 @@ int Protocol::LoadPartitionInfo(char *szPartName, PartitionEntry *pEntry)
   int status = 0;
 
   // First of all read in the GPT information and see if it was successful
-  status = ReadGPT(false);
+  status = ReadGPT(bVerbose);
   if (status == 0) {
     // Check to make sure partition name is found
     status = ENOENT;
@@ -92,7 +92,8 @@ int Protocol::LoadPartitionInfo(char *szPartName, PartitionEntry *pEntry)
         pEntry->start_sector = gpt_entries[i].first_lba;
         pEntry->num_sectors = gpt_entries[i].last_lba - gpt_entries[i].first_lba + 1;
         pEntry->physical_partition_number = 0;
-        return 0;
+        status = 0;
+        break;
       }
     }
     iconv_close(conv);
@@ -152,7 +153,7 @@ int Protocol::ReadGPT(bool debug)
           char* dst = part_name;
 	  size_t dstlen = 36;
 	  iconv(conv, &src, &srclen, &dst, &dstlen);
-          Log("%2i. Partition Name: %-36s Start LBA: 0x%.8x Size in LBA: 0x%.8x",
+          printf("%2i. Partition Name: %-36s Start LBA: 0x%.8lx Size in LBA: 0x%.8lx",
                i + 1, part_name, gpt_entries[i].first_lba, gpt_entries[i].last_lba - gpt_entries[i].first_lba + 1);
         }
       }
@@ -207,6 +208,7 @@ int Protocol::DumpDiskContents(__uint64_t start_sector, __uint64_t num_sectors, 
       num_sectors = pe.num_sectors;
     }
     else {
+      printf("%s partition not found\n", szPartName);
       return ENOENT;
     }
 
