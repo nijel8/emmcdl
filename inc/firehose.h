@@ -72,6 +72,7 @@ private:
   SerialPort *sport;
   __uint64_t diskSectors;
   uint32_t speedWidth;
+  struct timespec startTs;
   bool m_read_back_verify;
   bool m_rawmode;
   unsigned char *m_payload;

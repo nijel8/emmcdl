@@ -136,6 +136,11 @@ int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
   uint32_t dwBytesRead = dwMaxPacketSize;
   uint32_t retry = 0;
 
+  status = clock_gettime(CLOCK_MONOTONIC, &startTs);
+  if (status < 0) {
+      return status;
+  }
+
   printf("Firehose:%s\n", __func__);
   // Allocation our global buffers only once when connecting to flash programmer
   if (m_payload == NULL || program_pkt == NULL || m_buffer == NULL) {
@@ -360,7 +365,13 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
   if (ret < 0) {
       return ret;
   }
-  printf("Downloaded raw image at speed %8.4f MB/s%n\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
+
+  uint64_t now =  ts.tv_sec * NANO + ts.tv_nsec;
+  time_t  elapse = ts.tv_sec - startTs.tv_sec;
+  char tmstr[64];
+  strftime(tmstr, 64, "%T", gmtime(&elapse));
+  printf("Downloaded raw image at speed %8.4f MB/s %s%n\r",
+            (((((double)*bytesWritten*NANO)/1024/1024)) / (now - ticks + 1)), tmstr, &speedWidth);
 
   // Get the response after read is done
   status = ReadStatus();
@@ -430,7 +441,13 @@ int Firehose::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, 
   if (ret < 0) {
       return ret;
   }
-  printf("Downloaded raw image at speed %8.4f MB/s%n\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
+
+  uint64_t now =  ts.tv_sec * NANO + ts.tv_nsec;
+  time_t  elapse = ts.tv_sec - startTs.tv_sec;
+  char tmstr[64];
+  strftime(tmstr, 64, "%T", gmtime(&elapse));
+  printf("Downloaded raw image at speed %8.4f MB/s %s%n\r",
+                (((((double)*bytesWritten*NANO)/1024/1024)) / (now - ticks + 1)), tmstr, &speedWidth);
 
   // Get the response after read is done
   status = ReadStatus();
@@ -503,7 +520,12 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
   if (ret < 0) {
       return ret;
   }
-  printf("Downloaded raw image at speed %8.4f MB/s%n\r", ((((double)readBytes*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
+  uint64_t now =  ts.tv_sec * NANO + ts.tv_nsec;
+  time_t  elapse = ts.tv_sec - startTs.tv_sec;
+  char tmstr[64];
+  strftime(tmstr, 64, "%T", gmtime(&elapse));
+  printf("Downloaded raw image at speed %8.4f MB/s %s%n\r",
+            ((((double)readBytes*NANO)/1024/1024) / (now - ticks + 1)), tmstr, &speedWidth);
 
   // Get the response after read is done first response should be finished command
   status = ReadStatus();
@@ -730,8 +752,13 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
     if (ret < 0) {
         return ret;
     }
-    printf("Downloaded raw image at speed %8.4f MB/s%n\r",
-                 ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
+
+    uint64_t now =  ts.tv_sec * NANO + ts.tv_nsec;
+    time_t  elapse = ts.tv_sec - startTs.tv_sec;
+    char tmstr[64];
+    strftime(tmstr, 64, "%T", gmtime(&elapse));
+    printf("Downloaded raw image at speed %8.4f MB/s %s%n\r",
+                 ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (now - ticks + 1)), tmstr, &speedWidth);
   }
 
   // Get the response after raw transfer is completed
