@@ -168,10 +168,15 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 				continue;
 			} else if (csize > 0) {
 				rsize += csize;
-			}
+			} else {
+			   perror("emmcdl_read");
+                        }
 		} else {
 			//goto tryagain;
-                        if (rsize) {
+                        if (!rsize) {
+	                    *length = 0;
+			    perror("select()");
+                            if (!errno) errno=EAGAIN;
 			    printf("Serial Port No data within five seconds.\n");
 			    return -1;
                         }
@@ -184,7 +189,7 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 	} while (csize < 0 /*&& (rsize < *length)*/);
 	*length = rsize;
 
-	return 0;
+	return rsize ? 0 : -1;
 }
 
 int64_t SerialPort::InputBufferCount(){

@@ -90,7 +90,9 @@ int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
         m_buffer_len = dwMaxPacketSize;
         m_buffer_ptr = m_buffer;
         if ((status = sport->Read(m_buffer, &m_buffer_len)) <  0) {
-          m_buffer_len = 0;
+          //m_buffer_len = 0;
+          //printf("x%s\n", m_buffer);
+          Log("xml sport->Read fail\n");
         }
         //printf("x%s\n", m_buffer);
 
@@ -102,7 +104,7 @@ int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
     // First copy over any extra data that may be present from previous read
     dwBytesRead = dwBufSize;
     if (m_buffer_len > 0) {
-      Log("Using %i bytes from mbuffer", m_buffer_len);
+      Log("Using %i bytes from mbuffer\n", m_buffer_len);
       // If there is more bytes available then we have space for then only copy out the bytes we need and return
       if (m_buffer_len >= dwBufSize) {
         m_buffer_len -= dwBufSize;
@@ -117,17 +119,15 @@ int Firehose::ReadData(unsigned char *pOutBuf, uint32_t dwBufSize, bool bXML)
       dwBytesRead = dwBufSize - m_buffer_len;
     }
 
-    status = sport->Read(pOutBuf, &dwBytesRead);
+    if ((status = sport->Read(pOutBuf, &dwBytesRead)) < 0) {
+      Log("sport->Read fail\n");
+    }
     dwBytesRead += m_buffer_len;
+    m_buffer_ptr = m_buffer;
     m_buffer_len = 0;
   }
 
-  if (status != 0)
-  {
-    return status;
-  } 
-  
-  return dwBytesRead;
+  return dwBytesRead ? dwBytesRead : -1;
 }
 
 int Firehose::ConnectToFlashProg(fh_configure_t *cfg)
@@ -280,7 +280,6 @@ int Firehose::ReadStatus(void)
 int Firehose::ProgramPatchEntry(PartitionEntry pe, char *key)
 {
   char tmp_key[MAX_STRING_LEN];
-  size_t bytesOut;
   int status = 0;
   
   // Make sure we get a valid parameter passed in
@@ -592,7 +591,6 @@ int Firehose::PeekLogBuf(int64_t start, int64_t size)
 int Firehose::ProgramRawCommand(char *key)
 {
   uint32_t dwBytesRead;
-  size_t bytesOut;
   int status = 0;
   memset(program_pkt, 0, MAX_XML_LEN);
   sprintf(program_pkt, "<?xml version=\"1.0\" ?><data>");
@@ -610,7 +608,7 @@ int Firehose::ProgramRawCommand(char *key)
 
 int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sectorWrite, __uint64_t sectors, uint8_t partNum)
 {
-  size_t dwBytesRead = 0;
+  ssize_t dwBytesRead = 0;
   bool bReadStatus = true;
   int64_t dwWriteOffset = sectorWrite*DISK_SECTOR_SIZE;
   int64_t dwReadOffset = sectorRead*DISK_SECTOR_SIZE;
@@ -628,7 +626,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   }
   else {
     // Move file pointer to the give location if value specified is > 0
-    if (hRead != hDisk){
+    if (hWrite == hDisk){
       if (sectorRead > 0) {
         //int64_t sectorReadHigh = dwReadOffset >> 32;
         //status = SetFilePointer(hRead, (LONG)dwReadOffset, &sectorReadHigh, FILE_BEGIN);
@@ -743,8 +741,16 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
         uint32_t offset = 0;
         while (offset < bytesToRead) {
           dwBytesRead = ReadData(&m_payload[offset], bytesToRead - offset, false);
-          if (dwBytesRead > 0) {
+          if (dwBytesRead < 0 && errno == EAGAIN) {
+            printf("ReadData %s %d:%s\n", __func__, __LINE__, strerror(errno));
+            break;
+          } else if (dwBytesRead > 0) {
             offset += dwBytesRead;
+          } else {
+            printf("offset %d of %d in sector offset %lu read fail\n", offset, bytesToRead, sectors - tmp_sectors);
+            perror("ReadData");
+            memset(&m_payload[offset], 0xee, bytesToRead - offset);
+            break;
           }
         }
         // Now either write the data to the buffer or handle given

@@ -153,7 +153,7 @@ int Protocol::ReadGPT(bool debug)
           char* dst = part_name;
 	  size_t dstlen = 36;
 	  iconv(conv, &src, &srclen, &dst, &dstlen);
-          printf("%2i. Partition Name: %-36s Start LBA: 0x%.8lx Size in LBA: 0x%.8lx",
+          printf("%2i. Partition Name: %-36s Start LBA: 0x%.8lx Size in LBA: 0x%.8lx\n",
                i + 1, part_name, gpt_entries[i].first_lba, gpt_entries[i].last_lba - gpt_entries[i].first_lba + 1);
         }
       }
