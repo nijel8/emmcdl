@@ -855,7 +855,7 @@ int main(int argc, char * argv[])
       }
     }
   }
-
+  setbuf(stdout, NULL);
   status = m_port.Open(dnum);
   if (status < 0) goto end;
   status = DetectDeviceClass();
@@ -980,6 +980,6 @@ int main(int argc, char * argv[])
 
 end:
   // Display the error message and exit the process
-  printf("Status: %i %s\n",status, (char*)strerror(status));
+  printf("\nStatus: %i %s\n",status, (char*)strerror(status));
   return status;
 }

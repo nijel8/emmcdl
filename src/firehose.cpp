@@ -51,6 +51,7 @@ Firehose::Firehose(SerialPort *port,uint32_t maxPacketSize, int hLogFile)
   // Initialize the serial port
   dwMaxPacketSize = maxPacketSize;
   diskSectors = 0;
+  speedWidth = 0;
   hLog = hLogFile;
   sport = port;
   m_payload = NULL;
@@ -352,14 +353,14 @@ int Firehose::WriteData(unsigned char *writeBuffer, int64_t writeOffset, uint32_
       return status;
     }
     *bytesWritten += dwBytesRead;
-    printf("Sectors remaining %8i %32c\r", (int)(writeBytes - i), '\0');
+    printf("Sectors remaining %8i%-*c\r", (int)(writeBytes - i), speedWidth, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   if (ret < 0) {
       return ret;
   }
-  printf("Downloaded raw image at speed %8.4f MB/s\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
+  printf("Downloaded raw image at speed %8.4f MB/s%n\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
 
   // Get the response after read is done
   status = ReadStatus();
@@ -422,14 +423,14 @@ int Firehose::WriteSimlockData(unsigned char *writeBuffer, int64_t writeOffset, 
       return status;
     }
     *bytesWritten += dwBytesRead;
-    printf("Sectors remaining %8i %32c\r", (int)(writeBytes - i), '\0');
+    printf("Sectors remaining %8i%-*c\r", (int)(writeBytes - i), speedWidth, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   if (ret < 0) {
       return ret;
   }
-  printf("Downloaded raw image at speed %8.4f MB/s\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
+  printf("Downloaded raw image at speed %8.4f MB/s%n\r", (((((double)*bytesWritten*NANO)/1024/1024)) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
 
   // Get the response after read is done
   status = ReadStatus();
@@ -495,14 +496,14 @@ int Firehose::ReadData(unsigned char *readBuffer, int64_t readOffset, uint32_t r
     // Now either write the data to the buffer or handle given
     readBuffer += bytesToRead;
     *bytesRead += bytesToRead;
-    printf("Sectors remaining %8i %15c\r", (int)tmp_sectors, '\0');
+    printf("Sectors remaining %8i%-*c\r", (int)tmp_sectors, speedWidth, '\0');
   }
 
   ret = clock_gettime(CLOCK_MONOTONIC, &ts);
   if (ret < 0) {
       return ret;
   }
-  printf("Downloaded raw image at speed %8.4f MB/s\r", ((((double)readBytes*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
+  printf("Downloaded raw image at speed %8.4f MB/s%n\r", ((((double)readBytes*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
 
   // Get the response after read is done first response should be finished command
   status = ReadStatus();
@@ -722,14 +723,15 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
           break;
         }
       }
-      printf("Sectors remaining %8i %32c\r", (int)(tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), '\0');
+      printf("Sectors remaining %8i%-*c\r", (int)(tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), speedWidth, '\0');
       //emmcdl_sleep_ms(10);
     }
     ret = clock_gettime(CLOCK_MONOTONIC, &ts);
     if (ret < 0) {
         return ret;
     }
-    printf("Downloaded raw image at speed %8.4f MB/s\r", ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)));
+    printf("Downloaded raw image at speed %8.4f MB/s%n\r",
+                 ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (ts.tv_sec*NANO + ts.tv_nsec - ticks + 1)), &speedWidth);
   }
 
   // Get the response after raw transfer is completed
