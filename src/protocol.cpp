@@ -254,7 +254,8 @@ int Protocol::WipeDiskContents(__uint64_t start_sector, __uint64_t num_sectors, 
   pe.num_sectors = num_sectors;
   pe.eCmd = CMD_ERASE;
   pe.physical_partition_number = 0;  // By default the wipe disk only works on physical sector 0
-  sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/", DISK_SECTOR_SIZE, (int)num_sectors, (int)start_sector);
+  sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/",
+                    DISK_SECTOR_SIZE, (int)num_sectors, (int)start_sector);
   Partition partition;
   status = partition.ProgramPartitionEntry(this,pe, cmd_pkt);
 

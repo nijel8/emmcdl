@@ -487,8 +487,9 @@ int Partition::ProgramPartitionEntry(Protocol *proto, PartitionEntry pe, char *k
     // Fast copy from input file to output disk
     Log("In offset: %lu out offset: %lu sectors: %lu\n", pe.offset, pe.start_sector, pe.num_sectors);
     status = proto->FastCopy(hRead, pe.offset, proto->GetDiskHandle(),  pe.start_sector, pe.num_sectors,pe.physical_partition_number);
-    emmcdl_close(hRead);
   }
+  if (hRead > 0)
+    emmcdl_close(hRead);
   return status;
 }
 
