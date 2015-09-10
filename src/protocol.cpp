@@ -114,7 +114,8 @@ int Protocol::WriteGPT(char *szPartName, char *szBinFile)
     Partition partition;
     strcpy(partEntry.filename, szBinFile);
     partEntry.eCmd = CMD_PROGRAM;
-    sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/", DISK_SECTOR_SIZE, (int)partEntry.num_sectors, (int)partEntry.start_sector);
+    sprintf(cmd_pkt, "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%i\" physical_partition_number=\"0\" start_sector=\"%i\"/",
+                       DISK_SECTOR_SIZE, (int)partEntry.num_sectors, (int)partEntry.start_sector);
     status = partition.ProgramPartitionEntry(this, partEntry, cmd_pkt);
   }
 
