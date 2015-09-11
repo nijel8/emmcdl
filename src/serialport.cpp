@@ -152,7 +152,7 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 		  tv.tv_usec = (to_ms % 1000) * 1000;
                 } else {
 		  /* Wait up to five seconds. */
-		  tv.tv_sec = 5;
+		  tv.tv_sec = 1;
 		  tv.tv_usec = 0;
                 }
 		/* Don't rely on the value of tv now! */
@@ -179,9 +179,9 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 			//goto tryagain;
                         if (!rsize) {
 	                    *length = 0;
-			    perror("select()");
+			    //perror("select()");
+			    Log("Serial Port No data within five seconds. %s\n", strerror(errno));
                             if (!errno) errno=EAGAIN;
-			    printf("Serial Port No data within five seconds.\n");
 			    return -1;
                         }
                         else {

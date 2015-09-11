@@ -658,6 +658,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   }
   else
   {
+    sport->SetTimeout(5);
     if (sectorRead < 0) {
       sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
       "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
@@ -743,9 +744,16 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
         while (offset < bytesToRead) {
           dwBytesRead = ReadData(&m_payload[offset], bytesToRead - offset, false);
           if (dwBytesRead < 0 && errno == EAGAIN) {
-            printf("ReadData %s %d:%s\n", __func__, __LINE__, strerror(errno));
-            break;
+            //printf("try again ReadData %s %d:%s\n", __func__, __LINE__, strerror(errno));
+            continue;
           } else if (dwBytesRead > 0) {
+            // Now either write the data to the buffer or handle given
+            if (!emmcdl_write(hWrite, &m_payload[offset], (size_t)dwBytesRead))  {
+              // Failed to write out the data
+              printf("write to file fail %s %d:%s\n", __func__, __LINE__, strerror(errno));
+              status = errno;
+              break;
+            }
             offset += dwBytesRead;
           } else {
             printf("offset %d of %d in sector offset %lu read fail\n", offset, bytesToRead, sectors - tmp_sectors);
@@ -753,12 +761,6 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
             memset(&m_payload[offset], 0xee, bytesToRead - offset);
             break;
           }
-        }
-        // Now either write the data to the buffer or handle given
-        if (!emmcdl_write(hWrite, m_payload, bytesToRead))  {
-          // Failed to write out the data
-          status = errno;
-          break;
         }
       }
       printf("Sectors remaining %8lu%-*c\r", (tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), speedWidth, '\0');
@@ -781,6 +783,7 @@ int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sector
   if (status == 0) {
     status = ReadStatus();
   }
+  sport->SetTimeout(0);
 
   return status;
 }
