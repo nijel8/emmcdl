@@ -54,6 +54,7 @@ Firehose::Firehose(SerialPort *port,uint32_t maxPacketSize, int hLogFile)
   speedWidth = 0;
   hLog = hLogFile;
   sport = port;
+  sport->SetTimeout(0);
   m_payload = NULL;
   program_pkt = NULL;
   m_buffer_len = 0;

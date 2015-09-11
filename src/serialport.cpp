@@ -141,16 +141,20 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 	struct timeval tv;
 	int retval;
 
-
 	do {
 		/* Watch Serial Port to see when it has input. */
 		FD_ZERO(&rfds);
 
 		FD_SET(hPort, &rfds);
 
-		/* Wait up to five seconds. */
-		tv.tv_sec = 5;
-		tv.tv_usec = 0;
+                if (to_ms > 0) {
+		  tv.tv_sec = to_ms/1000;
+		  tv.tv_usec = (to_ms % 1000) * 1000;
+                } else {
+		  /* Wait up to five seconds. */
+		  tv.tv_sec = 5;
+		  tv.tv_usec = 0;
+                }
 		/* Don't rely on the value of tv now! */
 		retval = TEMP_FAILURE_RETRY (select(hPort + 1, &rfds, NULL, NULL, &tv));
 
