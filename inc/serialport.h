@@ -24,6 +24,7 @@ when       who     what, where, why
 #include <stdio.h>
 #include "sysdeps.h"
 #include "crc.h"
+#include "usb.h"
 
 #define  ASYNC_HDLC_FLAG      0x7e
 #define  ASYNC_HDLC_ESC       0x7d
@@ -48,7 +49,7 @@ private:
   int HDLCEncodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   int HDLCDecodePacket(unsigned char *in_buf, int in_length, unsigned char *out_buf, int *out_length);
   
-  int hPort;
+  usb_handle* hPort;
   unsigned char *HDLCBuf;
   int to_ms;
 

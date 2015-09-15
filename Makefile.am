@@ -15,7 +15,9 @@ emmcdl_SOURCES = \
                src/sahara.cpp\
                src/partition.cpp\
                src/protocol.cpp\
-               src/serialport.cpp\
+               src/usbport.cpp\
+               src/usb_linux.c\
+               src/util.c\
                src/sparse.cpp\
                src/xmlparser.cpp
 
