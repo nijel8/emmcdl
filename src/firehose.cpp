@@ -607,183 +607,284 @@ int Firehose::ProgramRawCommand(char *key)
   return status;
 }
 
+
+void *WriterThread(void *arg) {
+   int DISK_SECTOR_SIZE = ((thread_info *)arg)->DISK_SECTOR_SIZE;
+   uint64_t sectors = ((thread_info *)arg)->sectors;
+   pthread_mutex_t *pmutex = ((thread_info *)arg)->pmutex;
+   pthread_cond_t  *pcond = ((thread_info *)arg)->pcond;
+   int hWrite = ((thread_info *)arg)->hWrite;
+   listnode *prnode = ((thread_info *)arg)->prnode;
+   listnode *pwnode = ((thread_info *)arg)->pwnode;
+   ssize_t ret;
+
+   pthread_cleanup_push((void (*)(void*))pthread_mutex_unlock,pmutex);
+   CBuffer *pbuffer;
+   ssize_t bytesleft = sectors * DISK_SECTOR_SIZE;
+   int splices = 0;
+   while (bytesleft) {
+      pthread_mutex_lock(pmutex);
+      if (list_head(prnode) == pwnode) {
+         pthread_cond_wait(pcond,pmutex);
+         pthread_mutex_unlock(pmutex);
+         continue;
+      } else {
+         pbuffer = (CBuffer*)list_head(prnode);
+      }
+      pthread_mutex_unlock(pmutex);
+      // Now either write the data to the buffer or handle given
+      splices++;
+      ssize_t bytes = emmcdl_write(hWrite, pbuffer->data, pbuffer->len);
+      if (bytes < 0 && errno != EAGAIN) {
+         printf("recv copy pipe to file error is %d:%s\n", __LINE__, strerror(errno));
+         break;
+      } else if (bytes < 0 && errno == EAGAIN) {
+         printf("recv copy pipe to file error is %d:%s\n", __LINE__, strerror(errno));
+         break;
+      } else if (bytes == pbuffer->len) {
+         bytesleft -= bytes;
+         //printf("recv  copy pipe to file len:%ld return info is %d:%s\n", bytes, errno, strerror(errno));
+      } else {
+         perror("writer to file fail");
+         break;
+      }
+
+      pthread_mutex_lock(pmutex);
+      list_remove(prnode);
+      list_add_head(&pbuffer->blist,prnode);
+      pthread_mutex_unlock(pmutex);
+   }
+
+   ret = emmcdl_lseek(hWrite, 0, SEEK_CUR);
+   if (ret != sectors * DISK_SECTOR_SIZE) {
+
+      printf("Finish recv image recv len mismatch %ld != %ld\n", sectors * DISK_SECTOR_SIZE , ret);
+   }
+
+   pthread_cleanup_pop(0);
+   pthread_exit(&ret);
+}
+
 int Firehose::FastCopy(int hRead, int64_t sectorRead, int hWrite, int64_t sectorWrite, __uint64_t sectors, uint8_t partNum)
 {
-  ssize_t dwBytesRead = 0;
-  bool bReadStatus = true;
-  int64_t dwWriteOffset = sectorWrite*DISK_SECTOR_SIZE;
-  int64_t dwReadOffset = sectorRead*DISK_SECTOR_SIZE;
-  int status = 0;
+   ssize_t dwBytesRead = 0;
+   bool bReadStatus = true;
+   int64_t dwWriteOffset = sectorWrite*DISK_SECTOR_SIZE;
+   int64_t dwReadOffset = sectorRead*DISK_SECTOR_SIZE;
+   int status = 0;
+   list_declare(wnode);
+   list_declare(rnode);
+   list_init(&wnode);
+   list_init(&rnode);
+   list_add_tail(&wnode, &rnode);
+   pthread_mutex_t mutex;
+   pthread_cond_t cond;
+   pthread_mutex_init(&mutex, NULL);
+   pthread_cond_init(&cond,NULL);
+   pthread_t wid1;
 
-  // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
-  if (hWrite < 0 ) {
-    return EINVAL;
-  }
+   // If we are provided with a buffer read the data directly into there otherwise read into our internal buffer
+   if (hWrite < 0 ) {
+      return EINVAL;
+   }
 
-  if (hRead < 0) {
-    printf("hRead = INVALID_HANDLE_VALUE, zeroing input buffer\n");
-    memset(m_payload, 0, dwMaxPacketSize);
-    dwBytesRead = dwMaxPacketSize;
-  }
-  else {
-    // Move file pointer to the give location if value specified is > 0
-    if (hWrite == hDisk){
-      if (sectorRead > 0) {
-        //int64_t sectorReadHigh = dwReadOffset >> 32;
-        //status = SetFilePointer(hRead, (LONG)dwReadOffset, &sectorReadHigh, FILE_BEGIN);
-        status = emmcdl_lseek(hRead,dwReadOffset, SEEK_SET);
-        if (status < 0) {
-          status = errno;
-          printf("Failed to set offset 0x%lx status: %i\n", sectorRead, status);
-          return status;
-        }
+
+   if (hRead < 0) {
+      printf("hRead = INVALID_HANDLE_VALUE, zeroing input buffer\n");
+      memset(m_payload, 0, dwMaxPacketSize);
+      dwBytesRead = dwMaxPacketSize;
+   }
+   else {
+      // Move file pointer to the give location if value specified is > 0
+      if (hWrite == hDisk){
+         if (sectorRead > 0) {
+            //int64_t sectorReadHigh = dwReadOffset >> 32;
+            //status = SetFilePointer(hRead, (LONG)dwReadOffset, &sectorReadHigh, FILE_BEGIN);
+            status = emmcdl_lseek(hRead,dwReadOffset, SEEK_SET);
+            if (status < 0) {
+               status = errno;
+               printf("Failed to set offset 0x%lx status: %i\n", sectorRead, status);
+               return status;
+            }
+         }
       }
-    }
-  }
+   }
 
-  // Determine if we are writing to firehose or reading from firehose
-  memset(program_pkt, 0, MAX_XML_LEN);
-  if (hWrite == hDisk){
-    if (sectorWrite < 0){
-      sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
-        "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorWrite);
-    }
-    else
-    {
-      sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-        "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
-        "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorWrite);
-    }
-  }
-  else
-  {
-    sport->SetTimeout(5);
-    if (sectorRead < 0) {
-      sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorRead);
-    } else {
-      sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
-      "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
-      "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorRead);
-
-    }
-  }
-
-  // Write out the command and wait for ACK/NAK coming back
-  status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
-  Log((char *)program_pkt);
-
-  if (hWrite == hDisk){
-    // Wait until device returns with ACK or NAK
-    while ((status = ReadStatus()) == EBUSY);
-  } //else {
-     //ReadData((unsigned char *)m_payload, dwMaxPacketSize, true);
-  //}
-
-  if (status == 0)
-  {
-    struct timespec ts;
-    int ret;
-
-    ret = clock_gettime(CLOCK_MONOTONIC, &ts);
-    if (ret < 0) {
-        return ret;
-    }
-    uint64_t ticks = ts.tv_sec * NANO + ts.tv_nsec;
-    uint32_t bytesToRead = dwMaxPacketSize&(~(DISK_SECTOR_SIZE - 1));
-    for (uint64_t tmp_sectors = sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
-      if (tmp_sectors < dwMaxPacketSize / DISK_SECTOR_SIZE) {
-        bytesToRead = tmp_sectors*DISK_SECTOR_SIZE;
+   // Determine if we are writing to firehose or reading from firehose
+   memset(program_pkt, 0, MAX_XML_LEN);
+   if (hWrite == hDisk){
+      if (sectorWrite < 0){
+         sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
+               "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
+               "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorWrite);
       }
-      if (hWrite == hDisk)
+      else
       {
-        // Writing to disk and reading from file...
-        dwBytesRead = 0;
-        if (hRead != -1) {
-			uint32_t curpos = 0;
-        	do {
-				dwBytesRead = emmcdl_read(hRead, m_payload+curpos, bytesToRead - curpos);
-				if (dwBytesRead < 0 && errno == EAGAIN) {
-					// Read not complete
-					printf("\n%s EAGAIN\n", __func__);
-					continue;
-				} else if (dwBytesRead > 0) {
-					curpos += dwBytesRead;
-				}
-        	} while(dwBytesRead < 0);
-        }
-
-        if (dwBytesRead >= 0) {
-          status = sport->Write(m_payload, bytesToRead);
-          if (status != 0) {
-            break;
-          }
-          dwWriteOffset += dwBytesRead;
-          if (sport->InputBufferCount() > 0) {
-                 Log("\n");
-                 status =  ReadStatus();
-        	  if (status == EBUSY || status == 0) {
-        	      continue;
-        	  } else {
-            	  status = ERROR_INVALID_DATA;
-            	  break;
-        	  }
-            }
-        }
-        else {
-          // If there is partial data read out then write out next chunk to finish this up
-          status = errno;
-          break;
-        }
-
-      }// Else this is a read command so read data from device in dwMaxPacketSize chunks
-      else {
-        uint32_t offset = 0;
-        while (offset < bytesToRead) {
-          dwBytesRead = ReadData(&m_payload[offset], bytesToRead - offset, false);
-          if (dwBytesRead < 0 && errno == EAGAIN) {
-            //printf("try again ReadData %s %d:%s\n", __func__, __LINE__, strerror(errno));
-            continue;
-          } else if (dwBytesRead > 0) {
-            // Now either write the data to the buffer or handle given
-            if (!emmcdl_write(hWrite, &m_payload[offset], (size_t)dwBytesRead))  {
-              // Failed to write out the data
-              printf("write to file fail %s %d:%s\n", __func__, __LINE__, strerror(errno));
-              status = errno;
-              break;
-            }
-            offset += dwBytesRead;
-          } else {
-            printf("offset %d of %d in sector offset %lu read fail\n", offset, bytesToRead, sectors - tmp_sectors);
-            perror("ReadData");
-            memset(&m_payload[offset], 0xee, bytesToRead - offset);
-            break;
-          }
-        }
+         sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
+               "<program SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
+               "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorWrite);
       }
-      printf("Sectors remaining %8lu%-*c\r", (tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), speedWidth, '\0');
-      //emmcdl_sleep_ms(10);
-    }
-    ret = clock_gettime(CLOCK_MONOTONIC, &ts);
-    if (ret < 0) {
-        return ret;
-    }
+   }
+   else
+   {
+      if (sectorRead < 0) {
+         sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
+               "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"NUM_DISK_SECTORS%li\"/>"
+               "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorRead);
+      } else {
+         sprintf(program_pkt,  "<?xml version=\"1.0\" ?><data>\n"
+               "<read SECTOR_SIZE_IN_BYTES=\"%i\" num_partition_sectors=\"%lu\" physical_partition_number=\"%i\" start_sector=\"%li\"/>"
+               "\n</data>", DISK_SECTOR_SIZE, sectors, partNum, sectorRead);
 
-    uint64_t now =  ts.tv_sec * NANO + ts.tv_nsec;
-    time_t  elapse = ts.tv_sec - startTs.tv_sec;
-    char tmstr[64];
-    strftime(tmstr, 64, "%T", gmtime(&elapse));
-    printf("Downloaded raw image at speed %8.4f MB/s %s%n\r",
-                 ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (now - ticks + 1)), tmstr, &speedWidth);
-  }
+      }
+      thread_info *arg;
+      arg = (thread_info*)calloc(sizeof(thread_info), 1);
+      arg->hWrite = hWrite;
+      arg->pmutex = &mutex;
+      arg->pcond = &cond;
+      arg->prnode = &rnode;
+      arg->pwnode = &wnode;
+      arg->sectors = sectors;
+      arg->fh = this;
+      arg->DISK_SECTOR_SIZE = DISK_SECTOR_SIZE;
+      pthread_create(&wid1,NULL,(void* (*)(void*))WriterThread, arg);
+   }
 
-  // Get the response after raw transfer is completed
-  if (status == 0) {
-    status = ReadStatus();
-  }
-  sport->SetTimeout(0);
+   // Write out the command and wait for ACK/NAK coming back
+   status = sport->Write((unsigned char*)program_pkt, strlen(program_pkt));
+   Log((char *)program_pkt);
 
-  return status;
+   if (hWrite == hDisk){
+      // Wait until device returns with ACK or NAK
+      while ((status = ReadStatus()) == EBUSY);
+   } //else {
+   //ReadData((unsigned char *)m_payload, dwMaxPacketSize, true);
+   //}
+
+   if (status == 0)
+   {
+      struct timespec ts;
+      int ret;
+
+      ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+      if (ret < 0) {
+         return ret;
+      }
+      uint64_t ticks = ts.tv_sec * NANO + ts.tv_nsec;
+      uint32_t bytesToRead = dwMaxPacketSize&(~(DISK_SECTOR_SIZE - 1));
+      for (uint64_t tmp_sectors = sectors; tmp_sectors > 0; tmp_sectors -= (bytesToRead / DISK_SECTOR_SIZE)) {
+         if (tmp_sectors < dwMaxPacketSize/ DISK_SECTOR_SIZE) {
+            bytesToRead = tmp_sectors*DISK_SECTOR_SIZE;
+         }
+         if (hWrite == hDisk)
+         {
+            // Writing to disk and reading from file...
+            dwBytesRead = 0;
+            if (hRead != -1) {
+               uint32_t curpos = 0;
+               do {
+                  dwBytesRead = emmcdl_read(hRead, m_payload+curpos, bytesToRead - curpos);
+                  if (dwBytesRead < 0 && errno == EAGAIN) {
+                     // Read not complete
+                     printf("\n%s EAGAIN\n", __func__);
+                     continue;
+                  } else if (dwBytesRead > 0) {
+                     curpos += dwBytesRead;
+                  }
+               } while(dwBytesRead < 0);
+            }
+
+            if (dwBytesRead >= 0) {
+               status = sport->Write(m_payload, bytesToRead);
+               if (status != 0) {
+                  break;
+               }
+               dwWriteOffset += dwBytesRead;
+               if (sport->InputBufferCount() > 0) {
+                  Log("\n");
+                  status =  ReadStatus();
+                  if (status == EBUSY || status == 0) {
+                     continue;
+                  } else {
+                     status = ERROR_INVALID_DATA;
+                     break;
+                  }
+               }
+            }
+            else {
+               // If there is partial data read out then write out next chunk to finish this up
+               status = errno;
+               break;
+            }
+
+         }// Else this is a read command so read data from device in dwMaxPacketSize chunks
+         else {
+            uint32_t offset = 0;
+            CBuffer *pbuffer;
+            pthread_mutex_lock(&mutex);
+            if (list_head(&wnode) == &rnode) {
+               pbuffer = (CBuffer*)malloc(sizeof(*pbuffer) - sizeof(pbuffer->data) + dwMaxPacketSize);
+               if (!pbuffer) {
+                  status = errno;
+                  pthread_mutex_unlock(&mutex);
+                  break;
+               }
+               pbuffer->len = bytesToRead;
+               list_init(&pbuffer->blist);
+               list_add_head(&wnode, &pbuffer->blist);
+            } else {
+               pbuffer = (CBuffer*)list_head(&wnode);
+               pbuffer->len = bytesToRead;
+            }
+            pthread_mutex_unlock(&mutex);
+            while (offset < bytesToRead) {
+               sport->SetTimeout(-1);
+               dwBytesRead = ReadData(&pbuffer->data[offset], bytesToRead - offset, false);
+               if (dwBytesRead < 0 && errno == EAGAIN) {
+                  printf("ReadData %s %d:%s\n", __func__, __LINE__, strerror(errno));
+                  continue; //TODO
+               } else if (dwBytesRead > 0) {
+                  offset += dwBytesRead;
+               } else {
+                  printf("offset %d of %d in sector offset %lu read fail\n", offset, bytesToRead, sectors - tmp_sectors);
+                  perror("ReadData");
+                  memset(&pbuffer->data[offset], 0xee, bytesToRead - offset);
+                  break;
+               }
+            }
+
+            pthread_mutex_lock(&mutex);
+            list_remove(&wnode);
+            list_add_head(&pbuffer->blist, &wnode);
+            pthread_cond_signal(&cond);
+            pthread_mutex_unlock(&mutex);
+         }
+         printf("Sectors remaining %8lu%-*c\r", (tmp_sectors - (bytesToRead / DISK_SECTOR_SIZE)), speedWidth, '\0');
+         //emmcdl_sleep_ms(10);
+      }
+      ret = clock_gettime(CLOCK_MONOTONIC, &ts);
+      if (ret < 0) {
+         return ret;
+      }
+
+      uint64_t now =  ts.tv_sec * NANO + ts.tv_nsec;
+      time_t  elapse = ts.tv_sec - startTs.tv_sec;
+      char tmstr[64];
+      strftime(tmstr, 64, "%T", gmtime(&elapse));
+      printf("Downloaded raw image at speed %8.4f MB/s %s%n\r",
+            ((((double)sectors*DISK_SECTOR_SIZE*NANO)/1024/1024) / (now - ticks + 1)), tmstr, &speedWidth);
+   }
+
+   // Get the response after raw transfer is completed
+   if (status == 0) {
+      status = ReadStatus();
+   }
+
+   if (hWrite != hDisk){
+      pthread_join(wid1,NULL); 
+   }
+   pthread_mutex_destroy(&mutex);
+   pthread_cond_destroy(&cond);
+
+   return status;
 }

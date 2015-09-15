@@ -24,6 +24,7 @@ when       who     what, where, why
 #include "serialport.h"
 #include "protocol.h"
 #include "partition.h"
+#include "list.h"
 #include <stdio.h>
 #include <stdint.h>
 #include "sysdeps.h"
@@ -41,6 +42,24 @@ typedef struct {
   int AckRawDataEveryNumPackets;
 } fh_configure_t;
 
+typedef struct {
+  struct listnode blist;
+  uint32_t len;
+  unsigned char data[4];
+} CBuffer;
+
+class Firehose;
+
+typedef struct {
+   Firehose *fh;
+   uint64_t sectors;
+   pthread_mutex_t *pmutex;
+   pthread_cond_t  *pcond;
+   listnode *prnode;
+   listnode *pwnode;
+   int hWrite;
+   int DISK_SECTOR_SIZE;
+}  thread_info;
 class Firehose : public Protocol {
 public:
   Firehose(SerialPort *port, uint32_t maxPacketSize = (1024*1024), int hLogFile = -1);

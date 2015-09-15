@@ -60,7 +60,7 @@ int SerialPort::Open(int port) {
 	tio.c_oflag = 0;
 
 	/*to_ms*10 timeout*/
-	tio.c_cc[VTIME] = to_ms * 10;
+	tio.c_cc[VTIME] = 0;
 	tio.c_cc[VMIN] = 0;
 	//tio.c_cc[VSTART] = 0x11;
 	//tio.c_cc[VSTOP] = 0x13;
@@ -139,6 +139,7 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
 	ssize_t csize = 0;
 	fd_set rfds;
 	struct timeval tv;
+        struct timeval *ptv;
 	int retval;
 
 	do {
@@ -150,13 +151,17 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
                 if (to_ms > 0) {
 		  tv.tv_sec = to_ms/1000;
 		  tv.tv_usec = (to_ms % 1000) * 1000;
-                } else {
+                  ptv = &tv;
+                } else if (to_ms == 0) {
 		  /* Wait up to five seconds. */
 		  tv.tv_sec = 1;
 		  tv.tv_usec = 0;
+                  ptv = &tv;
+                } else if (to_ms < 0) {
+                  ptv = NULL;
                 }
 		/* Don't rely on the value of tv now! */
-		retval = TEMP_FAILURE_RETRY (select(hPort + 1, &rfds, NULL, NULL, &tv));
+		retval = TEMP_FAILURE_RETRY (select(hPort + 1, &rfds, NULL, NULL, ptv));
 
 		if (retval == -1)
 			perror("select()");
@@ -180,7 +185,7 @@ int SerialPort::Read(unsigned char *data, uint32_t *length) {
                         if (!rsize) {
 	                    *length = 0;
 			    //perror("select()");
-			    Log("Serial Port No data within five seconds. %s\n", strerror(errno));
+			    printf("Serial Port No data within five seconds. %s\n", strerror(errno));
                             if (!errno) errno=EAGAIN;
 			    return -1;
                         }
