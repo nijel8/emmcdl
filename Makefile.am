@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
-INCLUDES=-I$(top_srcdir)/inc
-AM_CXXFLAGS= -std=c++11 -fno-rtti -fno-exceptions 
+AM_CPPFLAGS=-I$(top_srcdir)/inc
+AM_CXXFLAGS= -std=c++11 -fno-rtti -fno-exceptions -pthread
 
 noinst_PROGRAMS = emmcdl
 
@@ -17,7 +17,6 @@ emmcdl_SOURCES = \
                src/protocol.cpp\
                src/usbport.cpp\
                src/usb_linux.c\
-               src/util.c\
                src/sparse.cpp\
                src/xmlparser.cpp
 

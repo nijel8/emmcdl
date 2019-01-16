@@ -1,0 +1,8 @@
+To build:
+
+cd <to-source-dir>
+aclocal
+autoconf
+automake --add-missing
+./configure
+make
