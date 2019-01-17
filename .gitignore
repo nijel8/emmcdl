@@ -8,3 +8,15 @@ config.log
 config.status
 emmcdl
 Makefile
+compile
+COPYING
+INSTALL
+Makefile.in
+aclocal.m4
+autoscan.log
+bin
+config.h
+/configure
+/depcomp
+/install-sh
+/missing
