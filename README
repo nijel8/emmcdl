@@ -1,4 +1,4 @@
-To build with Autoconf 2.69 and Automake 1.15:
+To build emmcdl with Autoconf 2.69 and Automake 1.15:
 
 cd <to-source-dir>
 
@@ -11,3 +11,54 @@ $ ./configure
 $ make
 
 emmcdl linux binary in .(<source-dir>)
+
+$ emmcdl
+Version 2.10
+Usage: emmcdl <option> <value>
+       Options:
+       -l                               List available mass storage devices
+       -info                            List HW information about device attached to COM (eg -p COM8 -info)
+       -MaxPayloadSizeToTargetInBytes   The max bytes in firehose mode (DDR or large IMEM use 16384, default=8192)
+       -SkipWrite                       Do not write actual data to disk (use this for UFS provisioning)
+       -SkipStorageInit                 Do not initialize storage device (use this for UFS provisioning)
+       -MemoryName <ufs/emmc>           Memory type default to emmc if none is specified
+       -SetActivePartition <num>        Set the specified partition active for booting
+       -disk_sector_size <int>          Dump from start sector to end sector to file
+       -d <start> <end>                 Dump from start sector to end sector to file
+       -d <PartName>                    Dump entire partition based on partition name
+       -d logbuf@<start> <size>         Dump size of logbuf to the console
+       -e <start> <num>                 Erase disk from start sector for number of sectors
+       -e <PartName>                    Erase the entire partition specified
+       -s <sectors>                     Number of sectors in disk image
+       -p <port or disk>                Port or disk to program to (eg COM8, for PhysicalDrive1 use 1)
+       -o <filename>                    Output filename
+       [<-x <*.xml> [-xd <imgdir>]>...] Program XML file to output type -o (output) -p (port or disk)
+       -f <flash programmer>            Flash programmer to load to IMEM eg MPRG8960.hex
+       -i <singleimage>                 Single image to load at offset 0 eg 8960_msimage.mbn
+       -t                               Run performance tests
+       -b <prtname> <binfile>           Write <binfile> to GPT <prtname>
+       -g GPP1 GPP2 GPP3 GPP4           Create GPP partitions with sizes in MB
+       -gq                              Do not prompt when creating GPP (quiet)
+       -r                               Reset device
+       -ffu <*.ffu>                     Download FFU image to device in emergency download need -o and -p
+       -splitffu <*.ffu> -o <xmlfile>   Split FFU into binary chunks and create rawprogram0.xml to output location
+       -protocol <s|f>                  Can be <s>(STREAMING),  default is <f>(FIREHOSE)
+       -gpt                             Dump the GPT from the connected device
+       -raw                             Send and receive RAW data to serial port 0x75 0x25 0x10
+       -wimei <imei>                    Write IMEI <imei>
+       -v                               Enable verbose output
+
+
+
+Examples: emmcdl -p ttyUSB0 -info
+ emmcdl -p ttyUSB0 -gpt
+ emmcdl -p ttyUSB0 -SkipWrite -SkipStorageInit -MemoryName ufs -f prog_emmc_firehose_8994_lite.mbn -x memory_configure.xml
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml  -SetActivePartition 0
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -x rawprogram0.xml -xd imagedir  -SetActivePartition 0
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -ffu wp8.ffu
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -d 0 1000 -o dump_1_1000.bin
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -d SVRawDump -o svrawdump.bin
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -b SBL1 c:\temp\sbl1.mbn
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -e 0 100
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -e MODEM_FSG
+ emmcdl -p ttyUSB0 -f prog_emmc_firehose_8994_lite.mbn -raw 0x75 0x25 0x10
