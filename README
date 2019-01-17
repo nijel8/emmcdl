@@ -1,8 +1,13 @@
-To build:
+To build with Autoconf 2.69 and Automake 1.15:
 
 cd <to-source-dir>
-aclocal
-autoconf
-automake --add-missing
-./configure
-make
+
+$ aclocal
+$ autoconf
+$ automake --add-missing
+
+$ ./configure
+
+$ make
+
+emmcdl linux binary in .(<source-dir>)

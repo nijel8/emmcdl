@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
-AM_CPPFLAGS=-I$(top_srcdir)/inc
-AM_CXXFLAGS= -std=c++11 -fno-rtti -fno-exceptions -pthread
+AM_CPPFLAGS =-I$(top_srcdir)/inc
+AM_CXXFLAGS = -std=c++11 -fno-rtti -fno-exceptions -pthread
 
 noinst_PROGRAMS = emmcdl
 
@@ -21,7 +21,7 @@ emmcdl_SOURCES = \
                src/xmlparser.cpp
 
 if SYSDEPS_WIN32
-AM_CPPFLAGS = -D_WIN32
+AM_CPPFLAGS += -D_WIN32
 emmcdl_SOURCES += \
                src/diskwriter_windows.cpp\
                src/sysdeps_win32.cpp
