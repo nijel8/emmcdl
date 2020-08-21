@@ -1,3 +1,11 @@
+- Auto Install
+AutoMage & AutoConf install script
+
+chmod a+x setup.sh
+
+bash setup.sh
+
+- Manuel Install
 To build emmcdl with Autoconf 2.69 and Automake 1.15:
 
 cd <to-source-dir>
